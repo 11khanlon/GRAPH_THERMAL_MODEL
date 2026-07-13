@@ -1,7 +1,5 @@
 """
-geometry.py
-
-Step 1 of the graph-theory DED thermal model
+Step 2 of the graph-theory DED thermal model
 Create blocks that is later populated with random nodes 
 
 This module
@@ -12,11 +10,6 @@ This module
 4. Divides every hatch into five deposition blocks
 5. Stores deposition order
 
-Based on Section 4.3.1.1 of
-
-Riensche et al.
-Thermal Modeling of Directed Energy Deposition Using Graph Theory
-Rapid Prototyping Journal (2023)
 """
 
 import trimesh
@@ -39,19 +32,14 @@ class Block:
                  end):
 
         self.id = block_id
-
         self.layer = layer
 
         self.start = np.array(start)
-
         self.end = np.array(end)
-
         self.center = (self.start + self.end) / 2
-
+        
         self.active = False
-
         self.nodes = []
-
         self.temperature = None
 
     def __repr__(self):
@@ -76,11 +64,7 @@ class Geometry:
         """
         Divide the part into
 
-        layer
-
-            -> hatch
-
-                -> 5 blocks
+        layer -> hatch -> 5 blocks
 
         (paper Section 4.3.1.1)
         """

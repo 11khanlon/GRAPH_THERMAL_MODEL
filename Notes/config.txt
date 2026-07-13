@@ -1,0 +1,63 @@
+Stores variables in one spot so they can easily be modified
+
+
+Based on:
+
+Riensche et al.
+Thermal Modeling of Directed Energy Deposition Additive Manufacturing
+Using Graph Theory
+Rapid Prototyping Journal (2023)
+
+**Variables you can edit:**
+
+Material Properties:
+MATERIAL = {} python dictionary 
+key : value 
+
+Laser Parameters:
+LASER = {}  
+Another dictionary for machine parameters
+
+Build Geometry: 
+BUILD = {}
+
+Graph Parameters:
+GRAPH = {}
+
+
+Block Discretization: 
+BLOCK = {}
+how to break up .stl file
+does it discretize only the wall? or the substrate as well? should you include substrate in the .stl file 
+
+Convection:
+Forced convection --> argon assited cooling. How does this apply to each side
+Free convection --> natural air cooling
+clamp convection --> do we need a clamp?
+
+why don't include radiation? 
+do they calculate h_eff? why do the simplify it later 
+
+Dwell Time: 
+DWELL = {} 
+the waiting time between deposited layers 
+
+Random node settings: 
+NODES = {
+    "seed": 42,
+    "random": True
+}
+
+This controls how graph nodes are generated 
+with a seed every run gives the exact same sequence
+
+Example:
+seed = 42
+every run gives: 
+0.3745
+0.9507
+0.7319
+...
+are these coordinates? If the nodes are placed randomly, how is the node density assumed constant? 
+
+do you model the substrate too? 

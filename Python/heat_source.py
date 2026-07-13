@@ -1,11 +1,9 @@
 """
-heat_source.py
+Step 5
 
-Implements Goldak-based laser heating for the graph DED model.
+Implements Goldak-based laser heating for the graph DED model
 
 Based on Section 4.3.3 of
-
-Riensche et al. (2023)
 
 This module computes the initial temperature T0
 for nodes inside the newly deposited block and
@@ -21,10 +19,10 @@ from Python.config import MATERIAL
 class GoldakHeatSource:
 
     """
-    Goldak double-ellipsoid inspired heat source.
+    Goldak double-ellipsoid inspired heat source
 
     The paper uses Goldak's model to estimate
-    initial node temperatures before graph diffusion.
+    initial node temperatures before graph diffusion
     """
 
     def __init__(self):

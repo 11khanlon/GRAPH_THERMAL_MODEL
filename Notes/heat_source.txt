@@ -1,0 +1,84 @@
+remaining questions: 
+calculating T0 check
+what replaces laser_position in the future 
+does it consider 0.2 liquidus in the calculation 
+
+class GoldakHeatSource:
+This class represents one object
+The constructor has self in it and takes no inputs 
+Everything it needs already exists inside config.py 
+
+for attributes, it takes directly from config file dictionary 
+
+These parameters are tunable and define the size of the heat source 
+self.ax = 0.75e-3  --> controls length along the x
+self.by = 0.75e-3  --> controls the width along the y 
+self.cz = 1.25e-3  --> controls the width along the z 
+
+def temperature() 
+The function doesn't know anything about the nodes 
+It answers: if a point is located at (x,y,z), what should the temperature be 
+
+This computes the normalized distance from the center of the laser:
+each coordinate is scaled by ax,by,cz this stretches the coordiante system so that the heated region is an ellipsoid rather than a sphere
+r =
+(
+(x/self.ax)**2
++
+(y/self.by)**2
++
+(z/self.cz)**2
+)
+
+The further you move away, the temperature decreases. for example: exp(-6) is almost 0 
+
+heat_block(): 
+This function needs two arguments: block and laser_position 
+lx,ly,lz=laser_position simply unpacks (x,y,z) into three variables 
+
+for node in block.nodes:
+remember block.nodes was filled in with nodes.py. So this loop visits every node inside the newly deposited block 
+x = node.position[0]-lx it does not use the absolute coordinates instead it computes the node position relative to the laser 
+Goldak only cares how far the node is from the laser not where it is in the build 
+
+**what replaces laser_position in the future 
+
+
+heat_subsurface:
+The paper says the laser also reheats previous layers. It doesn't only heat newest material 
+The function loops through every block deposited 
+if not block.active:
+    continue
+this skips blocks that haven't been printed yet 
+dz=current_layer-block.layer computes how many layers below the current block this block is 
+
+attenuation=
+exp(-dz/depth_layers)
+This says heat decreases with depth 
+Blocks one layer below receive lots of reheating 
+blocks seven layers below recieve much less 
+
+def apply() 
+This is simply a convenience methos 
+instead of writing heat_block() and heat_subsurface() everywhere, 
+create method apply which performs both operations in correct order  
+when you call heater.apply(block, geometry) it automatically heats the current block and reheats the previously deposited layers 
+
+
+Main testing program: 
+the testing section follow exactly the same object oriented pattern as the earlier modules 
+
+geom = Geometry("example_part.stl") --> create the geometry object 
+geom.build_blocks() --> divide the part into deposition blocks  
+
+gen = NodeGenerator(geom) --> create node generator object and but geometry in it
+gen.generate()   --> run generate function 
+
+heater = GoldakHeatSource() --> create the heat source object 
+block = geom.blocks[0]  --> select first deposition block as starting point for GoldakHeatSource 
+
+heater.apply(
+    block,
+    geom
+)  tell teh GoldakHeatSource object to use this block as the newly deposited material 
+use the geometry object to locate all previously deposited block for reheating 

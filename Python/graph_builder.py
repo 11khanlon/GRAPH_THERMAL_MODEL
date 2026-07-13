@@ -1,13 +1,7 @@
 """
-graph_builder.py
+Constructs the weighted graph used for graph-theory thermal diffusion
 
-Constructs the weighted graph used for graph-theory thermal diffusion.
-
-Implements Equations (11)-(14) from:
-
-Riensche et al.
-Thermal Modeling of Directed Energy Deposition
-using Graph Theory (2023)
+Implements Equations (11)-(14) 
 """
 
 import numpy as np
@@ -20,13 +14,8 @@ class GraphBuilder:
     def __init__(self, nodes, epsilon):
 
         """
-        Parameters
-        ----------
-        nodes : ndarray (N x 3)
-            Cartesian node coordinates
-
-        epsilon : float
-            Neighborhood radius (meters)
+        nodes : ndarray (N x 3) Cartesian node coordinates
+        epsilon : float Neighborhood radius (meters)
         """
 
         self.nodes = nodes
@@ -38,9 +27,8 @@ class GraphBuilder:
         self.degree = None
         self.laplacian = None
 
-    ###############################################################
-    # Build Graph
-    ###############################################################
+
+    #---------- Build Graph ----------------
 
     def build(self):
 
@@ -48,10 +36,8 @@ class GraphBuilder:
 
         adjacency = lil_matrix((self.N, self.N))
 
-        ###############################################################
+        
         # First gather all neighbor distances
-        ###############################################################
-
         pair_distances = []
 
         neighbor_lists = []
@@ -84,9 +70,8 @@ class GraphBuilder:
 
         print(f"Neighborhood sigma = {sigma:.6e}")
 
-        ###############################################################
+    
         # Build weighted adjacency matrix
-        ###############################################################
 
         for i in range(self.N):
 
@@ -103,9 +88,8 @@ class GraphBuilder:
 
         adjacency = adjacency.tocsr()
 
-        ###############################################################
+       
         # Degree Matrix
-        ###############################################################
 
         degree_values = np.array(
             adjacency.sum(axis=1)
@@ -113,9 +97,8 @@ class GraphBuilder:
 
         degree = diags(degree_values)
 
-        ###############################################################
+    
         # Laplacian
-        ###############################################################
 
         laplacian = degree - adjacency
 
@@ -129,9 +112,8 @@ class GraphBuilder:
 
         return adjacency, degree, laplacian
 
-    ###############################################################
+
     # Average neighbors
-    ###############################################################
 
     def average_neighbors(self):
 
@@ -144,9 +126,8 @@ class GraphBuilder:
 
         return np.mean(degrees > 0)
 
-    ###############################################################
+
     # Connectivity check
-    ###############################################################
 
     def connectivity(self):
 
@@ -161,9 +142,8 @@ class GraphBuilder:
 
         print(f"Isolated nodes: {isolated}")
 
-    ###############################################################
+   
     # Return matrices
-    ###############################################################
 
     def get_graph(self):
 

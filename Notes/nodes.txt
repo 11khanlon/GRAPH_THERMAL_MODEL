@@ -1,0 +1,174 @@
+config.py
+    │
+    ▼
+Geometry object
+    │
+    ├── Block 0
+    ├── Block 1
+    ├── Block 2
+    └── ...
+            │
+            ▼
+NodeGenerator
+            │
+            ▼
+Generate Nodes
+            │
+            ▼
+Block 0 → Node 0, Node 1, Node 2...
+Block 1 → Node 3, Node 4...
+...
+
+remaining questions: 
+the random vs uniform node thing
+
+
+Overall goal of nodes.py: create nodes in the created segmented geometry
+
+# ------- Create Node Class ---------
+Node represent one graph node 
+This is similar to how one block represents one deposition block 
+One Node stores: position, temperature, neighbors, activation state 
+
+class Node: 
+This initializes the blueprint for the object of node 
+"what quantities does each node object contain"
+
+def __init__(self, node_id, position, block_id)
+The constructor: This initializes the attributes and variables each node contains
+node_id, position, block_id = these are the inputs 
+When someone creates a node they must give three inputs 
+
+self.id = node_id  --> this stores the node. Example: node 183 
+node_id is a parameter. It only exist while the contructor is running. 
+self_id is an instance attribute and belongs to the node object forever 
+
+self.position = np.asarray(position, dtype=float) --> stores (x,y,z)
+self.block_id = block_id --> stores what block number its at 
+self.active = False --> this means the laser hasn't reached the block yet
+self.temperature = MATERIAL["ambient_temperature"] --> directly calls 25 deg C
+self.neighbors = []  --> When a node is first created, the graph doesn't exist yet. It will fill later 
+self.weights = [] --> Empty for now but will later store the edge weights (heat transfer weights) corresponding to each neighbor
+
+Why doesn't node know geometry?
+a node only needs: position, temperature, neighbors 
+It doesn't care about STL, layers, build size 
+
+What does __repr__() mean? 
+This is a special python method 
+suppose you write print(node) --> how does python know what to display? 
+so __repr__() is just a human readable representation of the obejct 
+
+# --------- NodeGenerator Class --------
+Represents the algorithm/task that creates Nodes 
+The graph theory formulation represents the computational domain using discrete graph nodes rather than finite elements
+
+
+def __init__(self, geometry)
+The Geometry object is passed into the NodeGenerator
+self.geometry means the nodegenerator has access to geometry object 
+geometry owns the blocks and stores the nodes 
+nodegenerator uses geometry 
+
+
+def generate(self): 
+self refers to the current NodeGenerator object 
+
+density = GRAPH["node_density"]   #this is nodes/mm^3
+
+loop through every block: 
+for block in self.geometry.blocks 
+x0,y0,z0 = lower corner 
+x1,y1,z1 = upper corner
+
+for block in self.geometry.blocks:
+self means the current NodeGenerator object
+inside that NodeGenerator object is self.geometry. It is the geometry object passed into the constructor
+for block in self.geometry.blocks  give me the block that belongs to the geometry object inside this node generator 
+
+*Create a uniform node denisty* 
+Assume each block has dimensions LxLxL so that its volume is L^3 
+Establish block volume. Convert to nodes/m^3
+volume_mm3 = (
+                abs(x1-x0)*1000 *
+                abs(y1-y0)*1000 *
+                abs(z1-z0)*1000
+            )
+
+Determine number of nodes needed: 
+n_nodes = volume × density
+m^3 * nodes/m^3 = nodes
+--> since each block contains idetical volume, density, and nodes, the node denisty remains constant 
+
+for _ in range(n_nodes):
+this runs on each node
+so if you calculate 47 nodes, it will calculate and loop 47 times 
+
+After specifiying the number of nodes, the coordinates of each node are generated independently using a continuos uniform probabilty distribution 
+for each iteration: 
+np.random.uniform(x0,x1) 
+this picks a random number between left wall and right wall 
+
+
+node = Node(
+                    node_id=node_id,
+                    position=(x, y, z),
+                    block_id=block.id
+                )
+This is where the blueprint becomes one real node object
+
+self.nodes.append(node)  --> stores the node inside the generator 
+
+activate_block(block7)
+inside that block, active = False turns into True
+
+
+
+self.nodes.append(node)
+--> Stores the Node object inside the NodeGenerator.
+
+block.nodes.append(node)
+--> Stores the SAME Node object inside the Block.
+No copy is made.
+Both lists point to the exact same Node object in memory.
+
+
+activate_block(block)
+Loops through every node inside that block.
+Changes:
+active = False
+to
+active = True
+This indicates that the laser has deposited that block and all of its nodes are now active.
+
+
+active_nodes()
+Instead of checking every node manually,
+The program simply asks:
+generator.active_nodes()
+
+and receives a list such as:
+Node 0
+Node 1
+Node 2
+This is much more convenient and efficient.
+
+
+coordinates()
+Collects:
+Node 0 position
+Node 1 position
+Node 2 position
+...
+
+into one NumPy array.
+Later, graph.py uses this array to compute neighboring nodes and graph connectivity.
+
+
+Testing
+Notice:
+from geometry import Geometry
+inside
+if __name__ == "__main__":
+This is another example of module collaboration.
+

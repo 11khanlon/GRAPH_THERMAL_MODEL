@@ -1,15 +1,8 @@
 """
-config.py
+1st file
 Stores variables in one spot so they can easily be modified
-
 Configuration file for the Graph Theory Directed Energy Deposition thermal model
 
-Based on:
-
-Riensche et al.
-Thermal Modeling of Directed Energy Deposition Additive Manufacturing
-Using Graph Theory
-Rapid Prototyping Journal (2023)
 """
 
 import numpy as np
@@ -19,20 +12,11 @@ import numpy as np
 
 MATERIAL = {
 
-    # Ti-6Al-4V
-    "density": 4430.0,              # kg/m^3
-
-    # W/m-K
-    "thermal_conductivity": 7.2,
-
-    # J/kg-K
-    "specific_heat": 560.0,
-
-    # ambient temperature
-    "ambient_temperature": 25.0,
-
-    # liquidus temperature
-    "liquidus_temperature": 1630.0
+    "density": 8190,              # rho, kg/m^3
+    "thermal_conductivity": 18.0,    # k, W/m-K
+    "specific_heat": 550,         # cp,  J/kg-K
+    "ambient_temperature": 298.15,    #  ambient temperature, K
+    "liquidus_temperature": 1609.0    # liquidus temperature, K
 }
 
 
@@ -40,29 +24,17 @@ MATERIAL = {
 
 LASER = {
 
-    # Watts
-    "power": 415.0,
-
-    # m/s
-    "scan_speed": 8.5e-3,
-
-    # meters
-    "beam_diameter": 1.5e-3,
-
-    # layer height
-    "layer_height": 0.1806e-3,
-
-    # hatch width
-    "hatch_width": 3e-3,
-
-    # Goldak meltpool temperature
-    "meltpool_temperature": 2200.0
+    "power": 1070.0,            # Watts
+    "scan_speed": 12.7e-3,      # m/s
+    "beam_diameter": 1.778e-3,  # meters
+    "layer_height": 0.381e-3,   # meters
+    "hatch_width": 1.143e-3,    # meters
+    "meltpool_temperature": 2000  # Goldak meltpool temperature, must be above liquidus and fully molten temperature
 
 }
 
-# =============================================================================
-# BUILD GEOMETRY
-# =============================================================================
+
+#---- BUILD GEOMETRY ----
 
 BUILD = {
 
@@ -78,26 +50,19 @@ BUILD = {
 
 }
 
-# =============================================================================
-# GRAPH PARAMETERS
-# =============================================================================
+
+#------- GRAPH PARAMETERS --------
 
 GRAPH = {
 
-    # neighborhood radius ε
-    "epsilon": 0.0025,
-
-    # gain factor γ
-    "gain": 1.0,
-
-    # node density
-    "node_density": 0.470,
+    "epsilon": 0.0025,  # neighborhood radius ε
+    "gain": 1.0,     # gain factor g
+    "node_density": 0.470,     # node density, nodes/mm^3
 
 }
 
-# =============================================================================
-# BLOCK DISCRETIZATION
-# =============================================================================
+
+#----------- BLOCK DISCRETIZATION ---------------
 
 BLOCK = {
 
@@ -114,30 +79,27 @@ BLOCK = {
 
 }
 
-# =============================================================================
-# CONVECTION
-# =============================================================================
+
+#-------- CONVECTION ---------
+
 
 CONVECTION = {
 
     # W/m^2-K
 
     "forced": 50.0,
-
     "free": 5.0,
-
-    "clamp": 1000.0
+    "clamp": 1000.0   #do you need a clamp in this study 
 
 }
 
-# =============================================================================
-# DWELL TIME
-# =============================================================================
+
+#------- DWELL TIME ---------
+
 
 DWELL = {
 
-    "case_A": 20.0,
-
+    "case_A": 10.0,
     "case_B": 3.0
 
 }
@@ -149,7 +111,6 @@ DWELL = {
 NODES = {
 
     "seed": 42,
-
     "random": True
 
 }

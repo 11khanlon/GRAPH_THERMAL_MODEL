@@ -1,6 +1,5 @@
 """
-nodes.py
-
+Step 3 of the graph-theory DED thermal model
 Creates the point cloud used by the graph-theory solver.
 
 Implements Step 1 from Riensche et al. (2023):
@@ -17,10 +16,7 @@ import numpy as np
 from Python.config import GRAPH, MATERIAL
 
 
-# ---------------------------------------------------------
-# Graph Node
-# ---------------------------------------------------------
-
+#---------- Graph Node -----------
 class Node:
 
     def __init__(self,
@@ -56,11 +52,10 @@ class Node:
             f"block={self.block_id}, "
             f"T={self.temperature:.1f})"
         )
+ 
 
 
-# ---------------------------------------------------------
-# Node Generator
-# ---------------------------------------------------------
+# -------- Node Generator ---------
 
 class NodeGenerator:
 
@@ -83,7 +78,6 @@ class NodeGenerator:
         self.nodes = []
 
     # -----------------------------------------------------
-
     def generate(self):
 
         node_id = 0
@@ -95,10 +89,7 @@ class NodeGenerator:
             x0, y0, z0 = block.start
             x1, y1, z1 = block.end
 
-            # -------------------------------
             # Block volume
-            # -------------------------------
-
             volume_mm3 = (
                 abs(x1-x0)*1000 *
                 abs(y1-y0)*1000 *
@@ -110,10 +101,8 @@ class NodeGenerator:
                 int(volume_mm3 * density)
             )
 
-            # -------------------------------
-            # Uniform random node placement
-            # -------------------------------
 
+            # Uniform random node placement
             for _ in range(n_nodes):
 
                 x = np.random.uniform(x0, x1)
@@ -141,7 +130,6 @@ class NodeGenerator:
         return self.nodes
 
     # -----------------------------------------------------
-
     def activate_block(self, block):
 
         """
@@ -153,7 +141,6 @@ class NodeGenerator:
             node.active = True
 
     # -----------------------------------------------------
-
     def active_nodes(self):
 
         return [
@@ -163,7 +150,6 @@ class NodeGenerator:
         ]
 
     # -----------------------------------------------------
-
     def inactive_nodes(self):
 
         return [
@@ -173,7 +159,6 @@ class NodeGenerator:
         ]
 
     # -----------------------------------------------------
-
     def temperatures(self):
 
         return np.array([
@@ -182,7 +167,6 @@ class NodeGenerator:
         ])
 
     # -----------------------------------------------------
-
     def coordinates(self):
 
         return np.array([
@@ -191,10 +175,8 @@ class NodeGenerator:
         ])
 
 
-# ---------------------------------------------------------
-# Testing
-# ---------------------------------------------------------
 
+# --------- Testing ----------
 if __name__ == "__main__":
 
     from Python.geometry import Geometry

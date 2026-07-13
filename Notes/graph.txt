@@ -1,0 +1,145 @@
+remaining questions:
+how are these equivalent to the code from the paper 
+tree = cKDTree(coords)
+recheck math
+theres an eigensolver component here but there's a whole python file for that
+
+sample = tree.query(coords, k=8)[0][:, 1:]
+sigma = np.std(sample)
+
+
+Overall Purpose: 
+Every node is going to become a graph vertex 
+
+initially we have created nodes that know only position, temperature, and block ID 
+There is no relationship between them 
+
+
+class ThermalGraph: 
+This class represents the entire graph 
+So this will only create one ThermalGraph object 
+
+Constructor 
+def __init__(self, nodes):
+Notice how nodes is not the Node class 
+It is the list of Node objects that was generated earlier 
+
+Suppose generator.generate() created 5000 Node objects 
+Then graph = ThermalGraph(generator.nodes) passes that entire list into the graph 
+
+Constructor Variables 
+self.nodes = nodes Stores every node object 
+Later self.nodes[17] means Node 17 
+self.N = len(nodes) this stores the total number of nodes 
+self.A = None   This will later store the adjacency matrix 
+self.H = None   This will later store the degree matrix 
+self.L = None   This will later store the laplacian matrix 
+self.eigenvalues  This will later store the eigenvalues
+self.eigenvectors This will later store the eigenvectors 
+
+def coordinates(self):
+this is a convenience function 
+instead of repeatedly writing [node.position for node in self.nodes] throughout the program,
+they packaged it into one numpy array  
+
+def build(self):
+This function's purpose is to connect nearby nodes in the file 
+coords = self.coordinates()   retrieve every node position 
+tree = cKDTree(coords)    This is one of the biggest improvement over a brute-force search 
+
+Suppose there are 5000 nodes 
+A naive algorithm compares every node to every other node 
+That requires roughly 5000^2 comparisons which is approximately 25 million 
+KDTree organizes points spatially so nearby neighbors can be found much faster.
+Instead of searching the entire domain, it searches only nearby regions.
+
+epsilon = GRAPH["epsilon"] reads the neighborhood radius from config.py 
+self.A = np.zeros((self.N,self.N))
+Creates an adjancency matrix
+The dimension is dependent on the number of nodes 
+
+Estimate σ
+sample = tree.query(coords,k=8)
+This estimates the average spacing between nearby nodes 
+The paper uses σ inside the Gaussian weighting function 
+Instead of manually choosing σ the code estimates it from the data 
+
+sigma=np.std(sample)
+This computes the standard deviation of nearby distances 
+
+Main loop 
+for i in range(self.N): 
+Loop every node 
+Suppose 5000 nodes are present 
+
+neighbors=
+tree.query_ball_point(...)
+KDTree asks which nodes lie within ε
+
+if i==j: 
+ignores the node itself 
+A node shouldn't connect to itself 
+
+distance = np.linalg.norm(...)
+Computes the Euclidean distance 
+√[(x₂-x₁)²+(y₂-y₁)²+(z₂-z₁)²]
+
+Gaussian Weight 
+weight = exp(-(distance²)/(sigma²))
+*Notice if distance is small weight is close to 1 
+If distance is large weight becomes close to 0 
+Therefore close distance neighbors exchange lots of heat 
+Far neighbors exchange very little 
+
+Fill the adjacency matrix 
+self.A[i,j]=weight
+self.A[j,i]=weight
+Both directions recieve the same value 
+That makes A symmetric this matches heat conduction 
+
+def degree_matix(): 
+The degree matrix is H 
+each diagonal entry equals the total connection weights of one node [one row]
+It computes degrees=np.sum(self.A,axis=1) or a row sum 
+then it performs np.diag(degrees) and places the summed up values along a diagonal 
+
+def laplacian(self): 
+The paper defines L = H - A --> self.L = self.H - self.A
+This is the solution to the discrete heat diffusion equation 
+
+def eigensystem(): 
+This computes Lφ=φΛ or the eigenvalue problem 
+eigenvalues, eigenvectors = eigh(self.L)
+This find all eigenvalues and eigenvecotrs and uses them to solve the graph heat equation in spectral space 
+
+summary():
+Prints number of nodes, number of edges, average neighbors 
+
+active_subgraph():
+nodes already store whether they are active or not
+They are initially non active or this variable is False 
+active = [] 
+This creates an empty python list 
+self.nodes = nodes --> stores the list of node objects 
+If you write for node in self.nodes:python gives you only the object 
+node = Node0, node = Node1 
+Now use enumerate(self.nodes) instead now python returns two things every iteration 
+iteration 1: 
+i = 0 , node = Node0 
+i = 1, node = Node1 
+so... for i, node in enumerate(...) says "loop through every node and tell the index" 
+
+
+Understanding the main program: 
+if __name__ == "__main__": 
+
+geom.build_blocks()
+Tell the geometry object to execute its build_blocks function 
+geom.build_blocks()
+
+general form: object.method() 
+Object: geom 
+Method: build_blocks() 
+
+
+

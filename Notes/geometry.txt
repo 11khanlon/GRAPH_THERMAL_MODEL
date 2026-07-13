@@ -1,0 +1,196 @@
+Based on Section 4.3.1.1 of Riensche et al.
+Thermal Modeling of Directed Energy Deposition Using Graph Theory
+Rapid Prototyping Journal (2023)
+
+Step 1 of the graph-theory DED thermal model
+Create blocks that is later populated with random nodes 
+Workflow for this is STL file --> find geometry size 
+--> split into layers --> split each layer into blocks --> store print order 
+
+Simulation
+│
+├── Geometry
+│      │
+│      ├── Block 0
+│      ├── Block 1
+│      ├── Block 2
+│      └── ...
+│
+├── Graph
+│      │
+│      ├── Node 0
+│      ├── Node 1
+│      └── ...
+│
+├── Laser
+│
+└── Thermal Solver
+
+
+
+config values establish geometry. where is the .stl coming into play and being imported
+for geometry in block for self.nodes, is this ever filled in?
+
+
+------ Imports -------
+import trimesh 
+trimesh is a python library for reading and and manipulating 3D meshes such as STL files 
+
+from Python.config import BUILD, BLOCK 
+instead of hardcoding values the program imports the dictionaries you created in config.py 
+
+----- Create Block Class -------
+Need for OOP: 
+Instead of creating hundreds of variables 
+and storing them within one script, create one object 
+
+class Block:
+A class is a blueprint and frame for creating objects 
+This initializes the structure for object oriented programming 
+Each deposited block will have the same properites below:
+ID, layer number, location, temperature, nodes, active status 
+
+def __init__(...)
+this function runs automatically when a new block is created 
+this initilizes the variables involved
+
+self.id = block_id
+each block gets a unique integer
+example: block 0, block 1, block 2
+
+self.layer = layer 
+this stores which layer the block belongs to 
+
+Start position: 
+self.start = np.array(start) 
+which is the lower corner of the block 
+
+End Position: 
+self.end = np.array(end)
+the opposite lower corner
+
+Center: 
+self.center = (self.start + self.end)/2
+instead of storing the corners the program also computes the center 
+
+Active: 
+self.active = False
+the block is initially false because the laser has not reached the block 
+Then if its true later, then the laser has reached the block
+
+self.nodes = []
+this is initially empty
+later this list will contain graph nodes inside the block
+
+Temperature:
+self.temperature = None 
+this is initially unknown 
+
+def __repr__(self):
+this controls what is getting tracked and getting printed
+return f"Block(id={self.id}, layer={self.layer})"
+you see here Block(id = 7, layer =3)
+
+
+
+------- Create Geometry Class ------
+
+class Geometry:
+this class represents the entire printed part 
+it stores STL mesh, dimensions, all deposition blocks 
+
+def __init__(self, stl_file):
+geom = Geometry("example_part.stl")
+
+load STL: self.mesh = trimesh.load_mesh(stl_file)
+self.bounds = self.mesh.bounds
+
+For example: 
+xmin = 0
+xmax = 37.2 mm
+
+ymin = 0
+ymax = 3 mm
+
+zmin = 0
+zmax = 11 mm
+
+These six numbers define the smallest box that encloses the entire part 
+
+
+def build_blocks(): 
+this function converts one STL into different layers 
+
+read bounding box 
+xmin, ymin, zmin = self.bounds[0]  lower corner 
+xmax, ymax, zmax = self.bounds[1]  upper corner 
+
+read config values: 
+block_length = BLOCK["length"]
+this uses the config value 7.84 mm 
+
+block_length = BLOCK["length"] 
+0.1806 mm 
+
+total_layers = BUILD["layers"]
+62 
+
+Alternate scan direction 
+the scan goes back and forth 
+if layer % 2 == 0:
+if the layer number has a remainder of 0 then its even 
+if the layer number has a remainder of 1 then its odd 
+
+
+**I still don't understand this part 
+np.arange(
+    xmin,
+    xmax,
+    block_length
+)
+
+
+Move up one layer
+z += layer_height
+layer 1 is z = 0
+and then increase by programmed layer height the next layer begins 
+
+get_block() 
+geom.get_block(15)
+block 15 
+
+activate() 
+geom.activate(15)
+changes active = False and active = True meaning the laser has deposited that block 
+
+deactivate_all() 
+sets every block back to False 
+useful restarting a simulation 
+
+activate_blocks 
+returns only blocks currenty being printed 
+
+deposition_order() 
+returns self.blocks
+which are already stored in the order they were created, corresponding to the deposition sequence 
+
+
+Every python file has a special built-in variable called __name__
+Case 1: You run the file directly 
+then python sets __name__ = "__main__"
+so this code then runs:
+
+if __name__ == "__main__":
+    geom = Geometry("example_part.stl")
+    geom.build_blocks()
+    print(geom.blocks[0])
+
+Case 2: Another file imports it 
+Suppose main.py contains 
+from geometry import Geometry
+
+geom = Geometry("part.stl")
+geom.build_blocks()
+
+when geometry.py is imported Python sets __name__ = "geometry" 
+now the condition if __name__ == "__main__":  is skipped 

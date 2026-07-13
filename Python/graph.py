@@ -1,11 +1,9 @@
 """
-graph.py
+Step 4
 
 Constructs the graph used for thermal diffusion.
 
-Implements Section 4.3.1.2 of:
-
-Riensche et al. (2023)
+Implements Section 4.3.1.2:
 
 Creates
 
@@ -13,8 +11,7 @@ A = adjacency matrix
 H = degree matrix
 L = graph Laplacian
 
-and computes
-
+computes
 Lφ = φΛ
 """
 
@@ -66,7 +63,6 @@ class ThermalGraph:
         epsilon = GRAPH["epsilon"]
 
         # adjacency matrix
-
         self.A = np.zeros((self.N, self.N))
 
         # ----------------------------------------------------
