@@ -1,0 +1,16 @@
+graph_ded/
+
+│── main.py
+│── geometry.py
+│── nodes.py
+│── graph.py
+│── heat_source.py
+│── conduction.py
+│── convection.py
+│── material.py
+│── deposition.py
+│── visualization.py
+│── config.py
+
+
+missing conduction, convection, deposition, and visualization

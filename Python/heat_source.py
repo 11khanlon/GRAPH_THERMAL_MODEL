@@ -1,214 +1,288 @@
 """
-Step 5
+heat_source.py
 
-Implements Goldak-based laser heating for the graph DED model
+Laser heat source model.
 
-Based on Section 4.3.3 of
+Implements Section 4.3.3
 
-This module computes the initial temperature T0
-for nodes inside the newly deposited block and
-adjacent subsurface blocks.
+Goldak's double ellipsoid model
+(Paper Equation 19)
+
+Produces the initial nodal temperature field
+before conduction begins.
+
+This module ONLY applies laser heating.
+
+No conduction.
+No convection.
+No graph operations.
 """
 
 import numpy as np
 
-from Python.config import LASER
-from Python.config import MATERIAL
-
 
 class GoldakHeatSource:
 
-    """
-    Goldak double-ellipsoid inspired heat source
+    def __init__(
+        self,
+        laser_power,
+        conductivity,
+        diffusivity,
+        scan_speed,
+        scaling_factor,
+        meltpool_temperature,
+        liquidus_temperature,
+    ):
 
-    The paper uses Goldak's model to estimate
-    initial node temperatures before graph diffusion
-    """
+        self.P = laser_power
+        self.k = conductivity
+        self.alpha = diffusivity
+        self.V = scan_speed
+        self.C = scaling_factor
 
-    def __init__(self):
-
-        self.power = LASER["power"]
-
-        self.scan_speed = LASER["scan_speed"]
-
-        self.beam_radius = LASER["beam_diameter"] / 2
-
-        self.k = MATERIAL["thermal_conductivity"]
-
-        self.ambient = MATERIAL["ambient_temperature"]
-
-        self.meltpool_temperature = LASER["meltpool_temperature"]
-
-        self.liquidus = MATERIAL["liquidus_temperature"]
-
-        # Characteristic decay lengths (meters)
-        # These are tunable and roughly correspond
-        # to melt pool dimensions.
-
-        self.ax = 0.75e-3
-        self.by = 0.75e-3
-        self.cz = 1.25e-3
+        self.Tmelt = meltpool_temperature
+        self.Tliquidus = liquidus_temperature
 
     # --------------------------------------------------------
 
-    def temperature(self,
-                    x,
-                    y,
-                    z):
+    def goldak_temperature(
+        self,
+        x,
+        y,
+        z,
+    ):
         """
-        Initial temperature field.
+        Equation (19)
 
-        Returns T0(x,y,z)
-
-        centered on laser position (0,0,0)
+        Returns laser-induced temperature
+        at local coordinates (x,y,z).
         """
 
-        r = (
-            (x/self.ax)**2
-            +
-            (y/self.by)**2
-            +
-            (z/self.cz)**2
+        r = np.sqrt(
+            x**2 +
+            y**2 +
+            z**2
         )
 
-        return (
-            self.ambient
-            +
-            (self.meltpool_temperature-self.ambient)
+        # avoid singularity
+
+        r = np.maximum(
+            r,
+            1e-8
+        )
+
+        temperature = (
+            self.C
+            * self.P
+            /
+            (
+                2
+                * np.pi
+                * self.k
+                * r
+            )
             *
-            np.exp(-3*r)
+            np.exp(
+                -self.V
+                /
+                (
+                    2
+                    * self.alpha
+                )
+                *
+                (
+                    x + r
+                )
+            )
         )
+
+        return temperature
 
     # --------------------------------------------------------
 
-    def heat_block(self,
-                   block,
-                   laser_position):
+    def heat_block(
+        self,
+        nodes,
+        block_center,
+        temperature,
+    ):
         """
-        Assign temperatures to every node
-        inside one deposited block.
+        Heat one active block.
+
+        Parameters
+        ----------
+        nodes
+
+        block_center
+
+        temperature
+
+        Returns
+        -------
+        Updated temperature vector.
         """
 
-        lx, ly, lz = laser_position
+        T = temperature.copy()
 
-        for node in block.nodes:
+        xc, yc, zc = block_center
 
-            x = node.position[0] - lx
-            y = node.position[1] - ly
-            z = node.position[2] - lz
+        for i, node in enumerate(nodes):
 
-            node.temperature = self.temperature(
+            if not node.active:
+                continue
+
+            x = node.position[0] - xc
+            y = node.position[1] - yc
+            z = node.position[2] - zc
+
+            delta = self.goldak_temperature(
                 x,
                 y,
-                z
+                z,
             )
 
-            node.active = True
+            T[i] = max(
+                T[i],
+                min(
+                    delta,
+                    self.Tmelt
+                )
+            )
+
+        return T
 
     # --------------------------------------------------------
 
     def heat_subsurface(
-            self,
-            current_layer,
-            geometry,
-            laser_position,
-            depth_layers=7):
+        self,
+        nodes,
+        block_center,
+        temperature,
+        cutoff=0.20,
+    ):
         """
-        Reheat underlying material.
+        Heat underlying layers.
 
-        Paper:
-        laser penetrates roughly
-        seven previous layers.
+        Paper considers reheating down
+        to approximately
+
+        20%
+
+        of liquidus temperature.
         """
 
-        lx, ly, lz = laser_position
+        T = temperature.copy()
 
-        for block in geometry.blocks:
+        threshold = (
+            cutoff
+            * self.Tliquidus
+        )
 
-            if not block.active:
+        xc, yc, zc = block_center
+
+        for i, node in enumerate(nodes):
+
+            if not node.active:
                 continue
 
-            dz = current_layer - block.layer
+            x = node.position[0] - xc
+            y = node.position[1] - yc
+            z = node.position[2] - zc
 
-            if dz <= 0:
-                continue
-
-            if dz > depth_layers:
-                continue
-
-            attenuation = np.exp(
-                -dz/depth_layers
+            delta = self.goldak_temperature(
+                x,
+                y,
+                z,
             )
 
-            for node in block.nodes:
+            if delta >= threshold:
 
-                x = node.position[0] - lx
-                y = node.position[1] - ly
-                z = node.position[2] - lz
-
-                T = self.temperature(
-                    x,
-                    y,
-                    z
+                T[i] = max(
+                    T[i],
+                    delta
                 )
 
-                node.temperature = max(
-                    node.temperature,
-                    self.ambient +
-                    attenuation *
-                    (T-self.ambient)
-                )
+        return T
 
     # --------------------------------------------------------
 
     def apply(
-            self,
-            block,
-            geometry):
+        self,
+        nodes,
+        block_center,
+        temperature,
+    ):
         """
-        Complete heating operation.
+        Complete laser heating.
 
-        1) Heat current block.
-
-        2) Reheat previous layers.
+        Surface
+        +
+        subsurface heating.
         """
 
-        laser_position = block.center
-
-        self.heat_block(
-            block,
-            laser_position
+        T = self.heat_block(
+            nodes,
+            block_center,
+            temperature,
         )
 
-        self.heat_subsurface(
-            block.layer,
-            geometry,
-            laser_position
+        T = self.heat_subsurface(
+            nodes,
+            block_center,
+            T,
         )
+
+        return T
 
 
 # ------------------------------------------------------------
 
 if __name__ == "__main__":
 
-    from Python.geometry import Geometry
-    from Python.nodes import NodeGenerator
+    from geometry import Geometry
+    from nodes import NodeGenerator
+    from config import LASER, MATERIAL
 
     geom = Geometry("example_part.stl")
 
     geom.build_blocks()
 
-    gen = NodeGenerator(geom)
+    generator = NodeGenerator(geom)
 
-    gen.generate()
+    generator.generate()
 
-    heater = GoldakHeatSource()
+    nodes = generator.nodes
+
+    heat = GoldakHeatSource(
+
+        laser_power=LASER["power"],
+
+        conductivity=MATERIAL["thermal_conductivity"],
+
+        diffusivity=MATERIAL["thermal_diffusivity"],
+
+        scan_speed=LASER["scan_speed"],
+
+        scaling_factor=LASER["goldak_C"],
+
+        meltpool_temperature=LASER["meltpool_temperature"],
+
+        liquidus_temperature=MATERIAL["liquidus_temperature"],
+    )
+
+    temperature = np.full(
+        len(nodes),
+        MATERIAL["ambient_temperature"],
+    )
 
     block = geom.blocks[0]
 
-    heater.apply(
-        block,
-        geom
+    center = block.center
+
+    heated = heat.apply(
+        nodes,
+        center,
+        temperature,
     )
 
-    print(block.nodes[0].temperature)
+    print("Maximum temperature:", heated.max())

@@ -19,6 +19,7 @@ import numpy as np
 
 from scipy.spatial import cKDTree
 from scipy.linalg import eigh
+from scipy.sparse import lil_matrix, csr_matrix, diags
 
 from Python.config import GRAPH
 
@@ -63,7 +64,7 @@ class ThermalGraph:
         epsilon = GRAPH["epsilon"]
 
         # adjacency matrix
-        self.A = np.zeros((self.N, self.N))
+        self.A = lil_matrix((self.N, self.N))
 
         # ----------------------------------------------------
 

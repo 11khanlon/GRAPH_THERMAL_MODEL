@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     from Python.geometry import ThinWallGeometry
     from node_generator import NodeGenerator
-    from Python.graph_builder import GraphBuilder
+    from Python.DEATHROW.graph_builder import GraphBuilder
 
     geom = ThinWallGeometry()
 

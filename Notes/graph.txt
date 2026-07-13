@@ -3,6 +3,7 @@ how are these equivalent to the code from the paper
 tree = cKDTree(coords)
 recheck math
 theres an eigensolver component here but there's a whole python file for that
+change np.zeros to lil matrix 
 
 sample = tree.query(coords, k=8)[0][:, 1:]
 sigma = np.std(sample)
@@ -46,6 +47,8 @@ def build(self):
 This function's purpose is to connect nearby nodes in the file 
 coords = self.coordinates()   retrieve every node position 
 tree = cKDTree(coords)    This is one of the biggest improvement over a brute-force search 
+
+*change self.A of np.zeros to lil_matrix
 
 Suppose there are 5000 nodes 
 A naive algorithm compares every node to every other node 
@@ -140,6 +143,7 @@ geom.build_blocks()
 general form: object.method() 
 Object: geom 
 Method: build_blocks() 
+
 
 
 
