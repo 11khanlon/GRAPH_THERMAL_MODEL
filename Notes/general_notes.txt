@@ -1,9 +1,9 @@
 graph_ded/
 
-│── main.py
+│── main.py 
 │── geometry.py
 │── nodes.py
-│── graph.py
+│── graph.py [working on this]
 │── heat_source.py
 │── conduction.py
 │── convection.py
@@ -12,5 +12,3 @@ graph_ded/
 │── visualization.py
 │── config.py
 
-
-missing conduction, convection, deposition, and visualization

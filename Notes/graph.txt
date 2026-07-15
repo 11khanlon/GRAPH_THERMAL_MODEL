@@ -4,18 +4,20 @@ tree = cKDTree(coords)
 recheck math
 theres an eigensolver component here but there's a whole python file for that
 change np.zeros to lil matrix 
+the function def coordinates() is created and called twice: once in nodes another in graph.py
+how position is being tracked in nodes and graph.py 
 
 sample = tree.query(coords, k=8)[0][:, 1:]
 sigma = np.std(sample)
 
 
-Overall Purpose: 
+Overall Purpose of Python Script: 
 Every node is going to become a graph vertex 
 
-initially we have created nodes that know only position, temperature, and block ID 
-There is no relationship between them 
+Initially we have created nodes that know only position, temperature, and block ID 
+There is no relationship and weight between them 
 
-
+------------------------------------
 class ThermalGraph: 
 This class represents the entire graph 
 So this will only create one ThermalGraph object 
@@ -28,7 +30,7 @@ It is the list of Node objects that was generated earlier
 Suppose generator.generate() created 5000 Node objects 
 Then graph = ThermalGraph(generator.nodes) passes that entire list into the graph 
 
-Constructor Variables 
+Constructor Variables - characteristics of each thermal graph 
 self.nodes = nodes Stores every node object 
 Later self.nodes[17] means Node 17 
 self.N = len(nodes) this stores the total number of nodes 
@@ -38,18 +40,38 @@ self.L = None   This will later store the laplacian matrix
 self.eigenvalues  This will later store the eigenvalues
 self.eigenvectors This will later store the eigenvectors 
 
+---------------------------------
 def coordinates(self):
 this is a convenience function 
 instead of repeatedly writing [node.position for node in self.nodes] throughout the program,
 they packaged it into one numpy array  
 
+the shorthand to this means: take every node, extract its position and build a new list 
+
+coordinates = []
+for node in self.nodes:
+    coordinates.append(
+        node.position)
+
+--> How can coordinates() return an array if it doesn't have a variable name 
+Inside the function, python creates the array and then immediately returns it 
+It creates array([
+    [0,0,0],
+    [1,0,0],
+    [2,0,0]
+]) 
+Later, coords = self.coordinates() so now coords contains those arrays 
+--> Note
+This function is also in node.py. 
+Duplicating it again within the ThermalGraph class is called encapsulation 
+Even if NodeGenerator dissapeared, Graph would still work making it more independent 
+
+----------------------------------
 def build(self):
 This function's purpose is to connect nearby nodes in the file 
-coords = self.coordinates()   retrieve every node position 
+coords = self.coordinates() -->  retrieve every node position 
+
 tree = cKDTree(coords)    This is one of the biggest improvement over a brute-force search 
-
-*change self.A of np.zeros to lil_matrix
-
 Suppose there are 5000 nodes 
 A naive algorithm compares every node to every other node 
 That requires roughly 5000^2 comparisons which is approximately 25 million 
@@ -57,11 +79,34 @@ KDTree organizes points spatially so nearby neighbors can be found much faster.
 Instead of searching the entire domain, it searches only nearby regions.
 
 epsilon = GRAPH["epsilon"] reads the neighborhood radius from config.py 
-self.A = np.zeros((self.N,self.N))
-Creates an adjancency matrix
-The dimension is dependent on the number of nodes 
 
-Estimate σ
+**Sparse Matrices**
+self.A = lil_matrix((self.N, self.N)) --> Creates an adjancency matrix and dimension is dependent on number of nodes
+what is lil_matrix? LIL stands for lists of lists
+Is stores columns and indices where new values are added [non zero integers]
+lil_matrix is great for adding values repeatedly to a list, CSR is not 
+
+Example:
+Row 0
+[(3,4)]
+
+Row 1
+[(0,2)]
+
+The sparse matrix, for example, only stores Row 5, Column 9, Value = 0.82 ignoring uneeded zeros
+
+
+what is np.zeros and what no use it? suppose you write A = np.zeros((5,5)), 
+numpy immediately allocates memory for 25 numbers
+even though many entries are zero, they are still stored 
+
+what is CSR? CSR stands for compressed sparse row 
+Instead it stores values, collumns and row pointers into arrays 
+Why not just use CSR from the beginning?
+--> suppose you already have A and want to add one more edge. CSR has to resize arrays, resize memory
+--> convert back to CSR after assembling A (weight matrix)
+
+**** Estimate σ ****
 sample = tree.query(coords,k=8)
 This estimates the average spacing between nearby nodes 
 The paper uses σ inside the Gaussian weighting function 
@@ -70,7 +115,7 @@ Instead of manually choosing σ the code estimates it from the data
 sigma=np.std(sample)
 This computes the standard deviation of nearby distances 
 
-Main loop 
+**** Main loop ****
 for i in range(self.N): 
 Loop every node 
 Suppose 5000 nodes are present 
@@ -100,12 +145,14 @@ self.A[j,i]=weight
 Both directions recieve the same value 
 That makes A symmetric this matches heat conduction 
 
+-------------------------------
 def degree_matix(): 
 The degree matrix is H 
 each diagonal entry equals the total connection weights of one node [one row]
 It computes degrees=np.sum(self.A,axis=1) or a row sum 
 then it performs np.diag(degrees) and places the summed up values along a diagonal 
 
+----------------------------------------
 def laplacian(self): 
 The paper defines L = H - A --> self.L = self.H - self.A
 This is the solution to the discrete heat diffusion equation 
@@ -114,6 +161,11 @@ def eigensystem():
 This computes Lφ=φΛ or the eigenvalue problem 
 eigenvalues, eigenvectors = eigh(self.L)
 This find all eigenvalues and eigenvecotrs and uses them to solve the graph heat equation in spectral space 
+eigh() computer every eigenvalue and every eigenvector 
+eigsh() calculates only select number of eigenvalues. 
+
+
+
 
 summary():
 Prints number of nodes, number of edges, average neighbors 
@@ -135,6 +187,7 @@ so... for i, node in enumerate(...) says "loop through every node and tell the i
 
 Understanding the main program: 
 if __name__ == "__main__": 
+import Geometry class and NodeGenerator class 
 
 geom.build_blocks()
 Tell the geometry object to execute its build_blocks function 
@@ -144,6 +197,9 @@ general form: object.method()
 Object: geom 
 Method: build_blocks() 
 
+you have variable generator, which is just the solution of plugging in the stl argument into the NodeGenerator 
+now with this variable call the function generate (you have nodes now)
+now with graph, plug in the variable nodes from the generator function into our ThermalGraph model
 
 
 

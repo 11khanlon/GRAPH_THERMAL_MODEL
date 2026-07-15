@@ -32,6 +32,7 @@ Step 4
 from geometry import Geometry
 from nodes import NodeGenerator
 from graph import ThermalGraph
+from visualization import Visualizer
 from deposition import DepositionSimulation
 from visualization import (
     plot_sensor_temperature,
@@ -124,6 +125,28 @@ def main():
 
     plot_final_temperature(simulation)
 
+    viz = Visualizer(geometry)
+
+    # Thermocouple history
+    viz.temperature_history(
+        time_history,
+        sensor_history
+    )
+
+    # Maximum temperature
+    viz.max_temperature(history)
+
+    # Final nodal temperatures
+    viz.temperature_field(history[-1])
+
+    # Active nodes
+    viz.active_nodes()
+
+    # Example: Layer 5
+    viz.layer_temperature(
+        layer=5,
+        temperature=history[-1]
+    )
 
 if __name__ == "__main__":
 

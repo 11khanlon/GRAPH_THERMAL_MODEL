@@ -1,7 +1,7 @@
 """
 1st file
 Stores variables in one spot so they can easily be modified
-Configuration file for the Graph Theory Directed Energy Deposition thermal model
+Configuration file for the Graph Theory DED thermal model
 
 """
 
@@ -37,6 +37,7 @@ LASER = {
 #---- BUILD GEOMETRY ----
 
 BUILD = {
+    "stl_file": "example.stl",  #insertfile 
 
     "length": 37.2e-3,
     "width": 3.0e-3,
@@ -47,6 +48,7 @@ BUILD = {
     "substrate_length": 76.2e-3,
     "substrate_width": 25.4e-3,
     "substrate_height": 6.4e-3
+    
 
 }
 
@@ -68,14 +70,11 @@ BLOCK = {
 
     # paper uses 5 blocks per hatch
 
-    "length": 7.84e-3,
+    "length": 7.84e-3,  #m 
+    "width": 3.0e-3,    #m 
+    "height": 0.1806e-3,  #m 
 
-    "width": 3.0e-3,
-
-    "height": 0.1806e-3,
-
-    # seconds
-    "time_per_block": 0.922
+    "time_per_block": 0.922 #seconds
 
 }
 
@@ -98,6 +97,7 @@ CONVECTION = {
 
 
 DWELL = {
+    #seconds 
 
     "case_A": 10.0,
     "case_B": 3.0

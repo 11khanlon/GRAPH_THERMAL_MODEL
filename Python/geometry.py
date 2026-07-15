@@ -2,7 +2,7 @@
 Step 2 of the graph-theory DED thermal model
 Create blocks that is later populated with random nodes 
 
-This module
+This module:
 
 1. Loads an STL file
 2. Computes its bounding box
@@ -19,9 +19,9 @@ from Python.config import BUILD, BLOCK
 
 
 class Block:
+
     """
     Represents one deposition block.
-
     Every block is activated once during the simulation.
     """
 
@@ -62,11 +62,10 @@ class Geometry:
     def build_blocks(self):
 
         """
-        Divide the part into
-
+        Divide the part:
         layer -> hatch -> 5 blocks
 
-        (paper Section 4.3.1.1)
+        paper Section 4.3.1.1
         """
 
         xmin, ymin, zmin = self.bounds[0]
@@ -179,7 +178,10 @@ class Geometry:
 
 if __name__ == "__main__":
 
-    geom = Geometry("example_part.stl")
+  
+    stl_file = BUILD["stl_file"]
+    
+    geom = Geometry(stl_file)
 
     geom.build_blocks()
 

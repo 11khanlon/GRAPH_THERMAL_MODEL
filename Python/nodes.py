@@ -12,8 +12,7 @@ Each node later becomes one graph vertex.
 """
 
 import numpy as np
-
-from Python.config import GRAPH, MATERIAL
+from Python.config import GRAPH, MATERIAL, BUILD
 
 
 #---------- Graph Node -----------
@@ -60,15 +59,13 @@ class Node:
 class NodeGenerator:
 
     """
-    Generates random nodes inside every block.
-
-    Paper:
+    Generates random nodes inside every block
     Section 4.3.1.1
 
     Random nodes are distributed uniformly inside each
     deposition block.
 
-    Node density controls accuracy.
+    Node density controls accuracy
     """
 
     def __init__(self, geometry):
@@ -181,7 +178,9 @@ if __name__ == "__main__":
 
     from Python.geometry import Geometry
 
-    geom = Geometry("example_part.stl")
+    stl_file = BUILD["stl_file"]
+    
+    geom = Geometry(stl_file)
 
     geom.build_blocks()
 

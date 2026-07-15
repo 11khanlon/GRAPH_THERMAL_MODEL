@@ -2,10 +2,7 @@
 Step 4
 
 Constructs the graph used for thermal diffusion.
-
-Implements Section 4.3.1.2:
-
-Creates
+Implements Section 4.3.1.2 and creates:
 
 A = adjacency matrix
 H = degree matrix
@@ -19,6 +16,7 @@ import numpy as np
 
 from scipy.spatial import cKDTree
 from scipy.linalg import eigh
+from scipy.sparse.linalg import eigsh
 from scipy.sparse import lil_matrix, csr_matrix, diags
 
 from Python.config import GRAPH
@@ -52,8 +50,7 @@ class ThermalGraph:
     def build(self):
 
         """
-        Construct graph using neighborhood radius ε.
-
+        Construct graph using neighborhood radius ε
         Paper Eq. (11)
         """
 
@@ -67,9 +64,7 @@ class ThermalGraph:
         self.A = lil_matrix((self.N, self.N))
 
         # ----------------------------------------------------
-
-        # Estimate σ
-        # (standard deviation of pairwise distances)
+        # Estimate σ (standard deviation of pairwise distances)
 
         sample = tree.query(coords, k=8)[0][:, 1:]
 
@@ -109,6 +104,8 @@ class ThermalGraph:
                 self.nodes[i].neighbors.append(j)
                 self.nodes[i].weights.append(weight)
 
+        #convert from construction format to computation format 
+        self.A = self.A.tocsr()
         print("Adjacency matrix complete.")
 
     # --------------------------------------------------------
@@ -119,12 +116,9 @@ class ThermalGraph:
         Equation (13)
         """
 
-        degrees = np.sum(
-            self.A,
-            axis=1
-        )
+        degrees = np.asarray(self.A.sum(axis=1)).flatten()
 
-        self.H = np.diag(degrees)
+        self.H = diags(degrees)
 
         return self.H
 
@@ -164,7 +158,9 @@ class ThermalGraph:
 
         print("Computing eigenvectors...")
 
-        eigenvalues, eigenvectors = eigh(self.L)
+        L_dense = self.L.toarray()
+
+        eigenvalues, eigenvectors = eigh(L_dense)
 
         self.eigenvalues = eigenvalues
 
@@ -182,12 +178,12 @@ class ThermalGraph:
 
         print("Nodes:", self.N)
 
-        edges = np.count_nonzero(self.A) // 2
+        edges = self.A.nnz // 2
 
         print("Edges:", edges)
 
         avg_degree = np.mean(
-            np.sum(self.A > 0, axis=1)
+        self.A.getnnz(axis=1)
         )
 
         print("Average neighbors:",
@@ -222,8 +218,12 @@ if __name__ == "__main__":
 
     from Python.geometry import Geometry
     from Python.nodes import NodeGenerator
+    from Python.config import BUILD
+    
 
-    geom = Geometry("example_part.stl")
+    stl_file = BUILD["stl_file"]
+    
+    geom = Geometry(stl_file)
 
     geom.build_blocks()
 

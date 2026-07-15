@@ -1,3 +1,10 @@
+Remaining Questions: 
+do they calculate h_eff? why do the simplify it later  [radiation?]
+do you segment the substrate too? 
+are these coordinates? If the nodes are placed randomly, how is the node density assumed constant? [seed]
+do you model the substrate too?
+
+
 Stores variables in one spot so they can easily be modified
 
 

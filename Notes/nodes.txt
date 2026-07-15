@@ -20,7 +20,7 @@ Block 1 → Node 3, Node 4...
 ...
 
 remaining questions: 
-the random vs uniform node thing
+activate block section and beyond. (does this mess up the deposition.py file)
 
 
 Overall goal of nodes.py: create nodes in the created segmented geometry
@@ -58,6 +58,7 @@ What does __repr__() mean?
 This is a special python method 
 suppose you write print(node) --> how does python know what to display? 
 so __repr__() is just a human readable representation of the obejct 
+
 
 # --------- NodeGenerator Class --------
 Represents the algorithm/task that creates Nodes 
@@ -116,6 +117,7 @@ node = Node(
                     block_id=block.id
                 )
 This is where the blueprint becomes one real node object
+Give the node a node_id, position generated from np.random.uniform, and block id 
 
 self.nodes.append(node)  --> stores the node inside the generator 
 
