@@ -1,0 +1,139 @@
+Remaining Questions: 
+where does the temperature vector input come from?
+where foes the node surface come from 
+what are the surface nodes? 
+where does the surface_mask variable come from? 
+how does convection, conduction and deposition all work together 
+why is dt 1 second here? in dwell cooling() and multiple steps? didn't we determine this in config 
+i dont get this syntax solver.dwell_cooling(...)
+T[boundary] = (ambient_temperature + ( T[boundary] - ambient_temperature) * factor)   hwo does tboundary equal tnew and told at the same time 
+
+----------------------------------------------------------
+Heat loss through convection (and radiation approximation)
+
+Implements Section 4.3.1.5 and Section 4.3.1.6
+
+Paper Equations:
+(16): Tb = Tc exp(-β tb)
+(18): TLf = TLc exp(-β t)
+
+where
+
+β = h / rho L Cp
+
+This module only computes boundary cooling
+No graph operations are performed here
+
+-----------------------------------------------
+Problems with current code: 
+
+1. Node.surface does not exist 
+surface = np.array( [node.surface for node in nodes], dtype=bool)
+But node class currently contains:
+self.id
+self.position
+self.block_id
+self.active
+self.temperature
+self.neighbors
+self.weights
+there is no surface present 
+
+
+----------------------------------------------------
+class ConvectionSolver:
+This is the newton cooling model 
+Convection and radiation are lumped into a single effective heat transfer coefficient
+--> heff
+
+self.rho = density  --> kg/m^3 
+self.L = block_length  --> m 
+
+---------------------------------------------
+def beta(): 
+β = h / (rho L Cp)
+
+Parameters:
+h : float, Heat transfer coefficient
+cp : float,  Specific heat
+
+Returns:
+float
+
+--------------------------------
+def cool(): 
+
+Implements Equation (16)
+
+Parameters:
+temperature : ndarray
+surface_mask : ndarray(bool), True for boundary nodes
+
+h : float
+cp : float
+ambient_temperature : float
+dt : float
+
+Returns:
+ndarray
+
+temperature is teh current temperature vector 
+surface_mask is current boolean array (true, false, true)
+h = convection coefficient 
+cp = specific heat 
+dt = elapsed cooling time 
+
+surface nodes
+boundary = np.where(surface_mask)[0]
+suppose surface_mask = [true, false, false, etc]
+np.where(surface_mask)
+returns (array([0,2,4]),)
+so boundary becomes [0,2,4]
+
+
+vecotorized assigment 
+T[boundary] = which is similar to saying T[0,2,4]
+implements Tnew =T∞ + (Told − T∞)exp(−βt) 
+
+
+----------------------------------------
+def block_cooling(): 
+
+It simply calls cool() with block_time as the time interval
+
+----------------------------------------------------------
+def dwell_cooling(): 
+but now dt usually defaults to 1 second 
+The main simulation can repeatedly call:
+solver.dwell_cooling(...) once per second during the dwell period
+
+---------------------------------------
+multiple_steps() 
+This is analogous to the propagate() method in conduction solver 
+steps is determined by total_time/dt and rounding up 
+
+for _ in range(steps):
+    T = self.cool(...)
+
+This keeps updating the temperature after each interval, so the cooling accumulates over the dwell time 
+
+--------------------------------------------
+Main program 
+
+geom = Geometry(...) --> create the geometry 
+geom.build_blocks()  --> divide the part into deposition blocks 
+
+generator = NodeGenerator(geom)
+generator.generate()
+generate the graph nodes 
+ 
+temperature = np.full(len(nodes), MATERIAL["ambient_temperature"])
+initialize every node to ambient temperature
+
+temperature[:50] = 1200 
+artificially heat the first 50 nodes so you have something to cool during the test 
+
+solver = ConvectionSolver(...)  create the conduction solver 
+cooled = solver.block_cooling(...) --> apply newton cooling for one block dpeosition time 
+
+print(np.max(cooled)) --> check that the hottest node has cooled compared to its initial value 

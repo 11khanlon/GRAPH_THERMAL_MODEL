@@ -1,0 +1,194 @@
+
+Remaining questions: 
+How does everything happen in real time, if you input the graph and call self.graph throughout everything, will the condcution solver go through and use it
+Are we sure that Λ is diagonal
+return P @ temperature  --> where does temperature come from? 
+# Example: heat first 25 nodes T[:25] = 2200.0 --> where does this go later 
+does conduction account for cooling during dwell time 
+how does conduction.py extract the eigenvectors values needed from the graph.py
+
+--------------------------------------
+Graph-theory heat conduction solver
+Implements the spectral solution presented in
+- Section 4.3.1.4
+- Section 4.3.1.6
+
+Paper Equations:
+(15) Tc = Φ exp(-alpha g Λ tb) Φᵀ T0
+(17) TLc = Φ exp(-alpha g Λ t) Φᵀ Tb
+
+where
+
+Φ  = Laplacian eigenvectors
+Λ  = Laplacian eigenvalues
+alpha  = thermal diffusivity
+g  = gain factor
+t  = timestep
+
+This module performs ONLY heat conduction --> It does not apply laser heating or convection
+
+Geometry
+↓
+Blocks
+↓
+Nodes
+↓
+Graph Construction
+↓
+Graph Laplacian
+↓
+Eigenvalue Decomposition
+↓
+Goldak Heating
+↓
+Conduction Solver  ← You are here
+↓
+Convection
+↓
+Next Block
+
+--------------------------------
+class ConductionSolver:
+This initializes the creation of the conduction solver object 
+
+def __init__(self, graph, gain):
+This is the constructor it takes in arguments graph and gain 
+
+Graph is the Thermal Graph object after the eigensystem has been computed 
+graph = ThermalGraph(generator.nodes) --> created the object 
+graph.build()
+graph.degree_matrix()
+graph.laplacian()
+graph.eigensystem()
+These actions above filled it with information 
+
+Error checking 
+if graph.eigenvalues is None:  
+This asks "Has the eigensystem been computed yet?" 
+
+
+-----------------------------
+def propagator(self, alpha, dt):
+This constructs Φ exp(-alpha g Λ dt) Φᵀ 
+Return: ndarray, Spectral propagation matrix
+
+lambda_values = np.array([0,2,5])
+then np.exp(-lambda_values) automatically returns 
+[exp(0), exp(-2), exp(-5)]. There is no loop, numpy performs the loops internally 
+
+D = np.diag(decay)
+suppose decay = [1, 0.84, 0.31] 
+This creates a 3x3 matrix with the values at the diagonal 
+
+return self.phi @ D @ self.phi.T
+This is multiplying the eigenvectors and transpose of it by the soltuion to the decay problem 
+@ means matrix multiplication 
+
+--------------------------------
+def step(self, temperature, alpha, dt):
+Advance one conduction timestep
+Implements Equation (15): Tc = Φ exp(-alphagΛdt) Φᵀ T
+
+Parameters:
+temperature : ndarray, Current nodal temperatures.
+alpha : float, Thermal diffusivity
+dt : float, Time step
+
+Returns:
+ndarray --> Updated temperatures after conduction.
+
+P = self.propagator(alpha, dt) --> this builds Φ exp(-alpha g Λ dt) Φᵀ
+
+return P @ temperature
+This multiplies the created P vector by temperature 
+
+Tnew = PT 
+There is no finite difference loop 
+There is n oexplicit neighbor update 
+The matrix multiplication updates every node simultaneously 
+
+-----------------------------------
+def block_conduction(
+        self,
+        temperature,
+        alpha,
+        block_time
+        ):
+
+This function doesn't introduce new mathmatics
+It simply gives conduction step a meaningful name 
+
+Instead of writing 
+solver.step(T, alpha, 0.922), 
+you write solver.block_conduction(...)
+
+------------------------------------------
+def dwell_conduction(self, temperature, alpha, dt=1.0):
+
+This is conduction during dwell time 
+Implements Equation (17)
+
+One call corresponds to one second of dwell cooling
+
+Parameters:
+temperature : ndarray
+alpha : float
+dt : float, Usually 1 second.
+
+Returns: ndarray
+
+During a swell period, the laser is off. The graph still conducts heat 
+This simply calls step() using the dwell time increment 
+
+-----------------------------------------------
+propagate(): 
+Repeatedly apply conduction
+Useful for arbitrary simulation times
+
+Suppose you want to simulate 30 seconds
+Instead of writing step(), step()... repeatedly, call propogate() 
+
+Parameters:
+temperature : ndarray
+alpha : float
+total_time : float
+dt : float
+
+Returns: ndarray
+
+T = temperature.copy() --> creates sopy of the temperature vector 
+Dont overwrite the original temperature 
+
+nsteps = int(np.ceil(total_time/dt))
+Suppose total_time/dt = 5.3 
+np.ceil will round up to 6 seconds 
+therefore 6 steps are performed 
+
+for _ in range(nsteps):
+this loops nsteps number of times 
+Each iteration advances the temperature by one timestep 
+
+
+-------------------------------------
+Main Program 
+
+geom = Geometry("example_part.stl") --> load the STL and create the geometry object 
+geom.build_blocks() --> assemble the blocks 
+generator = NodeGenerator(geom) --> input the geometry from the built blocks 
+generator.generate() --> genenerate nodes 
+graph = ThermalGraph(generator.nodes) --> input the generated nodes into the thermal graph 
+create the graph by calling functions build, degree matrix, laplacian, eigensystem 
+
+solver = ConductionSolver(
+    graph,
+    gain=GRAPH["gain"]
+)
+The solver needs the graph and gain arguments to be assembled 
+
+
+T_new = solver.block_conduction(
+    temperature=T,
+    alpha=MATERIAL["thermal_diffusivity"],
+    block_time=BLOCK["time_per_block"]
+)
+This calculates Tc = Φ exp(-alpha g Λ tb) Φᵀ T0

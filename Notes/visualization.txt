@@ -1,0 +1,55 @@
+Remaining Questions: 
+Does it show an active plot of when things are printing?
+self.geometry.nodes  --> does geometry store nodes 
+
+--------------------------------------------------------
+Visualization tools for the graph-theory DED thermal model
+
+Used after simulation has completed
+
+
+Provides:
+
+1. Sensor thermal history
+2. Maximum temperature history
+3. 3D nodal temperature distribution
+4. Active node visualization
+5. Layer temperature visualization
+
+This file does NOT perform any thermal calculations
+
+from mpl_toolkits.mplot3d import Axes3D  --> This enables 3D plotting 
+
+------------------------------------------------
+class Visualizer:
+
+creates a class visualizer  
+
+def __init__(self, geometry):  --> constructor
+It recieves geometry object
+
+self.geometry = geometry --> now the visualizer remembers the Geometry object 
+saving nodes:
+--> self.nodes = nodes
+
+---------------------------------------
+temperature_history(): 
+
+inputs might look like:
+time = [0,1,2,3]
+temperature = [25, 100, 210, 400]
+
+plt.figure(figsize=(10,5))  ---> creates a new plotting window 
+The figure size 10 inches wide, 5 inches tall 
+Plot simulation: 
+plt.plot(
+    time,
+    temperature,
+    linewidth=2,
+    label="Graph Theory"
+)
+This creates the first curve. The x-axis is time and y axis is temperature 
+
+Optional experimental curve: 
+if experimental is not None: 
+"If the user actually gave me experimental data" 

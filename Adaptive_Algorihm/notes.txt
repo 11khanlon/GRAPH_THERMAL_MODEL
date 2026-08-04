@@ -1,0 +1,21 @@
+Initialize graph G(V,E)
+
+while laser is scanning:
+
+    determine laser position
+
+    identify nodes near laser
+
+    refine graph locally
+
+    rebuild local edges
+
+    assemble Laplacian
+
+    solve graph heat equation
+
+    apply convection/radiation
+
+    coarsen cooled regions
+
+end

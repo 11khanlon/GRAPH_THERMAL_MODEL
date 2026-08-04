@@ -1,0 +1,79 @@
+Remaining questions:
+This python files needs a lot of work lol 
+How to fix the config file with respect to these properties
+where do they find table 6 parameters from literature 
+Is there a way to concatenate all these helper functions? 
+
+------------------------------------------------
+What is material.py 
+This class stores the material properties of the alloy so the solver can look them up whenever 
+Think of it as a database of material properties 
+
+Implements Section 4.3.4.3 
+
+------------------------------------------------
+class Ti64Material:
+For Ti-64 it stores density, conductivity, specific heat, diffusivity 
+
+Table 6 from the paper
+Replace these values with the exact Table 6 values if you have them available
+
+def __init__(self):
+Python automatically stores all of these tables inside the object 
+temperature | thermal conductivity | specific heat | 
+
+-------------------------------------
+def conductivity(self, T):
+
+Suppose you ask: 
+material.conductivity(350) 
+There is no 350 deg C 
+Python therefore interpolates to find the value in between 300 and 400 degree C 
+
+---------------------------------------
+def specific_heat(): 
+
+We don't know the value of specific heat at a specific temperature, interpolate in between values 
+
+
+----------------------------------
+def diffusivity(): 
+
+call self.conductivity(T) and self.specific_heat(T) 
+then return  k / (self.rho * cp) to get alpha 
+
+------------------------------------
+diffusivity_linear() :
+
+Section 4.3.4.3
+the equation alpha = (0.0042 * T + 2.612) from literature
+this returns mm^2 / s
+
+----------------------------------------
+def diffusivity_linear_si(self, T):
+
+Convert mm²/s to m²/s
+
+-----------------------------------------
+def layer_diffusivity(self, temperatures): 
+
+The graph solver does nto compute one diffusivity for every node 
+Instead it avergages the layer 
+
+Tavg = np.mean(temperatures)
+
+Suppose the layer temperatures are 800, 820, 840, 780 
+Average 810 deg C 
+diffusivity_linear_si(810) returns one diffusivity for the entire layer 
+
+----------------------------------------
+summary(): 
+just prints information 
+
+----------------------------------
+Main Program 
+
+material = Ti64Material()  --> create one material object 
+material.summary() --> prints desnity, conductivity, specific heat, diffusivity 
+temperatures = np.linspace(25, 1600, 10) creates a test case 
+

@@ -1,31 +1,26 @@
 remaining questions:
 how are these equivalent to the code from the paper 
-tree = cKDTree(coords)
 recheck math
 theres an eigensolver component here but there's a whole python file for that
-change np.zeros to lil matrix 
 the function def coordinates() is created and called twice: once in nodes another in graph.py
-how position is being tracked in nodes and graph.py 
-
-sample = tree.query(coords, k=8)[0][:, 1:]
-sigma = np.std(sample)
 
 
+-------------------------------------------
 Overall Purpose of Python Script: 
 Every node is going to become a graph vertex 
 
 Initially we have created nodes that know only position, temperature, and block ID 
 There is no relationship and weight between them 
 
-------------------------------------
+--------------------------------------------
 class ThermalGraph: 
 This class represents the entire graph 
 So this will only create one ThermalGraph object 
 
 Constructor 
 def __init__(self, nodes):
-Notice how nodes is not the Node class 
-It is the list of Node objects that was generated earlier 
+nodes is the variable that is passed into the ThermalGraph object
+NodeGenerator class is called later to generate nodes and input into ThermalGraph
 
 Suppose generator.generate() created 5000 Node objects 
 Then graph = ThermalGraph(generator.nodes) passes that entire list into the graph 
@@ -71,12 +66,13 @@ def build(self):
 This function's purpose is to connect nearby nodes in the file 
 coords = self.coordinates() -->  retrieve every node position 
 
-tree = cKDTree(coords)    This is one of the biggest improvement over a brute-force search 
-Suppose there are 5000 nodes 
-A naive algorithm compares every node to every other node 
-That requires roughly 5000^2 comparisons which is approximately 25 million 
+tree = cKDTree(coords) ---> computational optimization for node distance comparison
+Example: Suppose there are 5000 nodes 
 KDTree organizes points spatially so nearby neighbors can be found much faster.
 Instead of searching the entire domain, it searches only nearby regions.
+A naive algorithm compares every node to every other node 
+That requires roughly 5000^2 comparisons which is approximately 25 million 
+
 
 epsilon = GRAPH["epsilon"] reads the neighborhood radius from config.py 
 
@@ -107,22 +103,29 @@ Why not just use CSR from the beginning?
 --> convert back to CSR after assembling A (weight matrix)
 
 **** Estimate σ ****
-sample = tree.query(coords,k=8)
+From Literature: equation 11 says: σ is the standard deviation of all the pariwise distances between nodes 
+sample = tree.query(coords, k=8)[0][:, 1:]
 This estimates the average spacing between nearby nodes 
 The paper uses σ inside the Gaussian weighting function 
 Instead of manually choosing σ the code estimates it from the data 
+
+tree.query() returns two arrays. distances, indices = tree.query(...)
+Notice the first distance is zero. Because every point is its own nearest neighbor 
+for tree.query(...) means only take the distance array 
+[:, 1:] means take all rows but skip the first column. It skips the 0 distance which is just the point itself 
 
 sigma=np.std(sample)
 This computes the standard deviation of nearby distances 
 
 **** Main loop ****
 for i in range(self.N): 
-Loop every node 
+Loop every node and add weights to it with its corresponding neighbor
 Suppose 5000 nodes are present 
 
 neighbors=
 tree.query_ball_point(...)
-KDTree asks which nodes lie within ε
+KDTree asks which nodes lie within ε, which has units of length
+"Find every node within 2.5mm of this node"
 
 if i==j: 
 ignores the node itself 
@@ -145,6 +148,10 @@ self.A[j,i]=weight
 Both directions recieve the same value 
 That makes A symmetric this matches heat conduction 
 
+For example: Suppose weight = .83
+A[7,12]=0.83
+A[12,7]=0.83 
+
 -------------------------------
 def degree_matix(): 
 The degree matrix is H 
@@ -157,6 +164,8 @@ def laplacian(self):
 The paper defines L = H - A --> self.L = self.H - self.A
 This is the solution to the discrete heat diffusion equation 
 
+
+---------------------------------------------
 def eigensystem(): 
 This computes Lφ=φΛ or the eigenvalue problem 
 eigenvalues, eigenvectors = eigh(self.L)
@@ -166,7 +175,7 @@ eigsh() calculates only select number of eigenvalues.
 
 
 
-
+--------------------------------------------------
 summary():
 Prints number of nodes, number of edges, average neighbors 
 
@@ -202,4 +211,38 @@ now with this variable call the function generate (you have nodes now)
 now with graph, plug in the variable nodes from the generator function into our ThermalGraph model
 
 
+------------------------
+Use for debugging later 
+------------------------
+# --------------------------------------------------
+    def check_orthogonality(self):
 
+        Phi = self.eigenvectors
+
+        identity = Phi.T @ Phi
+
+        error = np.linalg.norm(
+            identity - np.eye(identity.shape[0])
+        )
+
+        print(f"Orthogonality error: {error:.3e}")
+
+        return error
+    
+
+    
+    # ---------------------------------
+    def reconstruction_error(self):
+
+        Phi = self.eigenvectors
+        Lambda = np.diag(self.eigenvalues)
+
+        reconstructed = Phi @ Lambda @ Phi.T
+
+        error = np.linalg.norm(
+            reconstructed - self.L.toarray()
+        )
+
+        print(f"Laplacian reconstruction error: {error:.3e}")
+
+        return error

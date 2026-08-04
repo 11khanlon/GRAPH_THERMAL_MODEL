@@ -1,38 +1,30 @@
 """
-heat_source.py
-
-Laser heat source model.
+Step 5
+Laser heat source model
+Produces the initial nodal temperature field To before conduction begins
+This module ONLY applies laser heating
+--> No conduction
+--> No convection
+--> No graph operations
 
 Implements Section 4.3.3
+Goldak's double ellipsoid model (Paper Equation 19)
 
-Goldak's double ellipsoid model
-(Paper Equation 19)
-
-Produces the initial nodal temperature field
-before conduction begins.
-
-This module ONLY applies laser heating.
-
-No conduction.
-No convection.
-No graph operations.
 """
 
 import numpy as np
 
-
 class GoldakHeatSource:
 
-    def __init__(
-        self,
-        laser_power,
-        conductivity,
-        diffusivity,
-        scan_speed,
-        scaling_factor,
-        meltpool_temperature,
-        liquidus_temperature,
-    ):
+    def __init__(self,
+                laser_power,
+                conductivity,
+                diffusivity,
+                scan_speed,
+                scaling_factor,
+                meltpool_temperature,
+                liquidus_temperature
+                ):
 
         self.P = laser_power
         self.k = conductivity
@@ -45,54 +37,25 @@ class GoldakHeatSource:
 
     # --------------------------------------------------------
 
-    def goldak_temperature(
-        self,
-        x,
-        y,
-        z,
-    ):
+    def goldak_temperature(self, x, y, z):
+
         """
         Equation (19)
-
-        Returns laser-induced temperature
-        at local coordinates (x,y,z).
+        Returns laser-induced temperature at local coordinates (x,y,z)
         """
 
-        r = np.sqrt(
-            x**2 +
-            y**2 +
-            z**2
-        )
+        r = np.sqrt(x**2 + y**2 + z**2)
 
-        # avoid singularity
+        # avoid 0 in denomenator
+        r = np.maximum(r, 1e-8)
 
-        r = np.maximum(
-            r,
-            1e-8
-        )
-
+        #Equation 19 
         temperature = (
-            self.C
-            * self.P
-            /
-            (
-                2
-                * np.pi
-                * self.k
-                * r
-            )
-            *
-            np.exp(
-                -self.V
-                /
-                (
-                    2
-                    * self.alpha
-                )
-                *
-                (
-                    x + r
-                )
+            self.C * self.P
+            / (2 * np.pi * self.k * r)
+            * np.exp(
+                -(self.V / (2 * self.alpha))
+                * (x + r)
             )
         )
 
@@ -100,26 +63,15 @@ class GoldakHeatSource:
 
     # --------------------------------------------------------
 
-    def heat_block(
-        self,
-        nodes,
-        block_center,
-        temperature,
-    ):
+    def heat_block(self,
+                   nodes,
+                   block_center,
+                   temperature
+                   ):
+        
         """
-        Heat one active block.
-
-        Parameters
-        ----------
-        nodes
-
-        block_center
-
-        temperature
-
-        Returns
-        -------
-        Updated temperature vector.
+        This function heats only the newly deposited block
+        Returns updated temperature vector
         """
 
         T = temperature.copy()
@@ -135,40 +87,25 @@ class GoldakHeatSource:
             y = node.position[1] - yc
             z = node.position[2] - zc
 
-            delta = self.goldak_temperature(
-                x,
-                y,
-                z,
-            )
+            delta = self.goldak_temperature(x, y, z)
 
-            T[i] = max(
-                T[i],
-                min(
-                    delta,
-                    self.Tmelt
-                )
-            )
+            T[i] = max(T[i], min(delta, self.Tmelt))
 
         return T
 
     # --------------------------------------------------------
 
-    def heat_subsurface(
-        self,
-        nodes,
-        block_center,
-        temperature,
-        cutoff=0.20,
-    ):
+    def heat_subsurface(self,
+                        nodes,
+                        block_center,
+                        temperature,
+                        cutoff = 0.20
+                        ):
+        
         """
-        Heat underlying layers.
-
-        Paper considers reheating down
-        to approximately
-
-        20%
-
-        of liquidus temperature.
+        Heat underlying layers
+        Paper considers reheating down to approximately
+        20% of liquidus temperature
         """
 
         T = temperature.copy()
@@ -189,11 +126,7 @@ class GoldakHeatSource:
             y = node.position[1] - yc
             z = node.position[2] - zc
 
-            delta = self.goldak_temperature(
-                x,
-                y,
-                z,
-            )
+            delta = self.goldak_temperature(x, y, z)
 
             if delta >= threshold:
 
@@ -205,32 +138,24 @@ class GoldakHeatSource:
         return T
 
     # --------------------------------------------------------
+    #Surface + subsurface heating
 
-    def apply(
-        self,
-        nodes,
-        block_center,
-        temperature,
-    ):
-        """
-        Complete laser heating.
-
-        Surface
-        +
-        subsurface heating.
-        """
-
+    def apply(self,
+            nodes,
+            block_center,
+            temperature
+            ):
+    
         T = self.heat_block(
             nodes,
             block_center,
-            temperature,
-        )
+            temperature
+            )
 
         T = self.heat_subsurface(
             nodes,
             block_center,
-            T,
-        )
+            T)
 
         return T
 
@@ -255,24 +180,24 @@ if __name__ == "__main__":
 
     heat = GoldakHeatSource(
 
-        laser_power=LASER["power"],
+        laser_power = LASER["power"],
 
-        conductivity=MATERIAL["thermal_conductivity"],
+        conductivity = MATERIAL["thermal_conductivity"],
 
-        diffusivity=MATERIAL["thermal_diffusivity"],
+        diffusivity = MATERIAL["thermal_diffusivity"],
 
-        scan_speed=LASER["scan_speed"],
+        scan_speed = LASER["scan_speed"],
 
-        scaling_factor=LASER["goldak_C"],
+        scaling_factor = LASER["goldak_C"],
 
-        meltpool_temperature=LASER["meltpool_temperature"],
+        meltpool_temperature = LASER["meltpool_temperature"],
 
-        liquidus_temperature=MATERIAL["liquidus_temperature"],
+        liquidus_temperature = MATERIAL["liquidus_temperature"]
     )
 
     temperature = np.full(
         len(nodes),
-        MATERIAL["ambient_temperature"],
+        MATERIAL["ambient_temperature"]
     )
 
     block = geom.blocks[0]

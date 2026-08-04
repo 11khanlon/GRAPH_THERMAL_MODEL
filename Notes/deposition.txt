@@ -1,0 +1,208 @@
+Remaining Questions: 
+how do you deal with conduciton and convection, is it recalculated after each timestep? or layer
+ gain = graph_settings["gain"]  --> where does this come from? 
+where do these laser values come from 
+fix the block.nodes error. The sctivate_block(): function is repeated in nodes.py ?
+fix surface_maks() node class does not contain node.surface 
+how is cooling between node and node dealt with based on time from previous layers and blocks? does the entire graph recalculate or just the singular block? 
+the first layer deposits first, how do we factor its singular existence. How are previous layers incoroporated in future deposition calculations? 
+does the laser raster back and forth 
+
+block.node_indices does not exist in your earlier Geometry/Block class. Your Block stores block.nodes, not indices. Either store node indices when generating nodes or iterate over block.nodes.
+node.surface does not exist in your Node class. The convection solver assumes every node has a Boolean surface attribute. You'll need to add self.surface = False to the Node class and implement a method to identify boundary nodes.
+Material properties are currently treated as constants (material["thermal_diffusivity"], material["specific_heat"]). If you later switch to the temperature-dependent material class (material.py), you'll want to replace these constants with values computed from the current node or layer temperatures
+
+---------------------------------
+Overall purpose: Main deposition simulation 
+The paper solves the process in this order 
+
+1. deposit material 
+2. Heat it with the laser 
+3. Conduct heat 
+4. Lose heat through convection 
+5. Move to next block 
+6. After entire layer allow dwell cooling 
+7. Repeat 
+
+Implements Section 4.3.1
+
+Simulation order: 
+
+for every block
+--> activate nodes 
+--> apply Goldak heat source 
+--> conduction 
+--> convection 
+and block 
+
+after layer: 
+--> dwell conduction 
+--> dwell convection 
+repeat until final layer 
+
+-------------------------------------
+import numpy as np
+
+from conduction import ConductionSolver
+from convection import ConvectionSolver
+from heat_source import GoldakHeatSource
+
+Notice how earlier files imported mostly data 
+This file imports entire solver classes beacuse it needs to create them 
+
+-------------------------------------
+class DepositionSimulation:
+This class represents one complete DED simulation 
+
+def __init__(...) --> constructor 
+
+These are all object or dictionaries that already exist
+Nothing is recomputed:
+geometry --> Geometry object from geometry.py already contains blocks 
+nodes   --> self.nodes = nodes these come from NodeGenerator.generate()
+graph   --> self.graph This is the thermalgraph object. It already contains A,H,L eigenvalues and eigenvectors 
+material
+laser
+convection
+graph_settings
+
+self.temperature = np.full(len(nodes),
+material["ambient_temperature"],
+dtype=float)
+temperature vector. This take the length of the nodes and applies an initial temperature of ambient temperature 
+
+self.history = []
+This stores every timestep to allow for future plotting
+history[0], history[1], history[2]
+temperature vs time, temperature animation, sensor history 
+
+Create the conduction solver: 
+self.conduction = ConductionSolver(graph, gain = graph_settings["gain"])
+The conduction solver needs eigenvalues and eigenvectors but graph already holds them 
+
+Create cooling solver: 
+self.cooling = ConvectionSolver()
+this needs density and block length 
+
+Create Goldak heat source:
+self.heat_source = GoldakHeatSource(...)
+simply build another helper object 
+
+-----------------------------------------
+def activate_block(): 
+#activate nodes belonging to the newly deposited block 
+
+loop over block node indices 
+suppose block 18 contains node 110, 111, 112 and they have False, False, False 
+this changes the Falses into True 
+
+earlier geometry.py stores block.nodes not block.node_indices 
+
+Old code: 
+for idx in block.node_indices:
+    self.nodes[idx].active = True
+
+--------------------------------------------
+def surface_mask()
+
+return np.array([node.surface for node in self.nodes], dtype=bool)
+This builds something like True, True, False, False, True 
+Only the outside nodes lose heat 
+
+Potential issue:
+Node class earlier does not contain node.surface 
+Either need to add:
+--> self.surface = False (and later identify boundary nodes)
+--> implement a method to compute surface nodes 
+
+---------------------------------------------------
+def active_temperature(): 
+
+T = self.temperature.copy() makes a copy 
+Then inactive = np.array([not node.active for node in self.nodes])
+Then T[inactive] = ambient --> forces inactive material back to room temperature 
+
+--------------------------------------
+def simulate_block():
+
+self.activate_block(block)  --> material is deposited 
+
+Step 1: Laser Heating (Goldak Heating)
+self.temperature = self.heat_source.apply(...)
+This produces T0 
+
+Step 2: 
+self.temperature =
+self.conduction.block_conduction(...) 
+
+This implements  Tc = Φ exp(-alpha g Λ t) Φᵀ T0
+
+Step 3: Convection/Cooling Step 
+self.temperature = self.cooling.block_cooling(...)
+This implements the Tb = Tcexp(-beta * t)
+
+self.history.append(self.temperature.copy())
+Save this to the tempearture histroy 
+
+------------------------------------
+def simulate_dwell(self, dwell_time): 
+
+This implements waiting period between layers [is this after one layer of completion? ]
+Instead of laser, conduction, and convection, there is conduction and convection present
+
+Example given 5 second dwell this becomes:
+Second 1: 
+conduct 
+cool 
+
+Second 2: 
+conduct 
+cool 
+
+
+----------------------------
+def run(): 
+
+
+for block in self.geometry.blocks:
+This is the deposition order generated in geometry.py 
+For every block check: did we move to a new layer? If yes, perform dwel cooling 
+Then simulate_block(block) which repeats conduction, convection and laser. Reepat until finished\
+
+For each deposited block:
+    Activate new material
+    Apply Goldak heat source
+    Solve graph conduction
+    Apply convection
+
+After each completed layer:
+    Perform dwell conduction
+    Perform dwell convection
+
+------------------------------------
+def sensor_history():
+
+this returns all times steps with one node association 
+
+-----------------------------------------------
+maximum_temperature() 
+np.max(self.temperature) 
+This returns hottest node in the final solution 
+
+
+--------------------------------
+Main Program 
+
+geometry = Geometry(...) --> create the geometry 
+generator = NodeGenerator(geometry)  --> generate nodes 
+graph = ThermalGraph(generator.nodes) --> generate nodes 
+
+After passing generated node object into thermal graph object, we can call functions:
+graph.build()
+graph.degree_matrix()
+graph.laplacian()
+graph.eigensystem()
+
+simulation = DepositionSimulation(...) -> run deposition 
+
+history = simulation.run() --> run simulation and obtain information 

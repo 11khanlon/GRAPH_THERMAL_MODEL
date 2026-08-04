@@ -1,3 +1,13 @@
+remaining questions: 
+activate block section and beyond. (does this mess up the deposition.py file)
+
+How do we know these are the lower corner and upper corner do we get these from geometry 
+x0, y0, z0 = block.start
+x1, y1, z1 = block.end
+
+explain this syntax: self.geometry.blocks new to OOP
+
+-----------------------------------
 config.py
     │
     ▼
@@ -18,12 +28,21 @@ Generate Nodes
 Block 0 → Node 0, Node 1, Node 2...
 Block 1 → Node 3, Node 4...
 ...
-
-remaining questions: 
-activate block section and beyond. (does this mess up the deposition.py file)
-
+----------------------------------------------------
 
 Overall goal of nodes.py: create nodes in the created segmented geometry
+
+Step 3 of the graph-theory DED thermal model
+Creates the point cloud used by the graph-theory solver.
+
+Implements Step 1 from Riensche et al. (2023):
+
+    - Random node generation
+    - Uniform node density
+    - One point cloud for substrate + deposited part
+
+Each node later becomes one graph vertex
+
 
 # ------- Create Node Class ---------
 Node represent one graph node 
@@ -72,6 +91,7 @@ geometry owns the blocks and stores the nodes
 nodegenerator uses geometry 
 
 
+----------------------------------
 def generate(self): 
 self refers to the current NodeGenerator object 
 
@@ -90,14 +110,9 @@ for block in self.geometry.blocks  give me the block that belongs to the geometr
 *Create a uniform node denisty* 
 Assume each block has dimensions LxLxL so that its volume is L^3 
 Establish block volume. Convert to nodes/m^3
-volume_mm3 = (
-                abs(x1-x0)*1000 *
-                abs(y1-y0)*1000 *
-                abs(z1-z0)*1000
-            )
+volume_mm3 = (abs(x1-x0)*1000 * abs(y1-y0)*1000 * abs(z1-z0)*1000 )
 
 Determine number of nodes needed: 
-n_nodes = volume × density
 m^3 * nodes/m^3 = nodes
 --> since each block contains idetical volume, density, and nodes, the node denisty remains constant 
 
@@ -108,14 +123,14 @@ so if you calculate 47 nodes, it will calculate and loop 47 times
 After specifiying the number of nodes, the coordinates of each node are generated independently using a continuos uniform probabilty distribution 
 for each iteration: 
 np.random.uniform(x0,x1) 
-this picks a random number between left wall and right wall 
+--> Nodes are generated using a uniform random distribution (e.g., np.random.uniform()), 
+--> meaning every location inside a block has an equal probability of containing a node
+--> this picks a random number between left wall and right wall 
 
 
-node = Node(
-                    node_id=node_id,
-                    position=(x, y, z),
-                    block_id=block.id
-                )
+node = Node(node_id=node_id,
+            position=(x, y, z),
+            block_id=block.id)
 This is where the blueprint becomes one real node object
 Give the node a node_id, position generated from np.random.uniform, and block id 
 

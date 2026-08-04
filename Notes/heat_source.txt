@@ -1,1 +1,117 @@
-nnn
+Remaining Quesitons:
+go over how we get the block_center coordinates, laser coordinates and node coordinates
+does this resemble Goldak heat source? Does it calibrate it like the article?
+
+---------------------
+Laser heat source model
+Produces the initial nodal temperature field T0 before conduction begins
+This module ONLY applies laser heating
+--> No conduction.
+--> No convection.
+--> No graph operations
+
+Implements Section 4.3.3
+Goldak's double ellipsoid model (Paper Equation 19)
+
+
+-----------------
+class GoldakHeatSource:
+This class represents one object (the laser heat source)
+Notice how this instance has many inputs compared to the other objects 
+
+These are the qualities that each goldak heat source contains: 
+self.P = laser_power
+self.k = conductivity
+self.alpha = diffusivity
+self.V = scan_speed
+self.C = scaling_factor
+
+self.Tmelt = meltpool_temperature
+self.Tliquidus = liquidus_temperature
+
+-------------------------------------
+def goldak_temperature(self, x, y, z):
+Equation 19 from paper 
+
+r = np.sqrt(x**2 + y**2 + z**2), r computes the distance from the laser 
+r = np.maximum(r, 1e-8) prevents the division by zero 
+
+temperature = (
+            self.C * self.P
+            / (2 * np.pi * self.k * r)
+            * np.exp(
+                -(self.V / (2 * self.alpha))
+                * (x + r)
+            )
+        )
+T0(x, y, z, t) =  is the temperature at time t 
+P = laser power 
+k = thermal conductivity 
+C = dimensionless scaling factor 
+V = laser velocity
+alpha = thermal diffusivity 
+
+
+--------------------------
+def heat_block():
+
+This function heats only the newly deposited block 
+Inputs: All graph nodes, laser location, temperature 
+
+T = temperature.copy() create a copy of the generated temperature 
+xc,yc,zc = block_center extracts laser coordinates 
+
+xc,yc,zc = block_center
+
+if not node.active:
+    continue
+this skips nodes that are not active or deposited 
+
+Convert global coordiantes into local laser coordinates: 
+x = node.position[0] - xc
+y = node.position[1] - yc
+z = node.position[2] - zc
+Example: 
+If laser  = (20,5,3) 
+Node = (21,5,3) 
+Then x = 1 mm relative to the laser 
+
+delta computes the Goldak temperature with respect to the new centered coordinates 
+
+T[i] updates the temperature vector
+min(delta, self.Tmelt) the code first asks to ensure the Goldak model 
+doesn't predict something over the maximum meltpool temperature 
+
+max(T[i], delta), now suppose the node is already hot 
+T[i] = 1900°C this is the current temperature and Goldak predict delta = 1700°C
+The module is only heating so take the maximum one 
+
+-----------------------------
+def heat_subsurface(): 
+This applies reheating to previously deposited material 
+If cutoff = 0.20, then 0.2TL becomes the reheating threshold 
+Only temperatures larger than that threshold are applied 
+
+>= mean this is simply the greater than or equal to operator 
+
+--------------------------------------
+def apply() 
+Combine both laser heating operations 
+T=self.heat_block(...) heat current layer 
+T=self.heat_subsurface(...) heat previous layers 
+
+------------------------------------
+Main Program 
+
+geom = Geometry(...) --> create geometry object
+geom.build_blocks() --> divide stl into deposition blocks 
+generator = NodeGenerator(geom) --> Create generator object 
+generator.generate() --> populate every blokc wiht random nodes 
+nodes = generator.nodes --> retrieve node objects 
+heat = GoldakHeatSource(...) --> create one laser object containing all laser paramters 
+temperature=np.full(...) --> create initial temperature vector filled with ambient tmeperature 
+block=geom.blocks[0] --> first deposition block 
+center=block.center --> retreive the laser positon for that block 
+
+Now finally, apply Goldak heating 
+heated=heat.apply(...) 

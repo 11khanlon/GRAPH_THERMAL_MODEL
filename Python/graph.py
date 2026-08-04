@@ -106,6 +106,7 @@ class ThermalGraph:
 
         #convert from construction format to computation format 
         self.A = self.A.tocsr()
+
         print("Adjacency matrix complete.")
 
     # --------------------------------------------------------
@@ -169,7 +170,8 @@ class ThermalGraph:
         print("Eigen decomposition complete.")
 
         return eigenvalues, eigenvectors
-
+    
+    
     # --------------------------------------------------------
 
     def summary(self):

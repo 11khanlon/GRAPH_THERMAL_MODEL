@@ -1,20 +1,6 @@
-"""
-visualization.py
+# Visualization tools for the graph-theory DED thermal model
 
-Visualization tools for the graph-theory DED thermal model.
 
-Used after simulation has completed.
-
-Provides:
-
-1. Sensor thermal history
-2. Maximum temperature history
-3. 3D nodal temperature distribution
-4. Active node visualization
-5. Layer temperature visualization
-
-This file does NOT perform any thermal calculations.
-"""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,42 +10,35 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class Visualizer:
 
-    def __init__(self, geometry):
+    def __init__(self, geometry, nodes):
 
         self.geometry = geometry
 
-        self.nodes = geometry.nodes
+        self.nodes = nodes
 
 
     # ---------------------------------------------------------
     # Plot thermocouple history
-    # ---------------------------------------------------------
 
     def temperature_history(
         self,
         time,
         temperature,
-        experimental=None,
-    ):
+        experimental = None):
 
         plt.figure(figsize=(10,5))
 
         plt.plot(
             time,
             temperature,
-            linewidth=2,
-            label="Graph Theory"
-        )
+            linewidth=2, label = "Graph Theory")
 
         if experimental is not None:
 
             plt.plot(
                 time,
                 experimental,
-                "--",
-                linewidth=2,
-                label="Experimental"
-            )
+                "--", linewidth=2, label = "Experimental")
 
         plt.xlabel("Time (s)")
         plt.ylabel("Temperature (°C)")
@@ -74,7 +53,6 @@ class Visualizer:
 
     # ---------------------------------------------------------
     # Plot maximum temperature
-    # ---------------------------------------------------------
 
     def max_temperature(self, history):
 
@@ -96,7 +74,7 @@ class Visualizer:
 
     # ---------------------------------------------------------
     # Plot 3D temperature field
-    # ---------------------------------------------------------
+
 
     def temperature_field(
         self,
@@ -145,7 +123,7 @@ class Visualizer:
 
     # ---------------------------------------------------------
     # Active nodes
-    # ---------------------------------------------------------
+    
 
     def active_nodes(self):
 
@@ -187,7 +165,7 @@ class Visualizer:
 
     # ---------------------------------------------------------
     # Plot one deposited layer
-    # ---------------------------------------------------------
+    
 
     def layer_temperature(
         self,
@@ -241,8 +219,7 @@ class Visualizer:
 
     # ---------------------------------------------------------
     # Animation helper
-    # ---------------------------------------------------------
-
+    
     def snapshot(
         self,
         history,

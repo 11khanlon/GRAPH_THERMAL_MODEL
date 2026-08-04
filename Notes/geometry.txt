@@ -30,6 +30,7 @@ Simulation
 remaining questions: 
 how do we segment the substrate? where in the article do they mention the substrate
 for geometry in block for self.nodes, is this ever filled in?
+generalized .stl files will generalize number of layers and such
 
 
 ------ Imports -------

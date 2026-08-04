@@ -8,7 +8,7 @@ Implements Step 1 from Riensche et al. (2023):
     - Uniform node density
     - One point cloud for substrate + deposited part
 
-Each node later becomes one graph vertex.
+Each node later becomes one graph vertex
 """
 
 import numpy as np
@@ -26,7 +26,7 @@ class Node:
         self.id = node_id
 
         # Cartesian coordinate
-        self.position = np.asarray(position, dtype=float)
+        self.position = np.asarray(position, dtype = float)
 
         # block containing this node
         self.block_id = block_id
@@ -79,7 +79,7 @@ class NodeGenerator:
 
         node_id = 0
 
-        density = GRAPH["node_density"]  # nodes/mm³
+        node_density = GRAPH["node_density"]  # nodes/mm³
 
         for block in self.geometry.blocks:
 
@@ -93,11 +93,7 @@ class NodeGenerator:
                 abs(z1-z0)*1000
             )
 
-            n_nodes = max(
-                1,
-                int(volume_mm3 * density)
-            )
-
+            n_nodes = max(1, int(volume_mm3 * node_density))
 
             # Uniform random node placement
             for _ in range(n_nodes):
