@@ -7,7 +7,18 @@ fix surface_maks() node class does not contain node.surface
 how is cooling between node and node dealt with based on time from previous layers and blocks? does the entire graph recalculate or just the singular block? 
 the first layer deposits first, how do we factor its singular existence. How are previous layers incoroporated in future deposition calculations? 
 does the laser raster back and forth 
+does it call dwell time from config file? case_A (10s) for example
+Need to acitivate the substrate before deposition. Before the laser starts, the substrate is already sitting on the machine. At time 0, the substrate already exists. Every node and block must be active 
+for block in geometry.blocks:
 
+    if block.is_substrate:
+
+        block.active = True
+
+        for node in block.nodes:
+
+            node.active = True
+    
 block.node_indices does not exist in your earlier Geometry/Block class. Your Block stores block.nodes, not indices. Either store node indices when generating nodes or iterate over block.nodes.
 node.surface does not exist in your Node class. The convection solver assumes every node has a Boolean surface attribute. You'll need to add self.surface = False to the Node class and implement a method to identify boundary nodes.
 Material properties are currently treated as constants (material["thermal_diffusivity"], material["specific_heat"]). If you later switch to the temperature-dependent material class (material.py), you'll want to replace these constants with values computed from the current node or layer temperatures

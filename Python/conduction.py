@@ -113,6 +113,7 @@ if __name__ == "__main__":
     from nodes import NodeGenerator
     from graph import ThermalGraph
     from config import GRAPH, MATERIAL, BLOCK
+    from material import Ti64Material, layer_diffusivity
 
     geom = Geometry("example_part.stl")
 
@@ -146,8 +147,8 @@ if __name__ == "__main__":
     T[:25] = 2200.0
 
     T_new = solver.block_conduction(
-        temperature=T,
-        alpha=MATERIAL["thermal_diffusivity"],
+        temperature = T,
+        alpha = material.layer_diffusivity( temperature),
         block_time = BLOCK["time_per_block"]
     )
 

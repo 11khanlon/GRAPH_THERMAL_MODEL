@@ -7,7 +7,10 @@ how does convection, conduction and deposition all work together
 why is dt 1 second here? in dwell cooling() and multiple steps? didn't we determine this in config 
 i dont get this syntax solver.dwell_cooling(...)
 T[boundary] = (ambient_temperature + ( T[boundary] - ambient_temperature) * factor)   hwo does tboundary equal tnew and told at the same time 
-
+are the material properties vary with respect with time? 
+do they calculate h_eff? why do the simplify it later  [radiation?]. Where is convection values incorporated. The only convection here is forced convection for h. where is the rest? Where is radiation and free conveciton
+check import feature here 
+don't include clamp convection. I don't want it in my simulation, but how would you include it in your simulation/math? 
 ----------------------------------------------------------
 Heat loss through convection (and radiation approximation)
 

@@ -1,22 +1,9 @@
 Remaining Questions: 
-this is the config file: 
-Start with the values they used [Ti-64] to validate your math and model works. Then branch out to inconel
-
 
 build dictionary: 
 do you segment the substrate too? how to you do it here? is it included in deposition? 
 Need to extract CAD values instead of manually listing them each time [length, width, height, number of layers, substrate length, etc]
 nodes.py inserts .stl file, but does it work with the length, width suttf in the dictionary given
-
-NODES = {
-    "seed": 42,
-    "random": True}
-np.random.seed(NODES["seed"])
-are these coordinates? If the nodes are placed randomly, how is the node density assumed constant? [seed]
-Isn't this established in the node sectoin
-
-do they calculate h_eff? why do the simplify it later  [radiation?]. Where is convection values incorporated
-I do not want to model the clamp. How will this mess up the simulation? I only want one dwell time also how will this affect other code
 
 -------------------------------------------------
 Based on:
@@ -25,6 +12,8 @@ Riensche et al.
 Thermal Modeling of Directed Energy Deposition Additive Manufacturing
 Using Graph Theory
 Rapid Prototyping Journal (2023)
+
+Start with the values they used [Ti-64] to validate your math and model works. Then branch out to inconel
 
 **Variables you can edit:**
 
@@ -71,14 +60,9 @@ with a seed every run gives the exact same sequence
 
 Example:
 seed = 42
-every run gives: 
-0.3745
-0.9507
-0.7319
-...
-are these coordinates? If the nodes are placed randomly, how is the node density assumed constant? 
+every run gives: 0.3745, 0.9507, 0.7319...
+The seed only fixes the random number generator, each seed produces the same random node cloud 
 
-do you model the substrate too? 
 
 
 
@@ -111,3 +95,21 @@ LASER = {
 
 }
 
+DWELL = {
+    
+    "case_A": 10.0,  #seconds 
+    "case_B": 3.0    #seconds 
+
+}
+
+
+
+--------------------
+.stl check
+stl_file = BUILD["stl_file"]
+mesh = trimesh.load_mesh(stl_file)
+mesh.apply_scale(1e-3)
+bounds = mesh.bounds
+print("Raw STL bounds:")
+print(bounds)
+print(mesh.units)

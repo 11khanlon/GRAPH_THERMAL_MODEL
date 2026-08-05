@@ -2,6 +2,11 @@ Remaining Quesitons:
 go over how we get the block_center coordinates, laser coordinates and node coordinates
 does this resemble Goldak heat source? Does it calibrate it like the article?
 
+-----------------------
+Possible edits:
+- In the Heat Source for To, they keep k constant (6.8), but it may change 
+    --> You can change it to vary with time, but it won't be consistent with graph
+
 ---------------------
 Laser heat source model
 Produces the initial nodal temperature field T0 before conduction begins

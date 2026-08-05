@@ -126,6 +126,7 @@ if __name__ == "__main__":
     from geometry import Geometry
     from nodes import NodeGenerator
     from config import MATERIAL, CONVECTION, BLOCK
+    from material import Ti64Material
 
     geom = Geometry("example_part.stl")
 
@@ -155,7 +156,7 @@ if __name__ == "__main__":
         temperature,
         surface,
         h = CONVECTION["forced"],
-        cp = MATERIAL["specific_heat"],
+        cp = material.specific_heat(np.mean(temperature),
         ambient_temperature = MATERIAL["ambient_temperature"],
         block_time = BLOCK["time_per_block"])
 

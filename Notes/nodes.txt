@@ -1,5 +1,7 @@
 remaining questions: 
-activate block section and beyond. (does this mess up the deposition.py file)
+activate block section and beyond. (does this mess up the deposition.py file? since the deposition file is doing this anyway)
+how to work with stl_file? how does it work with the geometry dictionary? 
+does the subtrate and depsoition model get filled with nodes. are they connected? 
 
 How do we know these are the lower corner and upper corner do we get these from geometry 
 x0, y0, z0 = block.start

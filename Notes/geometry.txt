@@ -1,3 +1,14 @@
+remaining questions: 
+how do we segment the substrate? where in the article do they mention the substrate
+for geometry in block for self.nodes, is this ever filled in?
+generalized .stl files will generalize number of layers and such
+add a variation with the substrate. need to discretize the substrate and the deposition process 
+
+how to make sure substrate and deposition wall they are mated in the code 
+substrate attatched to geometry already? 
+
+
+----------------------------
 Based on Section 4.3.1.1 of Riensche et al.
 Thermal Modeling of Directed Energy Deposition Using Graph Theory
 Rapid Prototyping Journal (2023)
@@ -26,11 +37,6 @@ Simulation
 │
 └── Thermal Solver
 
-
-remaining questions: 
-how do we segment the substrate? where in the article do they mention the substrate
-for geometry in block for self.nodes, is this ever filled in?
-generalized .stl files will generalize number of layers and such
 
 
 ------ Imports -------
@@ -83,11 +89,30 @@ self.nodes = []
 this is initially empty
 later this list will contain graph nodes inside the block
 
+self.node_indices = []
+this will include the indices of the nodes 
+Later during deposition, instead of searching each node, 
+you loop over each block on turn on the node indices in there 
+
+substrate info: 
+is_substrate=False (initially turned off because deposition hasn't started yet)
+self.is_substrate = is_substrate
+self.active = is_substrate
+
 Temperature:
 self.temperature = None 
 this is initially unknown 
 
 def __repr__(self):
+
+region = "Substrate" if self.is_substrate else "Deposition"
+This is called the terniary operator 
+It is equivalent to:
+if self.is_substrate:
+    region = "Substrate"
+else:
+    region = "Deposition"
+
 this controls what is getting tracked and getting printed
 return f"Block(id={self.id}, layer={self.layer})"
 you see here Block(id = 7, layer =3)
@@ -119,7 +144,22 @@ zmax = 11 mm
 These six numbers define the smallest box that encloses the entire part 
 
 
-def build_blocks(): 
+---------- def build_substrate() -------------
+extract block length and height from config.py 
+Obtain xmax values by adding the xmin value + xmax 
+Obtain ymax values by adding the ymin value + ymax 
+Obtain zmin values by using the deposition geometry zmin and substracting it from substrate height. This is -6.4 mm
+Number of layers are determined by substrate height diviided by block height 
+
+double "for loop":
+loop over range of layers. For each substrate layer, you compute current z 
+
+for x in np.arange(xmin, xmax, block_length):
+This moves across the subtrate in the x-direction 
+So, for example, if xmin = 0 , xmax = 40, and block length is 8,
+you get x = 0, x = 8, x = 16, x = 24, x = 32 
+
+-------- def build_deposition(): -------------
 this function converts one STL into different layers 
 
 read bounding box 
@@ -143,12 +183,9 @@ if the layer number has a remainder of 0 then its even
 if the layer number has a remainder of 1 then its odd 
 
 
-**I still don't understand this part 
-np.arange(
-    xmin,
-    xmax,
-    block_length
-)
+np.arange(xmin, xmax, block_length) 
+this python package is in format np.arange(start, stop, step)
+It segments/discretizes the bead 
 
 
 Move up one layer
@@ -156,6 +193,8 @@ z += layer_height
 layer 1 is z = 0
 and then increase by programmed layer height the next layer begins 
 
+
+-------------------------------
 get_block() 
 geom.get_block(15)
 block 15 
@@ -195,3 +234,30 @@ geom.build_blocks()
 
 when geometry.py is imported Python sets __name__ = "geometry" 
 now the condition if __name__ == "__main__":  is skipped 
+
+
+
+
+
+
+
+
+
+---------------------------------
+print("----------------------------------")
+
+        print("Geometry created")
+
+        print("----------------------------------")
+
+        print("Part dimensions")
+
+        print(f"Length : {self.length:.4f} m")
+
+        print(f"Width  : {self.width:.4f} m")
+
+        print(f"Height : {self.height:.4f} m")
+
+        print()
+
+        print("Total blocks :", len(self.blocks))
