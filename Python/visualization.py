@@ -1,234 +1,217 @@
-# Visualization tools for the graph-theory DED thermal model
 
-
-
+import trimesh
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import os 
+import time
 
-from mpl_toolkits.mplot3d import Axes3D
+# ------------------------------
+def draw_block(ax, block, color):
 
+    """
+    Draw one block as a transparent rectangular prism.
+    """
 
-class Visualizer:
+    x0, y0, z0 = block.start
+    x1, y1, z1 = block.end
 
-    def __init__(self, geometry, nodes):
+    vertices = np.array([
+        [x0, y0, z0],
+        [x1, y0, z0],
+        [x1, y1, z0],
+        [x0, y1, z0],
+        [x0, y0, z1],
+        [x1, y0, z1],
+        [x1, y1, z1],
+        [x0, y1, z1],
+    ])
 
-        self.geometry = geometry
+    faces = [
 
-        self.nodes = nodes
+        [vertices[0], vertices[1], vertices[2], vertices[3]],
 
+        [vertices[4], vertices[5], vertices[6], vertices[7]],
 
-    # ---------------------------------------------------------
-    # Plot thermocouple history
+        [vertices[0], vertices[1], vertices[5], vertices[4]],
 
-    def temperature_history(
-        self,
-        time,
-        temperature,
-        experimental = None):
+        [vertices[2], vertices[3], vertices[7], vertices[6]],
 
-        plt.figure(figsize=(10,5))
+        [vertices[1], vertices[2], vertices[6], vertices[5]],
 
-        plt.plot(
-            time,
-            temperature,
-            linewidth=2, label = "Graph Theory")
+        [vertices[0], vertices[3], vertices[7], vertices[4]],
 
-        if experimental is not None:
+    ]
 
-            plt.plot(
-                time,
-                experimental,
-                "--", linewidth=2, label = "Experimental")
+    cube = Poly3DCollection(
 
-        plt.xlabel("Time (s)")
-        plt.ylabel("Temperature (°C)")
-        plt.title("Thermal History")
+        faces,
 
-        plt.grid(True)
-        plt.legend()
+        facecolors=color,
 
-        plt.tight_layout()
-        plt.show()
+        edgecolors="black",
 
+        linewidths=0.25,
 
-    # ---------------------------------------------------------
-    # Plot maximum temperature
+        alpha=0.20,
 
-    def max_temperature(self, history):
+    )
 
-        Tmax = np.max(history, axis=1)
+    ax.add_collection3d(cube)
 
-        plt.figure(figsize=(10,5))
+def plot_geometry(geometry):
 
-        plt.plot(Tmax)
+    """
+    Plot the STL together with every discretized block.
+    """
 
-        plt.xlabel("Time Step")
-        plt.ylabel("Maximum Temperature (°C)")
-        plt.title("Maximum Temperature During Build")
+    fig = plt.figure(figsize=(12,9))
 
-        plt.grid(True)
+    ax = fig.add_subplot(
+        111,
+        projection="3d"
+    )
 
-        plt.tight_layout()
-        plt.show()
+   
+    # STL
 
+    mesh = Poly3DCollection(
 
-    # ---------------------------------------------------------
-    # Plot 3D temperature field
+        geometry.mesh.triangles,
 
+        facecolor="lightgray",
 
-    def temperature_field(
-        self,
-        temperature,
-        title="Temperature Field",
-    ):
+        edgecolor="black",
 
-        coords = np.array(
-            [node.position for node in self.nodes]
-        )
+        alpha=0.10,
 
-        fig = plt.figure(figsize=(9,8))
+    )
 
-        ax = fig.add_subplot(
-            111,
-            projection="3d"
-        )
+    ax.add_collection3d(mesh)
 
-        scatter = ax.scatter(
+  
+    # Draw every block
 
-            coords[:,0],
-            coords[:,1],
-            coords[:,2],
+    for block in geometry.blocks:
 
-            c=temperature,
+        if block.is_substrate:
 
-            cmap="inferno",
+            draw_block(
+                ax,
+                block,
+                "royalblue"
+            )
 
-            s=20
-        )
+        else:
 
-        fig.colorbar(
-            scatter,
-            label="Temperature (°C)"
-        )
+            draw_block(
+                ax,
+                block,
+                "crimson"
+            )
 
-        ax.set_xlabel("X (m)")
-        ax.set_ylabel("Y (m)")
-        ax.set_zlabel("Z (m)")
-
-        ax.set_title(title)
-
-        plt.tight_layout()
-        plt.show()
-
-
-    # ---------------------------------------------------------
-    # Active nodes
     
 
-    def active_nodes(self):
+    ax.set_xlabel("X (m)")
+    ax.set_ylabel("Y (m)")
+    ax.set_zlabel("Z (m)")
 
-        coords = []
+    ax.set_title("Block Discretization")
 
-        for node in self.nodes:
+    # Substrate bounds
 
-            if node.active:
+    xmin = geometry.xmin - (geometry.substrate_length - geometry.length)/2
+    xmax = xmin + geometry.substrate_length
 
-                coords.append(node.position)
+    ymin = geometry.ymin - (geometry.substrate_width -  geometry.width)/2
+    ymax = ymin + geometry.substrate_width
 
-        coords = np.array(coords)
+    ax.set_box_aspect(
+    (xmax - xmin, ymax - ymin, geometry.zmax - (geometry.zmin - geometry.substrate_height)
+    )
+    )
 
-        fig = plt.figure(figsize=(8,7))
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
+    ax.set_zlim(
+        geometry.zmin - geometry.substrate_height,
+        geometry.zmax)
 
-        ax = fig.add_subplot(
-            111,
-            projection="3d"
-        )
+    plt.tight_layout()
+
+    plt.show()
+
+
+def plot_nodes(
+    self,
+    show_substrate=True,
+    show_deposition=True,
+):
+    """
+    Display all generated nodes.
+
+    Blue = substrate
+
+    Red = deposition
+    """
+
+    fig = plt.figure(figsize=(10,8))
+
+    ax = fig.add_subplot(
+        111,
+        projection="3d"
+    )
+
+    substrate_x = []
+    substrate_y = []
+    substrate_z = []
+
+    deposition_x = []
+    deposition_y = []
+    deposition_z = []
+
+    for node in self.nodes:
+
+        if node.is_substrate:
+
+            substrate_x.append(node.position[0])
+            substrate_y.append(node.position[1])
+            substrate_z.append(node.position[2])
+
+        else:
+
+            deposition_x.append(node.position[0])
+            deposition_y.append(node.position[1])
+            deposition_z.append(node.position[2])
+
+    if show_substrate:
 
         ax.scatter(
-
-            coords[:,0],
-            coords[:,1],
-            coords[:,2],
-
-            s=10
+            substrate_x,
+            substrate_y,
+            substrate_z,
+            s=2,
+            c="blue",
+            label="Substrate"
         )
 
-        ax.set_title("Active Nodes")
+    if show_deposition:
 
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-
-        plt.tight_layout()
-        plt.show()
-
-
-    # ---------------------------------------------------------
-    # Plot one deposited layer
-    
-
-    def layer_temperature(
-        self,
-        layer,
-        temperature,
-    ):
-
-        coords = []
-        temps = []
-
-        for node, T in zip(self.nodes, temperature):
-
-            if node.layer == layer:
-
-                coords.append(node.position)
-                temps.append(T)
-
-        coords = np.array(coords)
-        temps = np.array(temps)
-
-        fig = plt.figure(figsize=(8,7))
-
-        ax = fig.add_subplot(
-            111,
-            projection="3d"
+        ax.scatter(
+            deposition_x,
+            deposition_y,
+            deposition_z,
+            s=4,
+            c="red",
+            label="Deposition"
         )
 
-        scatter = ax.scatter(
+    ax.set_xlabel("X (m)")
+    ax.set_ylabel("Y (m)")
+    ax.set_zlabel("Z (m)")
 
-            coords[:,0],
-            coords[:,1],
-            coords[:,2],
+    ax.legend()
 
-            c=temps,
+    plt.tight_layout()
 
-            cmap="inferno",
-
-            s=25
-        )
-
-        fig.colorbar(
-            scatter,
-            label="Temperature (°C)"
-        )
-
-        ax.set_title(f"Layer {layer}")
-
-        plt.tight_layout()
-        plt.show()
-
-
-    # ---------------------------------------------------------
-    # Animation helper
-    
-    def snapshot(
-        self,
-        history,
-        step,
-    ):
-
-        self.temperature_field(
-
-            history[step],
-
-            title=f"Timestep {step}"
-        )
+    plt.show()

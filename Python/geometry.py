@@ -16,6 +16,8 @@ import trimesh
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import os 
+import time
 
 
 from config import BUILD, BLOCK
@@ -70,6 +72,31 @@ class Geometry:
 
         # Load deposited part
         self.mesh = trimesh.load_mesh(stl_file)
+
+        # -----------------------------------------
+        print("Loading STL...")
+
+        if not os.path.exists(stl_file):
+            raise FileNotFoundError(
+                f"STL file not found:\n{stl_file}"
+            )
+
+        start = time.perf_counter()
+
+        try:
+            self.mesh = trimesh.load_mesh(stl_file)
+
+        except Exception as e:
+            raise RuntimeError(
+                f"Unable to load STL:\n{e}"
+            )
+
+        elapsed = time.perf_counter() - start
+
+        print(f"STL loaded in {elapsed:.2f} seconds. Success!")
+
+        #---------------------------------
+
         self.mesh.apply_scale(1e-3)
 
         # Dimensions obtained directly from STL
@@ -100,65 +127,70 @@ class Geometry:
         self.blocks = []
         self.next_block_id = 0
 
+
+   
     # -----------------------------------------
     def build_substrate(self):
 
         """
-        Build the substrate from rectangular blocks.
+        Discretize the entire substrate into blocks
+        The top of the substrate is flush with the bottom of the deposited part.
         """
 
-        block_length = BLOCK["length"]
-        block_width  = BLOCK["width"]
-        block_height = BLOCK["height"]
+        #Determine number of blocks in the x,y,z
+        nx = 10
+        ny = 8
+        nz = 15
+    
+        block_length = self.substrate_length / nx
+        block_width  = self.substrate_width / ny
+        block_height = self.substrate_height / nz
 
-        xmin = self.xmin
-        ymin = self.ymin
+        # Substrate bounds
+        xmin = self.xmin - (self.substrate_length - self.length)/2
+        xmax = xmin + self.substrate_length
 
-        zmin = self.zmin - self.substrate_height
+        ymin = self.ymin - (self.substrate_width - self.width)/2
+        ymax = ymin + self.substrate_width
 
-        nx = int(np.ceil(self.substrate_length / block_length))
-        ny = int(np.ceil(self.substrate_width  / block_width))
-        nz = int(np.ceil(self.substrate_height / block_height))
+        substrate_bottom = self.zmin - self.substrate_height
+        substrate_top = self.zmin
 
+     
+        #Create substrate blocks
         for k in range(nz):
 
-            z0 = zmin + k * block_height
-            z1 = min(z0 + block_height,
-                    self.zmin)
+            z0 = substrate_bottom + k * block_height
+            z1 = min(z0 + block_height, substrate_top)
 
             for j in range(ny):
 
                 y0 = ymin + j * block_width
-                y1 = min(y0 + block_width,
-                        ymin + self.substrate_width)
+                y1 = min(y0 + block_width, ymax)
 
                 for i in range(nx):
 
                     x0 = xmin + i * block_length
-                    x1 = min(x0 + block_length,
-                            xmin + self.substrate_length)
+                    x1 = min(x0 + block_length, xmax)
+
+                    start = (x0, y0, z0)
+                    end = (x1, y1, z1)
 
                     self.blocks.append(
-
                         Block(
-
                             self.next_block_id,
-
-                            -(nz-k),
-
-                            (x0, y0, z0),
-
-                            (x1, y1, z1),
-
-                            is_substrate=True
-
+                            k - nz,
+                            start,
+                            end,
+                            is_substrate=True,
                         )
-
                     )
 
-                    self.next_block_id += 1    
+                    self.next_block_id += 1
 
     #--------------------------------   
+    #Create deposition blocks and area 
+
     def build_deposition(self):
 
         block_length = BLOCK["length"]
@@ -182,7 +214,7 @@ class Geometry:
                     self.xmax - block_length,
                     self.xmin - block_length,
                     -block_length
-                )
+                    )
 
             for x in x_positions:
 
@@ -206,7 +238,7 @@ class Geometry:
 
             z += layer_height
 
-
+    
     # --------------------------------------------------------------
     def validate_geometry(self):
 
@@ -214,15 +246,9 @@ class Geometry:
         Verify the generated geometry before node generation.
         """
 
-        print()
-        print("----------------------------------")
-        print("Geometry Validation")
-        print("----------------------------------")
-
-        # ------------------------------
+        print("------- Geometry Validation --------")
+      
         # Part dimensions
-        # ------------------------------
-
         print("Deposited Part")
 
         print(f"Length : {self.length:.4f} m")
@@ -237,10 +263,8 @@ class Geometry:
         print(f"Width  : {self.substrate_width:.4f} m")
         print(f"Height : {self.substrate_height:.4f} m")
 
-        # ------------------------------
+       
         # Count blocks
-        # ------------------------------
-
         substrate_blocks = sum(
             block.is_substrate
             for block in self.blocks
@@ -257,39 +281,23 @@ class Geometry:
         print("Deposition blocks:", deposition_blocks)
         print("Total blocks     :", len(self.blocks))
 
-        # ------------------------------
+    
         # Check interface
-        # ------------------------------
-
         substrate_top = max(
-
             block.end[2]
-
             for block in self.blocks
-
             if block.is_substrate
-
         )
 
         deposition_bottom = min(
-
             block.start[2]
-
             for block in self.blocks
-
-            if not block.is_substrate
-
-        )
+            if not block.is_substrate)
 
         gap = deposition_bottom - substrate_top
-
         active = sum(
-
         block.active
-
-        for block in geom.blocks
-
-            )
+        for block in geom.blocks)
 
         print()
 
@@ -309,9 +317,7 @@ class Geometry:
         print(len(set(ids)))
 
 
-        layers = sorted(
-
-        set(block.layer for block in geom.blocks))
+        layers = sorted(set(block.layer for block in geom.blocks))
 
         print(layers)
      
@@ -321,145 +327,31 @@ class Geometry:
         print(f"Gap               : {gap:.6e} m")
 
         if abs(gap) < 1e-9:
-
             print("PASS: Substrate and deposition touch.")
 
         else:
-
             print("WARNING: Gap detected.")
 
-    # --------------------------------------------------------------
-    def draw_block(self, ax, block, color):
 
-        """
-        Draw one block as a transparent rectangular prism.
-        """
+        print("----- Stl Bounds---- ")
+        print(self.bounds)
+        
+     
+        print()
+        print("Substrate bounds")
+        for block in geom.blocks:
 
-        x0, y0, z0 = block.start
-        x1, y1, z1 = block.end
+            if not block.is_substrate:
 
-        vertices = np.array([
-            [x0, y0, z0],
-            [x1, y0, z0],
-            [x1, y1, z0],
-            [x0, y1, z0],
-            [x0, y0, z1],
-            [x1, y0, z1],
-            [x1, y1, z1],
-            [x0, y1, z1],
-        ])
+                if block.layer < 5:
 
-        faces = [
+                    print(
+                        block.layer,
+                        block.start,
+                        block.end
+                    )
 
-            [vertices[0], vertices[1], vertices[2], vertices[3]],
-
-            [vertices[4], vertices[5], vertices[6], vertices[7]],
-
-            [vertices[0], vertices[1], vertices[5], vertices[4]],
-
-            [vertices[2], vertices[3], vertices[7], vertices[6]],
-
-            [vertices[1], vertices[2], vertices[6], vertices[5]],
-
-            [vertices[0], vertices[3], vertices[7], vertices[4]],
-
-        ]
-
-        cube = Poly3DCollection(
-
-            faces,
-
-            facecolors=color,
-
-            edgecolors="black",
-
-            linewidths=0.25,
-
-            alpha=0.20,
-
-        )
-
-        ax.add_collection3d(cube)
-
-    def plot_geometry(self):
-
-        """
-        Plot the STL together with every discretized block.
-        """
-
-        fig = plt.figure(figsize=(12,9))
-
-        ax = fig.add_subplot(
-            111,
-            projection="3d"
-        )
-
-        ####################################################
-        # STL
-        ####################################################
-
-        mesh = Poly3DCollection(
-
-            self.mesh.triangles,
-
-            facecolor="lightgray",
-
-            edgecolor="gray",
-
-            alpha=0.15,
-
-        )
-
-        ax.add_collection3d(mesh)
-
-        ####################################################
-        # Draw every block
-        ####################################################
-
-        for block in self.blocks:
-
-            if block.is_substrate:
-
-                self.draw_block(
-                    ax,
-                    block,
-                    "royalblue"
-                )
-
-            else:
-
-                self.draw_block(
-                    ax,
-                    block,
-                    "crimson"
-                )
-
-        ####################################################
-
-        ax.set_xlabel("X (m)")
-        ax.set_ylabel("Y (m)")
-        ax.set_zlabel("Z (m)")
-
-        ax.set_title("Block Discretization")
-
-        ax.set_xlim(
-            self.xmin,
-            self.xmin + self.substrate_length
-        )
-
-        ax.set_ylim(
-            self.ymin,
-            self.ymin + self.substrate_width
-        )
-
-        ax.set_zlim(
-            self.zmin - self.substrate_height,
-            self.zmax
-        )
-
-        plt.tight_layout()
-
-        plt.show()
+   
     # -----------------------------------------
     def build_blocks(self):
 
@@ -468,8 +360,7 @@ class Geometry:
         self.build_deposition()
 
         self.validate_geometry()
-        
-        
+    
 
 
     def deposition_order(self):
@@ -483,15 +374,15 @@ class Geometry:
 
         return [block
             for block in self.blocks
-            if not block.is_substrate
-        ]
+            if not block.is_substrate]
 
 
 # ------------------------------------------------------------------
 
 if __name__ == "__main__":
 
-  
+    from visualization import plot_geometry 
+
     stl_file = BUILD["stl_file"]
     
     geom = Geometry(stl_file)
@@ -502,4 +393,7 @@ if __name__ == "__main__":
 
     print(geom.blocks[-1])
 
-    geom.plot_geometry()
+    plot_geometry(geom)
+
+
+   

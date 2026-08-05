@@ -1,11 +1,5 @@
 remaining questions: 
-how do we segment the substrate? where in the article do they mention the substrate
-for geometry in block for self.nodes, is this ever filled in?
-generalized .stl files will generalize number of layers and such
-add a variation with the substrate. need to discretize the substrate and the deposition process 
 
-how to make sure substrate and deposition wall they are mated in the code 
-substrate attatched to geometry already? 
 
 
 ----------------------------

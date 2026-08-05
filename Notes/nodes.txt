@@ -9,6 +9,8 @@ x1, y1, z1 = block.end
 
 explain this syntax: self.geometry.blocks new to OOP
 
+create verification function and add to visualization
+self.geometry.nodes = self.nodes --> did I add this to the correct place? 
 -----------------------------------
 config.py
     │

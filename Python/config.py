@@ -12,9 +12,9 @@ MATERIAL = {
 
     "name": "Ti64",
     "density": 4430,                  # rho, kg/m^3
-    "ambient_temperature": 25,    #  ambient temperature, K
+    "ambient_temperature": 25,    #  ambient temperature,C
     "temperature_dependent":  True,
-    "liquidus_temperature": 1630      # liquidus temperature, K
+    "liquidus_temperature": 1630      # liquidus temperature, C
 
 }
 

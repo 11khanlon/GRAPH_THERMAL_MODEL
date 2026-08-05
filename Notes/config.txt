@@ -1,9 +1,6 @@
 Remaining Questions: 
 
-build dictionary: 
-do you segment the substrate too? how to you do it here? is it included in deposition? 
-Need to extract CAD values instead of manually listing them each time [length, width, height, number of layers, substrate length, etc]
-nodes.py inserts .stl file, but does it work with the length, width suttf in the dictionary given
+
 
 -------------------------------------------------
 Based on:
@@ -99,7 +96,6 @@ DWELL = {
     
     "case_A": 10.0,  #seconds 
     "case_B": 3.0    #seconds 
-
 }
 
 

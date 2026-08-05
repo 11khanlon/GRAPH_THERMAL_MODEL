@@ -12,7 +12,7 @@ Each node later becomes one graph vertex
 """
 
 import numpy as np
-from Python.config import GRAPH, MATERIAL, BUILD
+from config import GRAPH, MATERIAL, BUILD
 
 
 #---------- Graph Node -----------
@@ -21,7 +21,10 @@ class Node:
     def __init__(self,
                  node_id,
                  position,
-                 block_id):
+                 block_id, 
+                 block, 
+                 is_substrate=False
+                 ):
 
         self.id = node_id
 
@@ -30,9 +33,14 @@ class Node:
 
         # block containing this node
         self.block_id = block_id
+        self.block = block
 
-        # becomes True once deposited
-        self.active = False
+        #determine if substrate 
+        self.is_substrate = is_substrate
+
+        # becomes True once deposited. Now substrate nodes are active immediately
+        # Deposition nodes remain inactive until printed 
+        self.active = is_substrate
 
         # ambient temperature initially
         self.temperature = MATERIAL["ambient_temperature"]
@@ -42,6 +50,8 @@ class Node:
 
         # edge weights
         self.weights = []
+
+      
 
     def __repr__(self):
 
@@ -93,7 +103,10 @@ class NodeGenerator:
                 abs(z1-z0)*1000
             )
 
-            n_nodes = max(1, int(volume_mm3 * node_density))
+            expected_nodes = volume_mm3 * node_density
+
+            n_nodes = max(1,int(np.round(expected_nodes)))
+
 
             # Uniform random node placement
             for _ in range(n_nodes):
@@ -105,20 +118,31 @@ class NodeGenerator:
                 node = Node(
                     node_id=node_id,
                     position=(x, y, z),
-                    block_id=block.id
+                    block_id=block.id,
+                    block=block,
+                    is_substrate=block.is_substrate
                 )
 
                 self.nodes.append(node)
+
+                block.node_indices.append(node_id)
 
                 block.nodes.append(node)
 
                 node_id += 1
 
-        print("--------------------------------")
-        print("Nodes Generated")
-        print("--------------------------------")
-        print("Total Nodes:", len(self.nodes))
-        print()
+        substrate_nodes = sum(
+            node.is_substrate
+            for node in self.nodes
+        )
+
+        deposition_nodes = len(self.nodes) - substrate_nodes
+
+        print(f"Substrate Nodes : {substrate_nodes}")
+        print(f"Deposition Nodes: {deposition_nodes}")
+        print(f"Total Nodes     : {len(self.nodes)}")
+
+        self.geometry.nodes = self.nodes
 
         return self.nodes
 
@@ -168,11 +192,106 @@ class NodeGenerator:
         ])
 
 
+    # -----------------------------------------------------
+    def validate_nodes(self):
+        """
+        Verify node generation before building the graph.
+        """
+
+        print()
+        print("--------------------------------")
+        print("Node Validation")
+        print("--------------------------------")
+
+        substrate_nodes = sum(
+            node.is_substrate
+            for node in self.nodes
+        )
+
+        deposition_nodes = len(self.nodes) - substrate_nodes
+
+        active_nodes = sum(
+            node.active
+            for node in self.nodes
+        )
+
+        inactive_nodes = len(self.nodes) - active_nodes
+
+        print(f"Substrate Nodes : {substrate_nodes}")
+        print(f"Deposition Nodes: {deposition_nodes}")
+        print(f"Total Nodes     : {len(self.nodes)}")
+
+        print()
+
+        print(f"Active Nodes    : {active_nodes}")
+        print(f"Inactive Nodes  : {inactive_nodes}")
+
+        print()
+
+        nodes_per_block = []
+
+        densities = []
+
+        for block in self.geometry.blocks:
+
+            n = len(block.nodes)
+
+            nodes_per_block.append(n)
+
+            x0, y0, z0 = block.start
+            x1, y1, z1 = block.end
+
+            volume_mm3 = (
+                abs(x1-x0)*1000 *
+                abs(y1-y0)*1000 *
+                abs(z1-z0)*1000
+            )
+
+            densities.append(
+                n / volume_mm3
+            )
+
+        print(
+            f"Minimum Nodes per Block : {min(nodes_per_block)}"
+        )
+
+        print(
+            f"Maximum Nodes per Block : {max(nodes_per_block)}"
+        )
+
+        print(
+            f"Average Nodes per Block : {np.mean(nodes_per_block):.2f}"
+        )
+
+        print()
+
+        print(
+            f"Requested Density : {GRAPH['node_density']:.3f} nodes/mm³"
+        )
+
+        print(
+            f"Average Density   : {np.mean(densities):.3f} nodes/mm³"
+        )
+
+
+        print()
+
+        print(
+            f"Minimum Density : {min(densities):.3f}"
+        )
+
+        print(
+            f"Maximum Density : {max(densities):.3f}"
+        )
+
+        print(
+            f"Average Density : {np.mean(densities):.3f}"
+        )
 
 # --------- Testing ----------
 if __name__ == "__main__":
 
-    from Python.geometry import Geometry
+    from geometry import Geometry
 
     stl_file = BUILD["stl_file"]
     
@@ -185,3 +304,5 @@ if __name__ == "__main__":
     generator.generate()
 
     print(generator.nodes[0])
+
+    generator.validate_nodes()
