@@ -139,8 +139,8 @@ class Geometry:
 
         #Determine number of blocks in the x,y,z
         nx = 10
-        ny = 8
-        nz = 15
+        ny = 9
+        nz = 28
     
         block_length = self.substrate_length / nx
         block_width  = self.substrate_width / ny
@@ -160,8 +160,8 @@ class Geometry:
         #Create substrate blocks
         for k in range(nz):
 
-            z0 = substrate_bottom + k * block_height
-            z1 = min(z0 + block_height, substrate_top)
+            z0 = self.zmin - (nz - k) * block_height
+            z1 = z0 + block_height
 
             for j in range(ny):
 
@@ -194,57 +194,62 @@ class Geometry:
     def build_deposition(self):
 
         block_length = BLOCK["length"]
-        layer_height = BLOCK["height"]
+        block_height = BLOCK["height"]
         total_layers = int(np.ceil(self.height / BLOCK["height"]))
         z = self.zmin
 
+        blocks_per_layer = BUILD["blocks_per_layer"]
+
+        # Center the deposition on the substrate
+        deposit_xmin = (
+            self.xmin - (self.substrate_length - self.length)/2
+            + (self.substrate_length - self.length)/2
+        )
+
+        deposit_ymin = (self.ymin - (self.substrate_width - self.width)/2
+            + (self.substrate_width - self.width)/2
+        )
+
         for layer in range(total_layers):
 
-            if layer % 2 == 0:
+            z0 = self.zmin + layer * block_height
+            z1 = z0 + block_height
 
-                x_positions = np.arange(
-                    self.xmin,
-                    self.xmax,
-                    block_length
+            for i in range(blocks_per_layer):
+
+                x0 = deposit_xmin + i * block_length
+                x1 = x0 + block_length
+
+                start = (
+                    x0,
+                    deposit_ymin,
+                    z0
                 )
 
-            else:
-
-                x_positions = np.arange(
-                    self.xmax - block_length,
-                    self.xmin - block_length,
-                    -block_length
-                    )
-
-            for x in x_positions:
-
-                start = (x, self.ymin, z)  #lower corner of block
-
-                end = ( x + block_length, 
-                       self.ymax,
-                       z + layer_height)  #upper corner of block
+                end = (
+                    x1,
+                    deposit_ymin + BLOCK["width"],
+                    z1
+                )
 
                 self.blocks.append(
 
-                    Block(self.next_block_id,
+                    Block(
+                        self.next_block_id,
                         layer,
                         start,
                         end,
                         is_substrate=False
                     )
+
                 )
 
                 self.next_block_id += 1
-
-            z += layer_height
 
     
     # --------------------------------------------------------------
     def validate_geometry(self):
 
-        """
-        Verify the generated geometry before node generation.
-        """
 
         print("------- Geometry Validation --------")
       
@@ -275,19 +280,17 @@ class Geometry:
             for block in self.blocks
         )
 
-        print()
 
-        print("Substrate blocks :", substrate_blocks)
-        print("Deposition blocks:", deposition_blocks)
-        print("Total blocks     :", len(self.blocks))
+        print(f"\nSubstrate blocks :", substrate_blocks)
+        print(f"Deposition blocks:", deposition_blocks)
+        print(f"Total blocks     :", len(self.blocks))
 
     
         # Check interface
         substrate_top = max(
             block.end[2]
             for block in self.blocks
-            if block.is_substrate
-        )
+            if block.is_substrate)
 
         deposition_bottom = min(
             block.start[2]
@@ -295,34 +298,20 @@ class Geometry:
             if not block.is_substrate)
 
         gap = deposition_bottom - substrate_top
+        ids = [ block.id for block in geom.blocks]
+
         active = sum(
         block.active
         for block in geom.blocks)
 
-        print()
-
-        print("Active blocks")
-
-        print(active)
-
-
-        ids = [ block.id for block in geom.blocks]
-
-        print(min(ids))
-
-        print(max(ids))
-
-        print(len(ids))
-
-        print(len(set(ids)))
+        print(f"\nActive blocks:", active)
 
 
         layers = sorted(set(block.layer for block in geom.blocks))
-
-        print(layers)
+        print(f"\nTotal Layers:", layers)
      
 
-        print(f"Substrate top     : {substrate_top:.6f} m")
+        print(f"\nSubstrate top     : {substrate_top:.6f} m")
         print(f"Deposition bottom : {deposition_bottom:.6f} m")
         print(f"Gap               : {gap:.6e} m")
 
@@ -333,25 +322,6 @@ class Geometry:
             print("WARNING: Gap detected.")
 
 
-        print("----- Stl Bounds---- ")
-        print(self.bounds)
-        
-     
-        print()
-        print("Substrate bounds")
-        for block in geom.blocks:
-
-            if not block.is_substrate:
-
-                if block.layer < 5:
-
-                    print(
-                        block.layer,
-                        block.start,
-                        block.end
-                    )
-
-   
     # -----------------------------------------
     def build_blocks(self):
 
@@ -359,29 +329,58 @@ class Geometry:
 
         self.build_deposition()
 
-        self.validate_geometry()
-    
-
-
+    # ---------------------------------------------
     def deposition_order(self):
-
         """
-        Return deposited blocks only.
+        Return deposited blocks
+        in laser scan order.
 
-        Substrate blocks already exist
-        before deposition begins.
+        Even layers:
+            left -> right
+
+        Odd layers:
+            right -> left
         """
 
-        return [block
-            for block in self.blocks
-            if not block.is_substrate]
+        ordered_blocks = []
+
+        total_layers = BUILD["layers"]
+
+        for layer in range(total_layers):
+
+            layer_blocks = [
+
+                block
+
+                for block in self.blocks
+
+                if (
+                    not block.is_substrate
+                    and block.layer == layer
+                )
+
+            ]
+
+            # Sort by x coordinate
+            layer_blocks.sort(
+                key=lambda block: block.start[0]
+            )
+
+            # Reverse every other layer
+            if layer % 2 == 1:
+
+                layer_blocks.reverse()
+
+            ordered_blocks.extend(layer_blocks)
+
+        return ordered_blocks
 
 
-# ------------------------------------------------------------------
+# -------------------------------------
 
 if __name__ == "__main__":
 
-    from visualization import plot_geometry 
+    from visualization import plot_geometry, check_geometry_locations, plot_geometry_with_nodes
 
     stl_file = BUILD["stl_file"]
     
@@ -395,5 +394,6 @@ if __name__ == "__main__":
 
     plot_geometry(geom)
 
+    geom.validate_geometry()
 
-   
+    

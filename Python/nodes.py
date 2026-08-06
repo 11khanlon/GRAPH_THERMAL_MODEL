@@ -194,15 +194,9 @@ class NodeGenerator:
 
     # -----------------------------------------------------
     def validate_nodes(self):
-        """
-        Verify node generation before building the graph.
-        """
-
-        print()
-        print("--------------------------------")
-        print("Node Validation")
-        print("--------------------------------")
-
+        
+        print(f"\nNode Validation")
+      
         substrate_nodes = sum(
             node.is_substrate
             for node in self.nodes
@@ -223,10 +217,9 @@ class NodeGenerator:
 
         print()
 
-        print(f"Active Nodes    : {active_nodes}")
+        print(f"\nActive Nodes    : {active_nodes}")
         print(f"Inactive Nodes  : {inactive_nodes}")
 
-        print()
 
         nodes_per_block = []
 
@@ -251,47 +244,25 @@ class NodeGenerator:
                 n / volume_mm3
             )
 
-        print(
-            f"Minimum Nodes per Block : {min(nodes_per_block)}"
-        )
-
-        print(
-            f"Maximum Nodes per Block : {max(nodes_per_block)}"
-        )
-
-        print(
-            f"Average Nodes per Block : {np.mean(nodes_per_block):.2f}"
-        )
-
-        print()
-
-        print(
-            f"Requested Density : {GRAPH['node_density']:.3f} nodes/mm³"
-        )
-
-        print(
-            f"Average Density   : {np.mean(densities):.3f} nodes/mm³"
-        )
+        print(f"\nMinimum Nodes per Block : {min(nodes_per_block)}")
+        print(f"Maximum Nodes per Block : {max(nodes_per_block)}")
+        print(f"Average Nodes per Block : {np.mean(nodes_per_block):.2f}")
 
 
-        print()
+        print(f"\nRequested Density : {GRAPH['node_density']:.3f} nodes/mm³")
+        print(f"Average Density   : {np.mean(densities):.3f} nodes/mm³")
 
-        print(
-            f"Minimum Density : {min(densities):.3f}"
-        )
-
-        print(
-            f"Maximum Density : {max(densities):.3f}"
-        )
-
-        print(
-            f"Average Density : {np.mean(densities):.3f}"
-        )
+        print(f"\nMinimum Density : {min(densities):.3f}")
+        print(f"Maximum Density : {max(densities):.3f}")
+        print(f"Average Density : {np.mean(densities):.3f}")
+        
 
 # --------- Testing ----------
 if __name__ == "__main__":
 
     from geometry import Geometry
+    from visualization import  plot_geometry_with_nodes
+
 
     stl_file = BUILD["stl_file"]
     
@@ -306,3 +277,5 @@ if __name__ == "__main__":
     print(generator.nodes[0])
 
     generator.validate_nodes()
+
+    plot_geometry_with_nodes(geom, generator)

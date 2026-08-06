@@ -40,7 +40,9 @@ BUILD = {
 
     "substrate_length": 76.2e-3,
     "substrate_width": 25.4e-3,
-    "substrate_height": 6.4e-3
+    "substrate_height": 6.4e-3,
+
+    "blocks_per_layer": 5
     
 }
 
@@ -51,7 +53,7 @@ GRAPH = {
 
     "epsilon": 4.75e-3,  # neighborhood radius ε, m
     "gain": 1.5,     # gain factor g
-    "node_density": 0.470   # node density, nodes/mm^3
+    "node_density": 0.470  # node density, nodes/mm^3
 
 }
 

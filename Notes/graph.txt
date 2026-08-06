@@ -1,7 +1,4 @@
 remaining questions:
-how are these equivalent to the code from the paper 
-recheck math
-theres an eigensolver component here but there's a whole python file for that
 the function def coordinates() is created and called twice: once in nodes another in graph.py
 
 

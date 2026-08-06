@@ -1,16 +1,9 @@
 remaining questions: 
-activate block section and beyond. (does this mess up the deposition.py file? since the deposition file is doing this anyway)
-how to work with stl_file? how does it work with the geometry dictionary? 
-does the subtrate and depsoition model get filled with nodes. are they connected? 
 
-How do we know these are the lower corner and upper corner do we get these from geometry 
-x0, y0, z0 = block.start
-x1, y1, z1 = block.end
 
-explain this syntax: self.geometry.blocks new to OOP
+Problem: from block dimensions (7.84 x 3 x 0.1806), volume is 4.2477 mm^3 
+If the density is 0.900 nodes/mm^3, then 4.2477 x 0.9 = 3.82 nodes per block. Not that much 
 
-create verification function and add to visualization
-self.geometry.nodes = self.nodes --> did I add this to the correct place? 
 -----------------------------------
 config.py
     │

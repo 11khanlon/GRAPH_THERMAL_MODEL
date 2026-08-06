@@ -18,8 +18,11 @@ from scipy.spatial import cKDTree
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 from scipy.sparse import lil_matrix, csr_matrix, diags
+from scipy.sparse.csgraph import connected_components
+import time 
 
-from Python.config import GRAPH
+
+from config import GRAPH
 
 
 class ThermalGraph:
@@ -53,6 +56,7 @@ class ThermalGraph:
         Construct graph using neighborhood radius ε
         Paper Eq. (11)
         """
+        t0 = time.perf_counter() 
 
         coords = self.coordinates()
 
@@ -107,19 +111,23 @@ class ThermalGraph:
         #convert from construction format to computation format 
         self.A = self.A.tocsr()
 
+        print(
+            f"\n Graph assembly time: "
+            f"{time.perf_counter()-t0:.2f} s"
+        )
+
         print("Adjacency matrix complete.")
 
     # --------------------------------------------------------
-
+    #Equation (13)
     def degree_matrix(self):
-
-        """
-        Equation (13)
-        """
 
         degrees = np.asarray(self.A.sum(axis=1)).flatten()
 
         self.H = diags(degrees)
+
+        print(f"\nDegree matric verification: ")
+        print(self.H.diagonal()[:10])
 
         return self.H
 
@@ -128,9 +136,8 @@ class ThermalGraph:
     def laplacian(self):
 
         """
-        Equation (14)
-
         L = H - A
+        Equation (14)
         """
 
         if self.H is None:
@@ -146,12 +153,10 @@ class ThermalGraph:
     def eigensystem(self):
 
         """
-        Compute
-
-        Lφ = φΛ
-
-        Used later for the spectral heat equation.
+        Compute Lφ = φΛ
+        Used later for the spectral heat equation
         """
+        t0 = time.perf_counter()
 
         if self.L is None:
 
@@ -167,7 +172,10 @@ class ThermalGraph:
 
         self.eigenvectors = eigenvectors
 
-        print("Eigen decomposition complete.")
+        print("\nCheck eigensystem assembly time: ")
+        print(f"Eigen solve: " f"{time.perf_counter()-t0:.2f} s")
+
+        print("\nEigen decomposition complete.")
 
         return eigenvalues, eigenvectors
     
@@ -185,11 +193,56 @@ class ThermalGraph:
         print("Edges:", edges)
 
         avg_degree = np.mean(
-        self.A.getnnz(axis=1)
-        )
+        self.A.getnnz(axis=1))
 
-        print("Average neighbors:",
-              round(avg_degree, 2))
+        degrees = self.A.getnnz(axis=1)
+        isolated = np.sum(degrees == 0)
+
+        print(f"\nNeighbor information:")
+        print("Average neighbors:", round(avg_degree, 2))
+        print("Minimum neighbors :", degrees.min())
+        print("Maximum neighbors :", degrees.max())
+        print("Average neighbors :", degrees.mean())
+        print("Median neighbors  :", np.median(degrees))
+
+        print("\n Verify substrate is connected to deposition connections:")
+        substrate_to_part = 0
+
+        for i in range(self.N):
+
+            for j in self.nodes[i].neighbors:
+
+                if self.nodes[i].is_substrate != self.nodes[j].is_substrate:
+
+                    substrate_to_part += 1
+
+        print()
+        print("Substrate-Deposition edges:",
+            substrate_to_part // 2)
+
+        print(f"\n Check connected components")
+        n_components, labels = connected_components(self.A)
+        print("Connected components:", n_components)
+
+        print(f"\n Check Symmetry:")
+        difference = self.A - self.A.T
+        print("Symmetric:",
+            difference.nnz == 0)
+
+        print(f"\n Laplacian verification:")
+        row_sum = np.abs(self.L.sum(axis=1))
+        print("Maximum row sum:", row_sum.max()) 
+
+        print(f"\nSmallest eigenvalues")
+        print(self.eigenvalues[:10])
+        print(f"Largest eigenvalue")
+        print(self.eigenvalues[-1])
+
+        print("\nIsolated nodes:", isolated)
+        print("Minimum weight:",self.A.data.min())
+        print("Maximum weight:", self.A.data.max())
+
+    
 
         print("-------------------------------------")
 
@@ -198,9 +251,8 @@ class ThermalGraph:
     def active_subgraph(self):
 
         """
-        Returns indices of active nodes.
-
-        Used during deposition.
+        Returns indices of active nodes
+        Used during deposition
         """
 
         active = []
@@ -218,9 +270,9 @@ class ThermalGraph:
 
 if __name__ == "__main__":
 
-    from Python.geometry import Geometry
-    from Python.nodes import NodeGenerator
-    from Python.config import BUILD
+    from geometry import Geometry
+    from nodes import NodeGenerator
+    from config import BUILD
     
 
     stl_file = BUILD["stl_file"]
