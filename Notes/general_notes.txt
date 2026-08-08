@@ -4,11 +4,11 @@ graph_ded/
 │── geometry.py
 │── nodes.py
 │── graph.py 
-│── heat_source.py  
+│── heat_source.py   [working on this]
 │── conduction.py   
 │── convection.py   
 │── material.py  
 │── deposition.py  
-│── visualization.py  [working on this]
+│── visualization.py 
 │── main.py
 

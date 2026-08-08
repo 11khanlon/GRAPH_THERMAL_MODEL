@@ -1,8 +1,10 @@
 Remaining questions:
 This python files needs a lot of work lol 
 How to fix the config file with respect to these properties
-where do they find table 6 parameters from literature 
+where do they find table 6 parameters from literature. material data and equation from literature
 Is there a way to concatenate all these helper functions? 
+
+the x = -.75 mm you would have to change for calibration
 
 ------------------------------------------------
 What is material.py 

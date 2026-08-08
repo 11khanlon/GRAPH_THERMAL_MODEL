@@ -321,6 +321,8 @@ class Geometry:
         else:
             print("WARNING: Gap detected.")
 
+        
+
 
     # -----------------------------------------
     def build_blocks(self):
@@ -349,13 +351,8 @@ class Geometry:
         for layer in range(total_layers):
 
             layer_blocks = [
-
-                block
-
-                for block in self.blocks
-
-                if (
-                    not block.is_substrate
+                block for block in self.blocks
+                if ( not block.is_substrate
                     and block.layer == layer
                 )
 
@@ -395,5 +392,6 @@ if __name__ == "__main__":
     plot_geometry(geom)
 
     geom.validate_geometry()
+
 
     

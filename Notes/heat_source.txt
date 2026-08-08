@@ -2,6 +2,8 @@ Remaining Quesitons:
 go over how we get the block_center coordinates, laser coordinates and node coordinates
 does this resemble Goldak heat source? Does it calibrate it like the article?
 
+might need to change deposition logic
+KDTree.query_ball_point() --> maybe use later to replace "for node in nodes:"
 -----------------------
 Possible edits:
 - In the Heat Source for To, they keep k constant (6.8), but it may change 

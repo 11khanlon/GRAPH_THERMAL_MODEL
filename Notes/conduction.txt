@@ -1,12 +1,11 @@
 
 Remaining questions: 
 How does everything happen in real time, if you input the graph and call self.graph throughout everything, will the condcution solver go through and use it
-Are we sure that Λ is diagonal
 return P @ temperature  --> where does temperature come from? 
 # Example: heat first 25 nodes T[:25] = 2200.0 --> where does this go later 
-does conduction account for cooling during dwell time 
+does conduction account for cooling during dwell time? or do you do that in deposition module
 how does conduction.py extract the eigenvectors values needed from the graph.py
-
+changing material properties? They are updating diffusivity after each layer, not every second. 
 --------------------------------------
 Graph-theory heat conduction solver
 Implements the spectral solution presented in

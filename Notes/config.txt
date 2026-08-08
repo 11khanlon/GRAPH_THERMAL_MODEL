@@ -1,6 +1,11 @@
 Remaining Questions: 
+Change the Goldak C to the calibration feature 
+Later, make .stl upload more adaptable
 
-
+-----------------------
+Things you would have to change per material:
+Material properties 
+Change the Laser parameters per machine
 
 -------------------------------------------------
 Based on:

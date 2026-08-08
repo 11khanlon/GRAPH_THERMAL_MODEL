@@ -29,7 +29,10 @@ LASER = {
     "layer_height": 0.1806e-3,   # meters
     "hatch_width": 3e-3,    # meters
     "meltpool_temperature": 2200,  # Goldak meltpool temperature, must be above liquidus and fully molten temperature
-    "goldak_C": 0.165
+    "goldak_C": 0.171, 
+    "thermal_conductivity": 6.8 ,  #W/mK
+    "thermal_diffusivity": 2.7228E-6  #m^2/s
+
 }
 
 

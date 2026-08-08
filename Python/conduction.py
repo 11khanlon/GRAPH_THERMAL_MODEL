@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
     T_new = solver.block_conduction(
         temperature = T,
-        alpha = material.layer_diffusivity( temperature),
+        alpha = material.layer_diffusivity(temperature),
         block_time = BLOCK["time_per_block"]
     )
 

@@ -15,8 +15,7 @@ class Ti64Material:
 
         '''
         Table 6 from the paper
-        Replace these values with the exact Table 6 values if
-        you have them available
+        Replace these values with exact Table 6 values if available
         '''
 
         self.temperature_table = np.array([
@@ -101,6 +100,7 @@ class Ti64Material:
         print(f"alpha(25°C) = {self.diffusivity_linear_si(25):.3e} m²/s")
 
 
+#--------------------------------------------
 if __name__ == "__main__":
 
     material = Ti64Material()
