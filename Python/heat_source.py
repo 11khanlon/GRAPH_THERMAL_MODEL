@@ -23,8 +23,7 @@ class GoldakHeatSource:
                 scan_speed,
                 scaling_factor,
                 meltpool_temperature,
-                liquidus_temperature
-                ):
+                liquidus_temperature):
 
         self.P = laser_power
         self.k = conductivity
@@ -35,7 +34,7 @@ class GoldakHeatSource:
         self.Tmelt = meltpool_temperature
         self.Tliquidus = liquidus_temperature
 
-    # --------------------------------------------------------
+    # ------------------------------------
 
     def goldak_temperature(self, x, y, z):
 
@@ -47,11 +46,10 @@ class GoldakHeatSource:
         r = np.sqrt(x**2 + y**2 + z**2)
 
         # avoid 0 in denomenator
-        r = np.maximum(r, 1e-8)
+        r = max(r, 1e-8)
 
         #Equation 19 
-        temperature = (
-            self.C * self.P
+        temperature = (self.C * self.P
             / (2 * np.pi * self.k * r)
             * np.exp(
                 -(self.V / (2 * self.alpha))
@@ -61,13 +59,12 @@ class GoldakHeatSource:
 
         return temperature
 
-    # --------------------------------------------------------
+    # -------------------------------
 
     def heat_block(self,
                    nodes,
                    block_center,
-                   temperature
-                   ):
+                   temperature):
         
         """
         This function heats only the newly deposited block
@@ -78,7 +75,9 @@ class GoldakHeatSource:
 
         xc, yc, zc = block_center
 
-        for i, node in enumerate(nodes):
+        for node in block.nodes:
+
+            index = node.id
 
             if not node.active:
                 continue
@@ -89,18 +88,17 @@ class GoldakHeatSource:
 
             delta = self.goldak_temperature(x, y, z)
 
-            T[i] = max(T[i], min(delta, self.Tmelt))
+            T[index] = max(T[index], min(delta, self.Tmelt))
 
         return T
 
-    # --------------------------------------------------------
+    # ------------------------------------
 
     def heat_subsurface(self,
                         nodes,
                         block_center,
                         temperature,
-                        cutoff = 0.20
-                        ):
+                        cutoff = 0.20):
         
         """
         Heat underlying layers
@@ -110,10 +108,7 @@ class GoldakHeatSource:
 
         T = temperature.copy()
 
-        threshold = (
-            cutoff
-            * self.Tliquidus
-        )
+        threshold = (cutoff * self.Tliquidus)
 
         xc, yc, zc = block_center
 
@@ -130,45 +125,42 @@ class GoldakHeatSource:
 
             if delta >= threshold:
 
-                T[i] = max(
-                    T[i],
-                    delta
-                )
+                T[i] = max(T[i], delta)
 
         return T
 
-    # --------------------------------------------------------
+    # ------------------------------
     #Surface + subsurface heating
 
     def apply(self,
             nodes,
             block_center,
-            temperature
-            ):
+            temperature):
     
         T = self.heat_block(
             nodes,
             block_center,
-            temperature
-            )
+            temperature)
 
         T = self.heat_subsurface(
             nodes,
-            block_center,
-            T)
+            block_center,T)
 
         return T
 
 
-# ------------------------------------------------------------
+# ---------------------------------------
 
 if __name__ == "__main__":
 
     from geometry import Geometry
     from nodes import NodeGenerator
-    from config import LASER, MATERIAL
+    from config import LASER, MATERIAL, BUILD
+    from material import Ti64Material   
 
-    geom = Geometry("example_part.stl")
+    stl_file = BUILD["stl_file"]
+
+    geom = Geometry(stl_file)
 
     geom.build_blocks()
 
@@ -178,13 +170,16 @@ if __name__ == "__main__":
 
     nodes = generator.nodes
 
+
+    material = Ti64Material()
+    
     heat = GoldakHeatSource(
 
         laser_power = LASER["power"],
 
-        conductivity = MATERIAL["thermal_conductivity"],
+        conductivity = Ti64Material.conductivity(),
 
-        diffusivity = MATERIAL["thermal_diffusivity"],
+        diffusivity = Ti64Material.diffusivity_linear_si(),
 
         scan_speed = LASER["scan_speed"],
 
@@ -195,10 +190,7 @@ if __name__ == "__main__":
         liquidus_temperature = MATERIAL["liquidus_temperature"]
     )
 
-    temperature = np.full(
-        len(nodes),
-        MATERIAL["ambient_temperature"]
-    )
+    temperature = np.full(len(nodes), MATERIAL["ambient_temperature"])
 
     block = geom.blocks[0]
 
