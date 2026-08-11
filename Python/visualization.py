@@ -6,13 +6,11 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import os 
 import time
 
-# ------------------------------
+# ----------------------------------
 def draw_block(ax, block, color, alpha, edge=True, edge_color=None):
 
-    """
-    Draw one block as a transparent rectangular prism.
-    """
-
+    #Draw one block as a transparent rectangular prism.
+    
     x0, y0, z0 = block.start
     x1, y1, z1 = block.end
 
@@ -24,18 +22,16 @@ def draw_block(ax, block, color, alpha, edge=True, edge_color=None):
         [x0, y0, z1],
         [x1, y0, z1],
         [x1, y1, z1],
-        [x0, y1, z1],
+        [x0, y1, z1]
     ])
 
     faces = [
-
         [vertices[0], vertices[1], vertices[2], vertices[3]],
         [vertices[4], vertices[5], vertices[6], vertices[7]],
         [vertices[0], vertices[1], vertices[5], vertices[4]],
         [vertices[2], vertices[3], vertices[7], vertices[6]],
         [vertices[1], vertices[2], vertices[6], vertices[5]],
-        [vertices[0], vertices[3], vertices[7], vertices[4]],
-
+        [vertices[0], vertices[3], vertices[7], vertices[4]]
     ]
 
     if edge:
@@ -55,10 +51,64 @@ def draw_block(ax, block, color, alpha, edge=True, edge_color=None):
         facecolors=color,
         edgecolors=edge_color,
         linewidths=line_width,
-        alpha=alpha,
+        alpha=alpha
     )
 
     ax.add_collection3d(cube)
+
+
+def blocks_intersect(block1, block2, tol=1e-12):
+
+    # X overlap
+    x_overlap = (
+        block1.start[0] <= block2.end[0] + tol and
+        block1.end[0] >= block2.start[0] - tol
+    )
+
+    # Y overlap
+    y_overlap = (
+        block1.start[1] <= block2.end[1] + tol and
+        block1.end[1] >= block2.start[1] - tol
+    )
+
+    # Z overlap
+    z_overlap = (
+        block1.start[2] <= block2.end[2] + tol and
+        block1.end[2] >= block2.start[2] - tol
+    )
+
+    return x_overlap and y_overlap and z_overlap
+
+
+#--------------------------------------
+def substrate_under_deposition(block, first_layer_blocks, tol=1e-12):
+    """
+    Determine whether a substrate block lies underneath
+    the XY footprint of the first deposition layer.
+
+    This is only for visualization.
+    """
+
+    for dep_block in first_layer_blocks:
+
+        # X overlap
+        x_overlap = (
+            block.start[0] <= dep_block.end[0] + tol and
+            block.end[0] >= dep_block.start[0] - tol
+        )
+
+        # Y overlap
+        y_overlap = (
+            block.start[1] <= dep_block.end[1] + tol and
+            block.end[1] >= dep_block.start[1] - tol
+        )
+
+        if x_overlap and y_overlap:
+            return True
+
+    return False
+
+
 #-----------------------------------
 def draw_outline(ax, xmin, xmax, ymin, ymax, zmin, zmax, color="black", linewidth=1.5, linestyle="-"):
 
@@ -72,8 +122,7 @@ def draw_outline(ax, xmin, xmax, ymin, ymax, zmin, zmax, color="black", linewidt
         [xmin,ymin,zmax],
         [xmax,ymin,zmax],
         [xmax,ymax,zmax],
-        [xmin,ymax,zmax],
-
+        [xmin,ymax,zmax]
     ])
 
 
@@ -84,7 +133,6 @@ def draw_outline(ax, xmin, xmax, ymin, ymax, zmin, zmax, color="black", linewidt
         (4,5),(5,6),(6,7),(7,4),
 
         (0,4),(1,5),(2,6),(3,7)
-
     ]
 
 
@@ -101,88 +149,126 @@ def draw_outline(ax, xmin, xmax, ymin, ymax, zmin, zmax, color="black", linewidt
         )
 
 
-#---------------------------
+#-----------------------------------------
+    
 def plot_geometry(geometry):
 
-    """
-    Plot the STL together with every discretized block.
-    """
+    fig = plt.figure(figsize=(12, 9))
 
-    fig = plt.figure(figsize=(12,9))
+    ax = fig.add_subplot(111, projection="3d")
 
-    ax = fig.add_subplot(
-        111,
-        projection="3d"
-    )
-
-   
+  
     # STL
     mesh = Poly3DCollection(
-
         geometry.mesh.triangles,
-
         facecolor="lightgray",
-
         edgecolor="none",
-
-        alpha=0.10,
-
-    )
+        alpha=0.10)
 
     ax.add_collection3d(mesh)
 
-  
-    # Draw every block
-    # Draw substrate first (background)
+ 
+    # Find the bottom of the first deposition layer
+    deposition_blocks = [
+    block for block in geometry.blocks
+    if not block.is_substrate]
 
+    first_layer_number = min(
+        block.layer for block in deposition_blocks)
+
+    first_layer_blocks = [
+        block for block in deposition_blocks
+        if block.layer == first_layer_number]
+
+    print("\nFirst deposition layer:", first_layer_number)
+
+
+    first_xmin = min(block.start[0] for block in first_layer_blocks)
+    first_xmax = max(block.end[0] for block in first_layer_blocks)
+
+    first_ymin = min(block.start[1] for block in first_layer_blocks)
+    first_ymax = max(block.end[1] for block in first_layer_blocks)
+
+    first_zmin = min(block.start[2] for block in first_layer_blocks)
+    first_zmax = max(block.end[2] for block in first_layer_blocks)
+
+    print("First layer bounds:")
+    print("  X:", first_xmin, "to", first_xmax)
+    print("  Y:", first_ymin, "to", first_ymax)
+    print("  Z:", first_zmin, "to", first_zmax)
+
+
+    substrate_blocks = [
+    block for block in geometry.blocks
+    if block.is_substrate]
+
+    intersecting_substrate = []
+
+    for block in substrate_blocks:
+
+        intersects = any(
+            blocks_intersect(block, dep_block)
+            for dep_block in first_layer_blocks
+        )
+
+        if intersects:
+            intersecting_substrate.append(block)
+
+
+   
+    # Draw blocks
     for block in geometry.blocks:
 
+        #substrate blocks 
         if block.is_substrate:
 
+            intersects_first_layer = any(
+                blocks_intersect(block, dep_block)
+                for dep_block in first_layer_blocks)
 
-            # First few substrate layers under deposition
-            if block.layer >= -9:
+            if intersects_first_layer:
 
+                continue
 
+            elif block.layer >= -9:
+
+                # Nearby substrate, but not directly underneath
+                # the first deposition layer.
                 draw_block(
                     ax,
                     block,
-                    "royalblue",
-                    alpha=0.15,
+                    "lightgrey",
+                    alpha = 0.15,
                     edge=True,
-                    edge_color="none"
+                    edge_color="black"
                 )
 
-
-            # Far substrate
             else:
 
-
+                # Far substrate.
                 draw_block(
                     ax,
                     block,
-                    "royalblue",
+                    "lightgrey",
                     alpha=0.5,
                     edge=True,
                     edge_color="black"
                 )
 
-
-        # ----------------------------
-        # Deposition
-        # ----------------------------
-
+        # DEPOSITION
         else:
-
 
             draw_block(
                 ax,
                 block,
                 "crimson",
-                alpha=0.9,
+                alpha= 1,
                 edge=True,
                 edge_color="black"
             )
+
+   
+    # Determine plotting limits
 
     all_x = []
     all_y = []
@@ -190,65 +276,46 @@ def plot_geometry(geometry):
 
     for block in geometry.blocks:
 
-        all_x.extend([
-            block.start[0],
-            block.end[0]
-        ])
+        all_x.extend([block.start[0], block.end[0]])
+        all_y.extend([block.start[1], block.end[1]])
+        all_z.extend([block.start[2], block.end[2]])
 
-        all_y.extend([
-            block.start[1],
-            block.end[1]
-        ])
+    ax.set_xlim(min(all_x), max(all_x))
+    ax.set_ylim(min(all_y), max(all_y))
+    ax.set_zlim(min(all_z), max(all_z))
 
-        all_z.extend([
-            block.start[2],
-            block.end[2]
-        ])
-
-
-    ax.set_xlim(
-        min(all_x),
-        max(all_x)
-    )
-
-    ax.set_ylim(
-        min(all_y),
-        max(all_y)
-    )
-
-    ax.set_zlim(
-        min(all_z),
-        max(all_z)
-    )
-
-
+  
+    # Labels
     ax.set_xlabel("X (m)")
     ax.set_ylabel("Y (m)")
     ax.set_zlabel("Z (m)")
 
     ax.set_title("Block Discretization")
 
-    # Substrate bounds
-    xmin = geometry.xmin - (geometry.substrate_length - geometry.length)/2  
+    
+    # Substrate dimensions
+
+    xmin = (geometry.xmin - (geometry.substrate_length - geometry.length) / 2 )
     xmax = xmin + geometry.substrate_length
 
-    ymin = geometry.ymin - (geometry.substrate_width -  geometry.width)/2  
-    ymax = ymin + geometry.substrate_width 
+    ymin = (geometry.ymin - (geometry.substrate_width - geometry.width) / 2)
+    ymax = ymin + geometry.substrate_width
 
+   
+    # Aspect ratio
 
     ax.set_box_aspect(
-        (
-            geometry.substrate_length,
-            geometry.substrate_width,
-            geometry.substrate_height + geometry.height
+        (geometry.substrate_length,
+        geometry.substrate_width,
+        geometry.substrate_height + geometry.height
         )
     )
-
-
 
     plt.tight_layout()
 
     plt.show()
+
+
 
 def check_geometry_locations(geometry):
 
@@ -286,6 +353,7 @@ def check_geometry_locations(geometry):
 
     print("zmin:", min(b.start[2] for b in deposition))
     print("zmax:", max(b.end[2] for b in deposition))
+
 
 #%%
 def plot_nodes(

@@ -23,8 +23,28 @@ block.node_indices does not exist in your earlier Geometry/Block class. Your Blo
 node.surface does not exist in your Node class. The convection solver assumes every node has a Boolean surface attribute. You'll need to add self.surface = False to the Node class and implement a method to identify boundary nodes.
 Material properties are currently treated as constants (material["thermal_diffusivity"], material["specific_heat"]). If you later switch to the temperature-dependent material class (material.py), you'll want to replace these constants with values computed from the current node or layer temperatures
 substrate nodes are active before depostion starts. how do you know you activate each deposition block and those are the active nodes to tell the heatsource.py. Also, the substrate blokcs are active so once the deposition blocks have been activated the heat will just diffuse into the substrate you dont have to do anything else right? 
+does each node start at 25 degrees celcius?
+
+create a temperature history list after each update state: 
+temperature_history[0] → initial state
+temperature_history[1] → after block 1
+temperature_history[2] → after block 2
+...
 
 
+T = convection.cool(
+    T,
+    forced_surface_mask,
+    h=CONVECTION["forced"],
+    ...
+)
+
+T = convection.cool(
+    T,
+    free_surface_mask,
+    h=CONVECTION["free"],
+    ...
+)
 ---------------------------------
 Overall purpose: Main deposition simulation 
 The paper solves the process in this order 

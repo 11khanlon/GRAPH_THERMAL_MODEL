@@ -19,14 +19,14 @@ class GoldakHeatSource:
     def __init__(self,
                 laser_power,
                 conductivity,
-                diffusivity, 
+                alpha, 
                 scan_speed,
                 scaling_factor,
                 meltpool_temperature,
                 liquidus_temperature):
 
         self.P = laser_power
-        self.alpha = diffusivity
+        self.alpha = alpha
         self.k = conductivity
         self.V = scan_speed
         self.C = scaling_factor
@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
         conductivity = LASER["thermal_conductivity"], 
             
-        diffusivity = LASER["thermal_diffusivity"],
+        alpha = LASER["thermal_diffusivity"],
 
         scan_speed = LASER["scan_speed"],
 
@@ -180,8 +180,8 @@ if __name__ == "__main__":
 
     temperature = np.full(len(nodes), MATERIAL["ambient_temperature"])
 
-    block = geom.blocks[2560]
-    #block = geom.blocks[0]
+    #block = geom.blocks[2560]
+    block = geom.blocks[0]
     #block = next(block for block in geom.blocks  if not block.is_substrate)
 
     heated = heat.apply(nodes, block, temperature)

@@ -9,7 +9,6 @@ Paper Equations:
 
 import numpy as np
 
-
 class ConvectionSolver:
 
     #Newton cooling model 
@@ -19,6 +18,7 @@ class ConvectionSolver:
         
         self.rho = density
         self.L = block_length
+
 
     # -------------------------------------------------------
 
@@ -38,18 +38,18 @@ class ConvectionSolver:
             cp,
             ambient_temperature,
             dt):
-        
 
-        beta = self.beta(h, cp)
 
         T = temperature.copy()
+
+        beta = self.beta(h, cp)
 
         factor = np.exp(-beta * dt)
 
         boundary = np.where(surface_mask)[0]
 
         T[boundary] = (ambient_temperature 
-                       + ( T[boundary] - ambient_temperature) 
+                       + (T[boundary] - ambient_temperature) 
                        * factor)
 
         return T
@@ -80,7 +80,7 @@ class ConvectionSolver:
                     h,
                     cp,
                     ambient_temperature,
-                    dt = 1.0):
+                    dt):
 
         return self.cool(temperature,
                         surface_mask,
@@ -98,7 +98,7 @@ class ConvectionSolver:
                        cp,
                        ambient_temperature,
                        total_time,
-                       dt = 1.0):
+                       dt):
         """
         Repeated convection cooling.
         Used for arbitrary dwell periods.
@@ -150,13 +150,15 @@ if __name__ == "__main__":
 
     solver = ConvectionSolver(
         density = MATERIAL["density"],
-        block_length = BLOCK["block_length"])
+        block_length = BLOCK["length"])
+
+    material = Ti64Material() 
 
     cooled = solver.block_cooling(
         temperature,
         surface,
         h = CONVECTION["forced"],
-        cp = material.specific_heat(np.mean(temperature),
+        cp = material.specific_heat(temperature),
         ambient_temperature = MATERIAL["ambient_temperature"],
         block_time = BLOCK["time_per_block"])
 

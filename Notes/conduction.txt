@@ -6,6 +6,8 @@ return P @ temperature  --> where does temperature come from?
 does conduction account for cooling during dwell time? or do you do that in deposition module
 how does conduction.py extract the eigenvectors values needed from the graph.py
 changing material properties? They are updating diffusivity after each layer, not every second. 
+
+delete propagate function? already in depositoin. Handling inactive and active nodes.
 --------------------------------------
 Graph-theory heat conduction solver
 Implements the spectral solution presented in
@@ -49,6 +51,8 @@ Next Block
 --------------------------------
 class ConductionSolver:
 This initializes the creation of the conduction solver object 
+The conduction solver doesn't create temperatures
+Stores mathematical infomraiton needed to transform a temperature field
 
 def __init__(self, graph, gain):
 This is the constructor it takes in arguments graph and gain 
@@ -83,6 +87,8 @@ return self.phi @ D @ self.phi.T
 This is multiplying the eigenvectors and transpose of it by the soltuion to the decay problem 
 @ means matrix multiplication 
 
+
+
 --------------------------------
 def step(self, temperature, alpha, dt):
 Advance one conduction timestep
@@ -96,23 +102,21 @@ dt : float, Time step
 Returns:
 ndarray --> Updated temperatures after conduction.
 
-P = self.propagator(alpha, dt) --> this builds Φ exp(-alpha g Λ dt) Φᵀ
+P = self.propagator(alpha, dt) 
+--> this builds Φ exp(-alpha g Λ dt) Φᵀ
+--> describes how heat diffuses through your graph during that timestep
 
 return P @ temperature
 This multiplies the created P vector by temperature 
+This give the new temperature state that you will use to iterate in deposition
 
-Tnew = PT 
+Tnew = P@T0
 There is no finite difference loop 
 There is n oexplicit neighbor update 
 The matrix multiplication updates every node simultaneously 
 
 -----------------------------------
-def block_conduction(
-        self,
-        temperature,
-        alpha,
-        block_time
-        ):
+def block_conduction(self, temperature, alpha, block_time):
 
 This function doesn't introduce new mathmatics
 It simply gives conduction step a meaningful name 
@@ -120,6 +124,8 @@ It simply gives conduction step a meaningful name
 Instead of writing 
 solver.step(T, alpha, 0.922), 
 you write solver.block_conduction(...)
+
+performs one step here. deposition manger will handle timestep logic
 
 ------------------------------------------
 def dwell_conduction(self, temperature, alpha, dt=1.0):
@@ -138,6 +144,40 @@ Returns: ndarray
 
 During a swell period, the laser is off. The graph still conducts heat 
 This simply calls step() using the dwell time increment 
+
+performs one step here. deposition manger will handle timestep logic 
+
+----------------------------------------
+What enters ConductionSolver? 
+
+1. Heat Initial block and determine temperature state 1
+Input intial node temperatures (25 deg C) in each block to laser model 
+T0 = heat.apply(nodes, block, temperature)
+This is a numerical vector containing one temperature for everynode in the graph 
+
+2. Multiply T0 from Goldak to Conduction equation
+Input the T0 vector as "temperature" into block_conduction to obtain T1 state temperatures 
+T1 = solver.block_conduction(
+    temperature=T0,
+    alpha=alpha,
+    block_time=BLOCK["time_per_block"])
+
+3. Repeat 
+Take previous state, T1, and pass it into laser heating operation 
+Now block 2's nodes recieve heating on top of whatever temperature they already had
+However, this should just be 25 deg C because you loop over the nodes in block.nodes (current block set by deposition manager)
+
+This is why temperature.copy() is important from heat_source.py 
+This makes a copy of the current temperature state so that you can modify
+temperatures caused bu this laser pass without overwriting the input vector
+
+For example: 
+If temperature = [1800, 1800, 100, 100, 25, 25]
+then temperature.copy() gives [1800, 1800, 100, 100, 25, 25]
+
+Then heat_block() modifies the entries corresponding to the currently deposited block 
+T[index] = max(T[index], delta), if the laser raises this node above its current temperature, 
+its current temperature is replaced with the hotter value
 
 -----------------------------------------------
 propagate(): 

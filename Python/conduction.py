@@ -1,6 +1,5 @@
 """
-Step 6: 
-Graph-theory heat conduction solver
+Step 6: Graph-theory heat conduction solver
 Tc = Φ exp(-alpha g Λ tb) Φᵀ T0
 """
 
@@ -35,12 +34,7 @@ class ConductionSolver:
         Return: ndarray, Spectral propagation matrix.
         """
 
-        decay = np.exp(
-            -alpha
-            * self.gain
-            * self.lambda_values
-            * dt
-        )
+        decay = np.exp(-alpha * self.gain * self.lambda_values * dt)
 
         D = np.diag(decay)
 
@@ -61,21 +55,16 @@ class ConductionSolver:
 
     # ---------------------------------------------------------
 
-    def block_conduction(self, 
-                        temperature, 
-                        alpha,
-                        block_time):
+    def block_conduction(self, temperature, alpha, block_time):
         
-        return self.step(temperature, 
-                        alpha, 
-                        block_time)
+        return self.step(temperature, alpha, block_time)
 
     # ---------------------------------------------------------
 
     def dwell_conduction(self,
                          temperature,
                          alpha,
-                         dt=1.0):
+                         dt):
 
         #Conduction during dwell time --> Implements Equation (17)
 
@@ -83,24 +72,25 @@ class ConductionSolver:
                          alpha,
                          dt)
 
+    
     # ---------------------------------------------------------
 
     def propagate(self,
                   temperature,
                   alpha,
                   total_time,
-                  dt):
+                  block_time):
 
         
         #Repeatedly apply conduction
       
         T = temperature.copy()
 
-        nsteps = int(np.ceil(total_time / dt))
+        nsteps = int(np.ceil(total_time / block_time))
 
         for _ in range(nsteps):
 
-            T = self.step(T, alpha, dt)
+            T = self.step(T, alpha, block_time)
 
         return T
 
@@ -112,10 +102,12 @@ if __name__ == "__main__":
     from geometry import Geometry
     from nodes import NodeGenerator
     from graph import ThermalGraph
-    from config import GRAPH, MATERIAL, BLOCK
-    from material import Ti64Material, layer_diffusivity
+    from config import GRAPH, MATERIAL, BLOCK, BUILD, LASER
+    from material import Ti64Material
 
-    geom = Geometry("example_part.stl")
+    stl = BUILD["stl_file"]
+
+    geom = Geometry(stl)
 
     geom.build_blocks()
 
@@ -133,23 +125,100 @@ if __name__ == "__main__":
 
     graph.eigensystem()
 
-    solver = ConductionSolver(
-        graph,
-        gain = GRAPH["gain"]
-    )
+    solver = ConductionSolver(graph, gain = GRAPH["gain"])
 
-    T = np.full(
-        graph.N,
-        MATERIAL["ambient_temperature"]
-    )
+    material = Ti64Material()
+
+    T0 = np.full(graph.N, MATERIAL["ambient_temperature"])
 
     # Example: heat first 25 nodes
-    T[:25] = 2200.0
+    block = geom.deposition_order()[0]
 
-    T_new = solver.block_conduction(
-        temperature = T,
-        alpha = material.layer_diffusivity(temperature),
-        block_time = BLOCK["time_per_block"]
+    for node in block.nodes:
+        T0[node.id] = 2200.0
+
+    #alpha = LASER["thermal_diffusivity"]
+    alpha = material.layer_diffusivity(T0)
+
+    print("\n----------- Conduction Verification -----------")
+
+    print(
+        f"Initial maximum temperature : "
+        f"{T0.max():.2f} °C"
     )
 
-    print("Maximum temperature:", np.max(T_new))
+    print(
+        f"Layer average temperature   : "
+        f"{np.mean(T0):.2f} °C"
+    )
+
+    print(
+        f"Diffusivity                 : "
+        f"{alpha:.3e} m²/s"
+    )
+
+    # Conduct for one block
+
+    T1 = solver.block_conduction(
+        temperature=T0,
+        alpha = alpha,
+        block_time =BLOCK["time_per_block"]
+    )
+
+    print(
+        f"Final maximum temperature   : "
+        f"{T1.max():.2f} °C"
+    )
+
+    print(
+        f"Final minimum temperature   : "
+        f"{T1.min():.2f} °C"
+    )
+
+    print("\nTemperature statistics")
+    
+    print("T0:")
+    print("  max :", T0.max())
+    print("  min :", T0.min())
+    print("  mean:", T0.mean())
+
+    print("\nT1:")
+    print("  max :", T1.max())
+    print("  min :", T1.min())
+    print("  mean:", T1.mean())
+
+    difference = T1 - T0
+
+    print("\n Temperature Change:")
+    print("Maximum temperature change:",
+      T1.max() - T0.max())
+
+    print("Largest local increase:",
+        difference.max())
+
+    print("Largest local decrease:",
+        difference.min())
+
+    print("Largest absolute local change:",
+        np.max(np.abs(difference)))
+
+    print(f"\n -----------------------------------------------")
+
+    print("Temperature sum:", np.max(np.abs(T1 - T0)))
+
+    print("Final energy proxy:", np.sum(T1))
+
+    print(f"\n ----------------------------------")
+    print("Smallest eigenvalue:", solver.lambda_values[0])
+    print("Largest eigenvalue :", solver.lambda_values[-1])
+
+    print("Decay factors:")
+    print(
+        np.exp(
+            -alpha *
+            solver.gain *
+            solver.lambda_values[[0, 1, 2, -3, -2, -1]] *
+            BLOCK["time_per_block"]
+        )
+    )
+

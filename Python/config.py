@@ -55,8 +55,8 @@ BUILD = {
 GRAPH = {
 
     "epsilon": 4.75e-3,  # neighborhood radius ε, m
-    "gain": 1.5,     # gain factor g
-    "node_density": 0.470  # node density, nodes/mm^3
+    "gain": 1.5E6,     # gain factor g, m^-2
+    "node_density": 0.4709  # node density, nodes/mm^3
 
 }
 
@@ -81,7 +81,7 @@ BLOCK = {
 CONVECTION = {
 
     "free": 5.0,      # W/m^2-K
-    "forced": 50.0,   # W/m^2-K, free*5 
+    "forced": 50.0,   # W/m^2-K, free*10
     "clamp": 1000.0   #do you need a clamp in this study 
 
 }
