@@ -6,9 +6,9 @@ graph_ded/
 │── graph.py 
 │── heat_source.py   
 │── conduction.py   
-│── convection.py   [working on this]
+│── convection.py   
 │── material.py  
-│── deposition.py  
+│── deposition.py  [working on this]
 │── visualization.py 
 │── main.py
 

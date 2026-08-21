@@ -1,5 +1,6 @@
 remaining questions: 
 test deposition_order
+if i imported a different geometry, how to do this? also add GCODE? 
 
 
 ----------------------------
@@ -236,22 +237,3 @@ now the condition if __name__ == "__main__":  is skipped
 
 
 
-
----------------------------------
-print("----------------------------------")
-
-        print("Geometry created")
-
-        print("----------------------------------")
-
-        print("Part dimensions")
-
-        print(f"Length : {self.length:.4f} m")
-
-        print(f"Width  : {self.width:.4f} m")
-
-        print(f"Height : {self.height:.4f} m")
-
-        print()
-
-        print("Total blocks :", len(self.blocks))

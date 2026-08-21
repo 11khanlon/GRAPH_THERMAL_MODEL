@@ -54,6 +54,15 @@ class Block:
         self.nodes = []
         self.node_indices = []
 
+        self.exposed_faces = {
+            "top": False,
+            "bottom": False,
+            "left": False,
+            "right": False,
+            "front": False,
+            "back": False
+        }
+
     def __repr__(self):
 
         region = "Substrate" if self.is_substrate else "Deposition"
@@ -74,6 +83,8 @@ class Geometry:
         self.mesh = trimesh.load_mesh(stl_file)
 
         # -----------------------------------------
+        #Check if Trimesh import works 
+
         print("Loading STL...")
 
         if not os.path.exists(stl_file):
@@ -96,6 +107,7 @@ class Geometry:
         print(f"STL loaded in {elapsed:.2f} seconds. Success!")
 
         #---------------------------------
+        #Import mesh geometry
 
         self.mesh.apply_scale(1e-3)
 
@@ -128,7 +140,6 @@ class Geometry:
         self.next_block_id = 0
 
 
-   
     # -----------------------------------------
     def build_substrate(self):
 
@@ -201,14 +212,8 @@ class Geometry:
         blocks_per_layer = BUILD["blocks_per_layer"]
 
         # Center the deposition on the substrate
-        deposit_xmin = (
-            self.xmin - (self.substrate_length - self.length)/2
-            + (self.substrate_length - self.length)/2
-        )
-
-        deposit_ymin = (self.ymin - (self.substrate_width - self.width)/2
-            + (self.substrate_width - self.width)/2
-        )
+        deposit_xmin = self.xmin
+        deposit_ymin = self.ymin
 
         for layer in range(total_layers):
 
@@ -220,17 +225,8 @@ class Geometry:
                 x0 = deposit_xmin + i * block_length
                 x1 = x0 + block_length
 
-                start = (
-                    x0,
-                    deposit_ymin,
-                    z0
-                )
-
-                end = (
-                    x1,
-                    deposit_ymin + BLOCK["width"],
-                    z1
-                )
+                start = (x0, deposit_ymin, z0)
+                end = (x1, deposit_ymin + BLOCK["width"], z1)
 
                 self.blocks.append(
 
@@ -241,12 +237,55 @@ class Geometry:
                         end,
                         is_substrate=False
                     )
-
                 )
 
                 self.next_block_id += 1
 
+
+    # -----------------------------------------
+    def build_blocks(self):
+
+        self.build_substrate()
+
+        self.build_deposition()
+
+    # ---------------------------------------------
+    def deposition_order(self):
+        """
+        Return deposited blocks in laser scan order
+
+        Even layers: left -> right
+        Odd layers: right -> left
+        """
+
+        ordered_blocks = []
+
+        total_layers = int(np.ceil(self.height / BLOCK["height"]))
+
+        for layer in range(total_layers):
+
+            layer_blocks = [
+                block for block in self.blocks
+                if (not block.is_substrate
+                    and block.layer == layer
+                )
+            ]
+
+            # Sort by x coordinate
+            layer_blocks.sort(
+                key=lambda block: block.start[0]
+            )
+
+            # Reverse every other layer
+            if layer % 2 == 1:
+
+                layer_blocks.reverse()
+
+            ordered_blocks.extend(layer_blocks)
+
+        return ordered_blocks
     
+   
     # --------------------------------------------------------------
     def validate_geometry(self):
 
@@ -254,15 +293,13 @@ class Geometry:
         print("------- Geometry Validation --------")
       
         # Part dimensions
-        print("Deposited Part")
+        print("\nDeposited Part")
 
         print(f"Length : {self.length:.4f} m")
         print(f"Width  : {self.width:.4f} m")
         print(f"Height : {self.height:.4f} m")
 
-        print()
-
-        print("Substrate")
+        print("\nSubstrate")
 
         print(f"Length : {self.substrate_length:.4f} m")
         print(f"Width  : {self.substrate_width:.4f} m")
@@ -323,61 +360,12 @@ class Geometry:
 
         
 
-
-    # -----------------------------------------
-    def build_blocks(self):
-
-        self.build_substrate()
-
-        self.build_deposition()
-
-    # ---------------------------------------------
-    def deposition_order(self):
-        """
-        Return deposited blocks
-        in laser scan order.
-
-        Even layers:
-            left -> right
-
-        Odd layers:
-            right -> left
-        """
-
-        ordered_blocks = []
-
-        total_layers = BUILD["layers"]
-
-        for layer in range(total_layers):
-
-            layer_blocks = [
-                block for block in self.blocks
-                if ( not block.is_substrate
-                    and block.layer == layer
-                )
-
-            ]
-
-            # Sort by x coordinate
-            layer_blocks.sort(
-                key=lambda block: block.start[0]
-            )
-
-            # Reverse every other layer
-            if layer % 2 == 1:
-
-                layer_blocks.reverse()
-
-            ordered_blocks.extend(layer_blocks)
-
-        return ordered_blocks
-
-
 # -------------------------------------
 
 if __name__ == "__main__":
 
     from visualization import plot_geometry, check_geometry_locations, plot_geometry_with_nodes
+    from face import update_exposed_faces, print_exposed_faces, print_exposure_statistics
 
     stl_file = BUILD["stl_file"]
     
@@ -392,6 +380,12 @@ if __name__ == "__main__":
     plot_geometry(geom)
 
     geom.validate_geometry()
+
+    update_exposed_faces(geom)
+
+    #print_exposed_faces(geom)
+
+    print_exposure_statistics(geom)
 
 
     

@@ -1,5 +1,6 @@
 remaining questions: 
 
+forced_surface_mask and free_surface mask 
 
 Problem: from block dimensions (7.84 x 3 x 0.1806), volume is 4.2477 mm^3 
 If the density is 0.900 nodes/mm^3, then 4.2477 x 0.9 = 3.82 nodes per block. Not that much 

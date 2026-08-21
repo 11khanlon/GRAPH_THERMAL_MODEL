@@ -1,16 +1,8 @@
 Remaining Questions: 
-where does the temperature vector input come from?
-where foes the node surface come from 
-what are the surface nodes? 
-where does the surface_mask variable come from? 
-how does convection, conduction and deposition all work together 
-why is dt 1 second here? in dwell cooling() and multiple steps? didn't we determine this in config 
-i dont get this syntax solver.dwell_cooling(...)
-T[boundary] = (ambient_temperature + ( T[boundary] - ambient_temperature) * factor)   hwo does tboundary equal tnew and told at the same time 
-are the material properties vary with respect with time? 
-do they calculate h_eff? why do the simplify it later  [radiation?]. Where is convection values incorporated. The only convection here is forced convection for h. where is the rest? Where is radiation and free conveciton
-check import feature here 
-don't include clamp convection. I don't want it in my simulation, but how would you include it in your simulation/math? 
+recheck temperature dependent material properties 
+The characteristic length of a lumped cooling model is Lc = V/ As --> something to consider for later 
+What determines the threshold for a surface? 
+
 ----------------------------------------------------------
 Heat loss through convection (and radiation approximation)
 
@@ -26,21 +18,6 @@ where
 
 This module only computes boundary cooling
 No graph operations are performed here
-
------------------------------------------------
-Problems with current code: 
-
-1. Node.surface does not exist 
-surface = np.array( [node.surface for node in nodes], dtype=bool)
-But node class currently contains:
-self.id
-self.position
-self.block_id
-self.active
-self.temperature
-self.neighbors
-self.weights
-there is no surface present 
 
 
 ----------------------------------------------------
@@ -70,7 +47,7 @@ Implements Equation (16)
 
 Parameters:
 temperature : ndarray
-surface_mask : ndarray(bool), True for boundary nodes
+surface_mask : ndarray(bool), True for boundary/surface nodes
 
 h : float
 cp : float
@@ -80,29 +57,39 @@ dt : float
 Returns:
 ndarray
 
-temperature is teh current temperature vector 
-surface_mask is current boolean array (true, false, true)
+temperature is the current temperature state before convection. So this would be the conduction state. It's a vector 
+surface_mask is current boolean array (true, false, true) descrbining whether nodes are on/near the surface
 h = convection coefficient 
 cp = specific heat 
 dt = elapsed cooling time 
 
-surface nodes
-boundary = np.where(surface_mask)[0]
-suppose surface_mask = [true, false, false, etc]
-np.where(surface_mask)
-returns (array([0,2,4]),)
-so boundary becomes [0,2,4]
+copy current temperature state and assemble decay factor 
+--> temperature.shape = (5650, 0)
 
+forced_surface_mask.shape
+--> # (5650,)
 
-vecotorized assigment 
+But when you do T[forced_surface_mask], you only get 66 selected values 
+There are only 66 times where there are values of True 
+So the equation takes those values, updates them with cooling 
+Then return updated temperature vector 
+
+vectorized assigment 
 T[boundary] = which is similar to saying T[0,2,4]
-implements Tnew =T∞ + (Told − T∞)exp(−βt) 
+implements Tnew = T∞ + (Told − T∞)exp(−βt) 
+
+
+There are two ways to measure convection: 
+free convection: on the sides unexposed to argon 
+forced convection: on the top sides exposed to argon and radiation. Its larger 
+
 
 
 ----------------------------------------
 def block_cooling(): 
 
 It simply calls cool() with block_time as the time interval
+Replaces the dt variable is def cool with block_time defined in config.py 
 
 ----------------------------------------------------------
 def dwell_cooling(): 
@@ -139,4 +126,54 @@ artificially heat the first 50 nodes so you have something to cool during the te
 solver = ConvectionSolver(...)  create the conduction solver 
 cooled = solver.block_cooling(...) --> apply newton cooling for one block dpeosition time 
 
+solver.block_cooling(...) this is syntax for python calling a method/objust 
+since you called it, you can now use the function inside it 
+
 print(np.max(cooled)) --> check that the hottest node has cooled compared to its initial value 
+
+
+
+----------------------------------------
+Biot number review 
+
+Bi = hLc/k 
+h = surface heat-transfer [W / m^2K]
+Lc = characteristic length [m]
+k = solid thermal conductivity [W/mK]
+
+Bi can be interpreted as: 
+Bi ~ internal conduction resistance / surface heat transfer resistance 
+Rcond ~ Lc / kA 
+Rconv ~ 1 / hA 
+Rcond/Rconv ~ hLc/k = Bi 
+
+If Bi < 0.1 
+This means that the resistance in conduction is less than the resistance in the surface layer heat transfer 
+
+Internal solid                    Surface
+conduction                        heat transfer
+
+Rcond = SMALL                     Rconv = LARGE
+       │                                 │
+       ▼                                 ▼
+ ┌──────────────┐                  ┌─────────┐
+ │      SOLID   │ ───────────────► │ SURFACE │ ──► gas
+ └──────────────┘                  └─────────┘
+
+The solid can internally conduct heat easily compared to the rate that heat can leave the surface 
+since the resitiance for convection is larger (heat has more trouble leaving)
+
+What is a lumped body? 
+A lumped bpdy is a body whose internal temperature gradients are small enough to approximate 
+T(x, y, z, t)  = T(t). This is lumped capacitance where you lump the entire temperature field 
+The DED graph model is not a lumped capacitance model of the enitre substrate or entire part 
+The graph conduction solver calculates different temperatures at different nodes 
+The model is designed to capture spatial temperature gradients 
+
+The model lumps several surface heat-loss mechanisms
+Lump several surface heat-loss mechanisms: qconv + qrad 
+
+Note: 
+The characteristic length of a lumped cooling model is Lc = V/ As
+The use block length which is much larger than Lc
+more of a worst case scenario. Otherwise, the Beta term would be huge  

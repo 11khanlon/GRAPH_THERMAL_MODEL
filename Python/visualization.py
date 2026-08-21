@@ -7,7 +7,7 @@ import os
 import time
 
 # ----------------------------------
-def draw_block(ax, block, color, alpha, edge=True, edge_color=None):
+def draw_block(ax, block, color, alpha, edge=True, edge_color=None, zorder=0):
 
     #Draw one block as a transparent rectangular prism.
     
@@ -54,6 +54,7 @@ def draw_block(ax, block, color, alpha, edge=True, edge_color=None):
         alpha=alpha
     )
 
+    cube.set_zorder(zorder) 
     ax.add_collection3d(cube)
 
 
@@ -145,7 +146,7 @@ def draw_outline(ax, xmin, xmax, ymin, ymax, zmin, zmax, color="black", linewidt
             color=color,
             linewidth=linewidth,
             linestyle=linestyle,
-            zorder=100
+            zorder = 0 
         )
 
 
@@ -240,7 +241,7 @@ def plot_geometry(geometry):
                     "lightgrey",
                     alpha = 0.15,
                     edge=True,
-                    edge_color="black"
+                    edge_color="black", zorder = 0 
                 )
 
             else:
@@ -252,7 +253,7 @@ def plot_geometry(geometry):
                     "lightgrey",
                     alpha=0.5,
                     edge=True,
-                    edge_color="black"
+                    edge_color="black", zorder = 0
                 )
 
         # DEPOSITION
@@ -261,10 +262,10 @@ def plot_geometry(geometry):
             draw_block(
                 ax,
                 block,
-                "crimson",
+                "lightgrey",
                 alpha= 1,
                 edge=True,
-                edge_color="black"
+                edge_color="black", zorder = 100
             )
 
    
@@ -314,8 +315,6 @@ def plot_geometry(geometry):
     plt.tight_layout()
 
     plt.show()
-
-
 
 def check_geometry_locations(geometry):
 

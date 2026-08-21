@@ -6,13 +6,19 @@ Implements Section 4.3.3
 Finds C such that:
 T(x=0.75mm,y=0,z=0) = desired meltpool temperature
 
+Add Later:
+θ=(g, ϵ, hf, hfree, hclamp, T0)
+Thermocouple data 
+FLIR data 
 
 """
 
 import numpy as np
+import sys 
+sys.path.append('C:\\Users\\Kayleigh\\GraphThermalModel\\Python') 
 
-from material import Ti64Material
-from config import LASER
+from config import LASER, MATERIAL
+import matplotlib.pyplot as plt
 
 
 class GoldakCalibrator:
@@ -29,12 +35,11 @@ class GoldakCalibrator:
         self.alpha = diffusivity
         self.V = scan_speed
 
-    #--------------------
+    #----------------------------
     def temperature(self, x, y, z):
 
         r = np.sqrt(x**2 + y**2 + z**2)
         r = max(r,1e-12)
-
 
         #Equation 19 
         T = (self.C * self.P
@@ -48,7 +53,7 @@ class GoldakCalibrator:
         return T
 
 
-
+    #---------------------------------
     def find_C(self, target_temperature):
 
         #Finds C so T(0.75mm,0,0) = desired meltpool (target) temperature
@@ -57,7 +62,6 @@ class GoldakCalibrator:
         x = 0.75e-3
         y = 0
         z = 0
-
 
         # analytical solution
 
@@ -68,7 +72,7 @@ class GoldakCalibrator:
 
         C = target_temperature / denominator
 
-        return C
+        return C/10
 
 
 
@@ -88,13 +92,10 @@ if __name__ == "__main__":
     )
 
 
-    meltpool_values = [1900, 2200, 2450]
+    meltpool_temperatures = [MATERIAL["liquidus_temperature"], 1900, 2200, 2450]
 
-
-    for T in meltpool_values:
-
+    for T in meltpool_temperatures:
 
         C = calibrator.find_C(T)
-
 
         print(f"Meltpool:", T, f"\nC =", C)

@@ -42,6 +42,13 @@ class Node:
         # Deposition nodes remain inactive until printed 
         self.active = is_substrate
 
+        # Faces currently exposed to the environment, Updated dynamically as deposition progresses.
+        self.exposed_faces = set()
+
+        # Convection boundary-condition classification
+        self.forced_surface = False
+        self.free_surface = False
+
         # ambient temperature initially
         self.temperature = MATERIAL["ambient_temperature"]
 
@@ -51,8 +58,6 @@ class Node:
         # edge weights
         self.weights = []
 
-      
-
     def __repr__(self):
 
         return (
@@ -61,11 +66,46 @@ class Node:
             f"block={self.block_id}, "
             f"T={self.temperature:.1f})"
         )
- 
+
+    #-------------------------------------------------- 
+    
+def node_on_face(node, block, face, thickness):
+    """
+    Determine whether a node lies within the surface
+    region associated with a particular block face.
+
+    The thickness is a numerical surface-band parameter.
+    It is NOT a threshold specified by Riensche et al.
+    """
+
+    x, y, z = node.position
+
+    x0, y0, z0 = block.start
+    x1, y1, z1 = block.end
+
+    if face == "left":
+        return abs(x - x0) <= thickness
+
+    elif face == "right":
+        return abs(x1 - x) <= thickness
+
+    elif face == "front":
+        return abs(y - y0) <= thickness
+
+    elif face == "back":
+        return abs(y1 - y) <= thickness
+
+    elif face == "bottom":
+        return abs(z - z0) <= thickness
+
+    elif face == "top":
+        return abs(z1 - z) <= thickness
+
+    return False
 
 
+#%%
 # -------- Node Generator ---------
-
 class NodeGenerator:
 
     """
@@ -147,12 +187,86 @@ class NodeGenerator:
         return self.nodes
 
     # -----------------------------------------------------
+    def update_node_exposure(self, surface_thickness):
+
+        # Clear previous exposure
+        for node in self.nodes:
+            node.exposed_faces.clear()
+
+        # Examine active blocks
+        for block in self.geometry.blocks:
+
+            if not block.active:
+                continue
+
+            for face, exposed in block.exposed_faces.items():
+
+                if not exposed:
+                    continue
+
+                for node in block.nodes:
+
+                    if node_on_face(
+                        node,
+                        block,
+                        face,
+                        surface_thickness
+                    ):
+                        node.exposed_faces.add(face)
+
+    # -----------------------------------------------------
+    def update_surface_types(self):
+        """
+        Classify exposed nodes according to their convection boundary condition.
+
+        Forced convection:
+            Exposed surfaces of deposited material
+            Exposed top surface of substrate
+
+        Free convection:
+            Exposed sides and bottom of substrate
+        """
+
+        for node in self.nodes:
+
+            # Reset previous classification
+            node.forced_surface = False
+            node.free_surface = False
+
+            # Ignore inactive deposition nodes
+            if not node.active:
+                continue
+
+            # No exposed surface
+            if not node.exposed_faces:
+                continue
+
+            # ---------------------------------------------
+            # SUBSTRATE
+
+            if node.is_substrate:
+
+                # Substrate top -> forced convection
+                if "top" in node.exposed_faces:
+                    node.forced_surface = True
+
+                # Substrate sides/bottom -> free convection
+                if any(
+                    face in node.exposed_faces
+                    for face in ["left", "right", "front", "back", "bottom"]
+                ):
+                    node.free_surface = True
+
+            # DEPOSITION
+            else:
+                # Exposed deposition surfaces -> forced convection
+                node.forced_surface = True
+
+    # -----------------------------------------------------
     def activate_block(self, block):
 
-        """
-        Activate every node inside one deposited block.
-        """
-
+ 
+        #Activate every node inside one deposited block.
         for node in block.nodes:
 
             node.active = True
@@ -255,6 +369,54 @@ class NodeGenerator:
         print(f"\nMinimum Density : {min(densities):.3f}")
         print(f"Maximum Density : {max(densities):.3f}")
         print(f"Average Density : {np.mean(densities):.3f}")
+
+
+# -----------------------------------------------------
+def print_surface_statistics(nodes):
+    """
+    Print statistics for currently exposed nodes.
+    """
+
+    surface_nodes = [
+        node
+        for node in nodes
+        if node.exposed_faces
+    ]
+
+    print("\n------ SURFACE NODE STATISTICS ------")
+
+    print(f"Total nodes      : {len(nodes)}")
+
+    print(f"Surface nodes    : {len(surface_nodes)}")
+
+    if len(nodes) > 0:
+
+        percentage = (100 * len(surface_nodes) / len(nodes))
+
+        print(f"Surface fraction : {percentage:.2f}%")
+
+    face_counts = {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "front": 0,
+        "back": 0
+    }
+
+    for node in surface_nodes:
+
+        for face in node.exposed_faces:
+
+            face_counts[face] += 1
+
+    for face, count in face_counts.items():
+
+        print(
+            f"{face:>7}: {count}"
+        )
+
+    print("-------------------------------------")
         
 
 # --------- Testing ----------
@@ -262,7 +424,8 @@ if __name__ == "__main__":
 
     from geometry import Geometry
     from visualization import  plot_geometry_with_nodes
-
+    from face import update_exposed_faces
+    from config import BLOCK
 
     stl_file = BUILD["stl_file"]
     
@@ -272,10 +435,17 @@ if __name__ == "__main__":
 
     generator = NodeGenerator(geom)
 
-    generator.generate()
+    nodes = generator.generate()
+
+    update_exposed_faces(geom)
+
+    surface_thickness = BLOCK["height"]/2
+    generator.update_node_exposure(surface_thickness)
 
     print(generator.nodes[0])
 
     generator.validate_nodes()
 
-    plot_geometry_with_nodes(geom, generator)
+    #plot_geometry_with_nodes(geom, generator)
+
+    print_surface_statistics(nodes)

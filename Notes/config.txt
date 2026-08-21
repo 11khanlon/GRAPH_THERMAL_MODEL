@@ -114,3 +114,12 @@ bounds = mesh.bounds
 print("Raw STL bounds:")
 print(bounds)
 print(mesh.units)
+
+
+
+--------------------------------
+Substrate penetration 
+
+A good first approximation: thermal diffusion length
+For transient conduction, the characteristic distance heat penetrates into a solid over time t is approximately:
+Ld ~ 2sqrt(alpha * t) 

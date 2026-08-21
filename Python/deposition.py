@@ -58,10 +58,9 @@ class DepositionSimulation:
 
 
     # ----------------------------------------
-    def surface_mask(self):
+    def build_surface_mask(self):
 
-        return np.array([node.surface for node in self.nodes],
-            dtype=bool)
+        ......
 
     
     # -----------------------------------------
@@ -157,7 +156,7 @@ class DepositionSimulation:
 
         current_layer = -1
 
-        for block in self.geometry.blocks:
+        ordered_blocks = self.geometry.deposition_order()
 
             if block.layer != current_layer:
 

@@ -4,12 +4,18 @@ calibration.py
 Grid-search calibration of graph parameters
 (neighborhood radius ε and gain factor g)
 
+Add Later:
+θ=(g, ϵ, hf, hfree, hclamp, T0)
+Thermocouple data 
+FLIR data 
+
 Implements Section 4.3.4.1 from
 
 Riensche et al.
 Thermal Modeling of Directed Energy Deposition
 using Graph Theory (2023)
 """
+
 
 import numpy as np
 

@@ -1,5 +1,5 @@
 Remaining Questions: 
-how do you deal with conduciton and convection, is it recalculated after each timestep? or layer? in convection and conduction in the preceding timestep calculated simulatenously with each other timestep?
+how do you deal with conduciton and convection, is it recalculated after each timestep? or layer? in convection and conduction in the preceding timestep calculated simulatenously with each other timestep? But doesn't cooling happen to nodes after then laser is moved at the timestep? when do you store new temperatures? YOu calculate conduction, then convection after so convector "lags" after a second or your set timestep? 
  gain = graph_settings["gain"]  --> where does this come from? 
 where do these laser values come from 
 fix the block.nodes error. The sctivate_block(): function is repeated in nodes.py ?
@@ -45,6 +45,20 @@ T = convection.cool(
     h=CONVECTION["free"],
     ...
 )
+
+in laser heat source, you calculate a temperature under laser heat source and this is your delta 
+you do ambient + laser delta. But later you have to iterate the delta based on t current. Is this set up correctly then? 
+Because T0 represents current state, which initially is 25 degree C for first block 
+T1 = Hlaser(T0) The laser heats the current block, temperature increase (25 + initial condition from laser)
+Then condction: Tc = C(T1)
+Then convection: Tb = B(Tc)
+Now you have a new state. you iterate over again. It is implied that the next block tempearture starts at 25 degree C becuase it hasn't been activated. But that state vector also stores previous temperatures 
+In heat_block it includes delta with the initial temperature, is this correct? But if you input temperature doesn't this already have a current state 
+so for the first temperature you put in there is it just 25 deg C? just deposition manager keep adding current temperature to delta T ? 
+
+you apply goldak heating then it conducts, then condcution cooling happens after this. But doesn't cooling happen to nodes after then laser is moved at the timestep? when do you store new temperatures? 
+
+do you need a timestep for the dwell? I dont think you do because you should just be able to plug in tb
 ---------------------------------
 Overall purpose: Main deposition simulation 
 The paper solves the process in this order 
@@ -72,6 +86,31 @@ after layer:
 --> dwell conduction 
 --> dwell convection 
 repeat until final layer 
+----------------------------------------
+What happends physically when the laser is moving? 
+The laser deposits energy into the material. At essentially the same time:
+--> heat conducts away from the hot region 
+--> heat is lost from the exposed surfaces through convection 
+--> Radiation also removes heat 
+--> The surrounding material is heated 
+
+So physically, there isn't a sqeuence like:
+Laser heating, wait, conduciton, wait, convection 
+Instead, these mechanisms happen simultaneously 
+
+This paper uses a sequential numerical approximation 
+laser heating --> conduction --> convection/radiation calculation --> next laser position 
+For example: 
+T0 --> Laser B1 --> conduction --> convection --> T1 
+T1 --> Laser B2 --> Conduction --> convection --> T2 
+
+Convection:
+qconv = hA(T - Tinfinity)
+T(t) = Tinifinity + (T0 - Tinifinity)exp(-beta*t) 
+
+
+Conduction changes the temperature distribution, and that temperature distribution determines how much 
+heat can subsequently be removed form exposed surfaces 
 
 -------------------------------------
 import numpy as np

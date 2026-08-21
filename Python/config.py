@@ -31,7 +31,8 @@ LASER = {
     "meltpool_temperature": 2200,  # Goldak meltpool temperature, must be above liquidus and fully molten temperature
     "goldak_C": 0.171, 
     "thermal_conductivity": 6.8 ,  #W/mK
-    "thermal_diffusivity": 2.7228E-6  #m^2/s
+    "thermal_diffusivity": 2.7228E-6 , #m^2/s, 
+    "standoff_distance": 11.4E-3 
 
 }
 
@@ -70,6 +71,9 @@ BLOCK = {
     "width": 3.0e-3,    #m 
     "height": 0.1806e-3,  #m 
 
+    "surface_band_thickness": 0.1806e-3 / 2,
+    "surface_thickness": 0.1806e-3 / 2, 
+
     "time_per_block": 0.922 #seconds
 
 }
@@ -84,6 +88,7 @@ CONVECTION = {
     "forced": 50.0,   # W/m^2-K, free*10
     "clamp": 1000.0   #do you need a clamp in this study 
 
+
 }
 
 
@@ -92,7 +97,29 @@ CONVECTION = {
 DWELL = {
     
     "case_A": 20.0,  #seconds 
-    "case_B": 3.0    #seconds 
+    "case_B": 3.0 ,   #seconds 
+    "time_step": 1    #seconds
 }
 
 
+if __name__ == "__main__":
+
+    import numpy as np
+
+    Bi_free = CONVECTION["free"]*BLOCK["length"] / LASER["thermal_conductivity"]
+    Bi_forced = CONVECTION["forced"]*BLOCK["length"] / LASER["thermal_conductivity"]
+
+    if Bi_free < 0.1:
+        print(f"\nConduction resistance is less than convection ✓ ")
+        print(f" Biot number for free convection:", Bi_free)
+
+    if Bi_forced < 0.1:
+            print(f"\nConduction resistance is less than convection ✓ ")
+            print(f" Biot number for forced convection:", Bi_forced)
+
+    print(f"\n---- Needed subtrate depth -------")
+    number_of_blocks = 5  #worst case scenario for heat accumulation 
+
+    Ld = 2 * np.sqrt(LASER["thermal_diffusivity"] * BLOCK["time_per_block"])
+
+    print(f"Needed substrate depth in mm :", number_of_blocks* Ld * 1000)
