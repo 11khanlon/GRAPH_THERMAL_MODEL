@@ -88,7 +88,6 @@ CONVECTION = {
     "forced": 50.0,   # W/m^2-K, free*10
     "clamp": 1000.0   #do you need a clamp in this study 
 
-
 }
 
 

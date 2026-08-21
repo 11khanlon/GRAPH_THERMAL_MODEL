@@ -18,7 +18,7 @@ class ConvectionSolver:
         
         self.rho = density
         self.L = block_length
-
+    
 
     # -------------------------------------------------------
 
@@ -95,38 +95,6 @@ class ConvectionSolver:
             ambient_temperature, 
             dt)
 
-    # -------------------------------------------------------
-
-    def multiple_steps(
-            self,
-            temperature,
-            forced_surface_mask,
-            free_surface_mask,
-            h_forced,
-            h_free,
-            cp,
-            ambient_temperature,
-            total_time,
-            dt):
-
-        T = temperature.copy()
-
-        steps = int(np.ceil(total_time / dt))
-
-        for _ in range(steps):
-
-            T = self.cool(
-                T,
-                forced_surface_mask,
-                free_surface_mask,
-                h_forced,
-                h_free,
-                cp,
-                ambient_temperature,
-                dt
-            )
-
-        return T
 
 
 # ------------------------------------------------------------

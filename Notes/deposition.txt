@@ -1,23 +1,13 @@
 Remaining Questions: 
 how do you deal with conduciton and convection, is it recalculated after each timestep? or layer? in convection and conduction in the preceding timestep calculated simulatenously with each other timestep? But doesn't cooling happen to nodes after then laser is moved at the timestep? when do you store new temperatures? YOu calculate conduction, then convection after so convector "lags" after a second or your set timestep? 
- gain = graph_settings["gain"]  --> where does this come from? 
-where do these laser values come from 
+
+
 fix the block.nodes error. The sctivate_block(): function is repeated in nodes.py ?
 fix surface_maks() node class does not contain node.surface 
 how is cooling between node and node dealt with based on time from previous layers and blocks? does the entire graph recalculate or just the singular block? 
 the first layer deposits first, how do we factor its singular existence. How are previous layers incoroporated in future deposition calculations? 
 does the laser raster back and forth 
-does it call dwell time from config file? case_A (10s) for example. how to deal with dweel time in between each layer in code. 
-Need to acitivate the substrate before deposition. Before the laser starts, the substrate is already sitting on the machine. At time 0, the substrate already exists. Every node and block must be active 
-for block in geometry.blocks:
 
-    if block.is_substrate:
-
-        block.active = True
-
-        for node in block.nodes:
-
-            node.active = True
     
 block.node_indices does not exist in your earlier Geometry/Block class. Your Block stores block.nodes, not indices. Either store node indices when generating nodes or iterate over block.nodes.
 node.surface does not exist in your Node class. The convection solver assumes every node has a Boolean surface attribute. You'll need to add self.surface = False to the Node class and implement a method to identify boundary nodes.
@@ -25,26 +15,7 @@ Material properties are currently treated as constants (material["thermal_diffus
 substrate nodes are active before depostion starts. how do you know you activate each deposition block and those are the active nodes to tell the heatsource.py. Also, the substrate blokcs are active so once the deposition blocks have been activated the heat will just diffuse into the substrate you dont have to do anything else right? 
 does each node start at 25 degrees celcius?
 
-create a temperature history list after each update state: 
-temperature_history[0] → initial state
-temperature_history[1] → after block 1
-temperature_history[2] → after block 2
-...
 
-
-T = convection.cool(
-    T,
-    forced_surface_mask,
-    h=CONVECTION["forced"],
-    ...
-)
-
-T = convection.cool(
-    T,
-    free_surface_mask,
-    h=CONVECTION["free"],
-    ...
-)
 
 in laser heat source, you calculate a temperature under laser heat source and this is your delta 
 you do ambient + laser delta. But later you have to iterate the delta based on t current. Is this set up correctly then? 
@@ -58,7 +29,8 @@ so for the first temperature you put in there is it just 25 deg C? just depositi
 
 you apply goldak heating then it conducts, then condcution cooling happens after this. But doesn't cooling happen to nodes after then laser is moved at the timestep? when do you store new temperatures? 
 
-do you need a timestep for the dwell? I dont think you do because you should just be able to plug in tb
+
+
 ---------------------------------
 Overall purpose: Main deposition simulation 
 The paper solves the process in this order 
@@ -93,12 +65,13 @@ The laser deposits energy into the material. At essentially the same time:
 --> heat is lost from the exposed surfaces through convection 
 --> Radiation also removes heat 
 --> The surrounding material is heated 
+--> Repat by inputting temperature state into laser model
 
 So physically, there isn't a sqeuence like:
 Laser heating, wait, conduciton, wait, convection 
 Instead, these mechanisms happen simultaneously 
 
-This paper uses a sequential numerical approximation 
+This paper uses a sequential numerical approximation:
 laser heating --> conduction --> convection/radiation calculation --> next laser position 
 For example: 
 T0 --> Laser B1 --> conduction --> convection --> T1 
@@ -187,12 +160,6 @@ Either need to add:
 --> self.surface = False (and later identify boundary nodes)
 --> implement a method to compute surface nodes 
 
----------------------------------------------------
-def active_temperature(): 
-
-T = self.temperature.copy() makes a copy 
-Then inactive = np.array([not node.active for node in self.nodes])
-Then T[inactive] = ambient --> forces inactive material back to room temperature 
 
 --------------------------------------
 def simulate_block():
