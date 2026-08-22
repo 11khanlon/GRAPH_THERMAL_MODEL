@@ -20,7 +20,8 @@ class DepositionSimulation:
                 laser,
                 convection,
                 graph_settings,
-                dwell_info, 
+                dwell_info,
+                dwell_time, 
                 block_info):
 
         self.geometry = geometry
@@ -28,7 +29,9 @@ class DepositionSimulation:
         self.nodes = node_generator.nodes
         self.graph = graph
         self.dwell_info = dwell_info
+        self.dwell_time = dwell_time
         self.block_info = block_info
+
 
         #----- Configuration libraries ----------
         self.material_settings = material
@@ -38,6 +41,10 @@ class DepositionSimulation:
 
         #------ Temperature dependent material model ---------
         self.material_model = Ti64Material()
+        self.current_alpha = (self.material_model.diffusivity_linear_si(
+        self.material_settings["ambient_temperature"]
+            )
+        )
 
         #-------- Surface band definition -----------
         self.surface_thickness = block_info["surface_thickness"]
@@ -50,7 +57,6 @@ class DepositionSimulation:
         #---------- Constants concerning time --------------
         self.block_time = block_info["time_per_block"]    #Process timing
         self.dwell_dt = dwell_info["time_step"]           # Paper uses 1-second dwell integration
-        self.dwell_time = dwell_info["case_A"]            # Total dwell between layers
         self.time = 0.0                              #simulation time 
 
         #--------- Initial state as history -------------
@@ -63,12 +69,12 @@ class DepositionSimulation:
 
         self.cooling = ConvectionSolver(
             density = material["density"],
-            block_length = block_info["block_length"])
+            block_length = block_info["length"])
 
         self.heat_source = GoldakHeatSource(
             laser_power =  laser["power"],
             conductivity = laser["thermal_conductivity"],
-            diffusivity = laser["thermal_diffusivity"],
+            alpha = laser["thermal_diffusivity"],
             scan_speed = laser["scan_speed"],
             scaling_factor = laser["goldak_C"],
             meltpool_temperature = laser["meltpool_temperature"],
@@ -100,13 +106,6 @@ class DepositionSimulation:
         print(f"Free surface nodes: "
             f"{np.sum(self.free_surface_mask)}")
 
-    # --------------------------------
-    def active_mask(self):
-
-        return np.array(
-            [node.active for node in self.nodes],
-            dtype=bool
-        )
 
     #------------------------------------
     def layer_indices(self, layer):
@@ -132,9 +131,7 @@ class DepositionSimulation:
 
         T_layer = self.temperature[indices]
 
-        return self.material_model.layer_diffusivity(
-            T_layer
-        )
+        return self.material_model.layer_diffusivity(T_layer)
     
     #-----------------------------------------
     def record_state(self):
@@ -144,6 +141,30 @@ class DepositionSimulation:
         )
 
         self.history_time.append(self.time)
+
+    #--------------------------------------------
+    def active_mask(self):
+
+        return np.array(
+            [node.active for node in self.nodes],
+            dtype=bool)
+    
+    #--------------------------------------------------
+    def inactive_node_statistics(self):
+
+        inactive = self.active_mask()
+
+        if not np.any(inactive):
+            return
+
+        Tinactive = self.temperature[inactive]
+
+        ambient = self.material_settings["ambient_temperature"]
+
+        print("Max inactive T:", Tinactive.max())
+
+        print("Inactive nodes > ambient + 10 C:",
+            np.sum(Tinactive > ambient + 10.0))
   
     # -----------------------------------------------
 
@@ -171,7 +192,7 @@ class DepositionSimulation:
 
   
         # Step 2 -> Conduction
-        alpha = self.material.layer_diffusivity(self.temperature)
+        alpha = self.current_alpha
 
         self.temperature = (
             self.conduction.block_conduction(
@@ -182,7 +203,7 @@ class DepositionSimulation:
             )
 
         # Step 3 --> Convection
-        cp = self.material.specific_heat(self.temperature)
+        cp = self.material_model.specific_heat(self.temperature)
 
         overlap = (
             self.forced_surface_mask
@@ -195,25 +216,6 @@ class DepositionSimulation:
                 np.sum(overlap)
             )
 
-        if self.node.is_substrate:
-
-            if "top" in self.node.exposed_faces:
-
-                self.node.forced_surface = True
-                self.node.free_surface = False
-
-            elif any(
-                face in self.node.exposed_faces
-                for face in [
-                    "left",
-                    "right",
-                    "front",
-                    "back",
-                    "bottom"
-                ]
-            ):
-
-                self.node.free_surface = True
 
         # Forced convection + equivalent radiation
         self.temperature = self.cooling.block_cooling(
@@ -221,10 +223,8 @@ class DepositionSimulation:
             surface_mask=self.forced_surface_mask,
             h=self.convection["forced"],
             cp=cp,
-            ambient_temperature=
-                self.material_settings["ambient_temperature"],
-            block_time=
-                self.block_info["time_per_block"]
+            ambient_temperature = self.material_settings["ambient_temperature"],
+            block_time = self.block_info["time_per_block"]
         )
 
         # Free convection
@@ -233,82 +233,61 @@ class DepositionSimulation:
             surface_mask=self.free_surface_mask,
             h=self.convection["free"],
             cp=cp,
-            ambient_temperature=
-                self.material_settings["ambient_temperature"],
-            block_time=
-                self.block_info["time_per_block"]
+            ambient_temperature=self.material_settings["ambient_temperature"],
+            block_time=self.block_info["time_per_block"]
         )
 
         self.time += self.block_time
         self.record_state()
-        self.history.append(self.temperature.copy())
+     
 
     # ----------------------------------
-    def simulate_dwell(self, dwell_time):
+    def simulate_dwell(self):
 
-        steps = int(dwell_time)
-
-        active_mask = np.array(
-            [node.active for node in self.nodes],
-            dtype=bool)
+        steps = int(np.ceil(self.dwell_time / self.dwell_dt))
 
         for _ in range(steps):
 
-            alpha = (self.material_model.layer_diffusivity(
-                    self.temperature[active_mask]
-                )
-            )
+            alpha = self.current_alpha
 
             self.temperature = (
                 self.conduction.dwell_conduction(
                     temperature=self.temperature,
                     alpha=alpha,
-                    dt= self.dwell_info["time_step"],
-                    active_mask=active_mask
+                    dt = self.dwell_dt
                 )
             )
 
             cp = self.material_model.specific_heat(
-                self.temperature
-            )
+                self.temperature)
 
             self.temperature = (
                 self.cooling.dwell_cooling(
                     temperature=self.temperature,
-                    surface_mask=
-                        self.forced_surface_mask,
+                    surface_mask=self.forced_surface_mask,
                     h=self.convection["forced"],
                     cp=cp,
-                    ambient_temperature=
-                        self.material_settings[
-                            "ambient_temperature"],
-                    dt=self.dwell_info["time_step"]
+                    ambient_temperature=self.material_settings["ambient_temperature"],
+                    dt=self.dwell_dt
                 )
             )
 
-            cp = self.material_model.specific_heat(
-                self.temperature
-            )
+            cp = self.material_model.specific_heat(self.temperature)
 
             self.temperature = (
                 self.cooling.dwell_cooling(
                     temperature=self.temperature,
-                    surface_mask=
-                        self.free_surface_mask,
+                    surface_mask=self.free_surface_mask,
                     h=self.convection["free"],
                     cp=cp,
-                    ambient_temperature=
-                        self.material_settings[
-                            "ambient_temperature"
-                        ],
-                    dt=self.dwell_info["time_step"]
+                    ambient_temperature=self.material_settings["ambient_temperature"],
+                    dt = self.dwell_dt
                 )
             )
 
-            self.history.append(
-                self.temperature.copy()
-            )
+            self.time += self.dwell_dt
 
+            self.record_state()
     
     # --------------------------------------
     def run(self):
@@ -328,10 +307,11 @@ class DepositionSimulation:
                 # Dwell AFTER previous layer
                 if current_layer is not None:
 
-                    print(
-                        f"Dwell after layer "
+                    print(f"Dwell after layer "
                         f"{current_layer + 1}"
                     )
+                    self.current_alpha = (self.diffusivity_from_layer(
+                    current_layer))
 
                     self.simulate_dwell()
 
@@ -347,20 +327,15 @@ class DepositionSimulation:
         print("-------------------")
         print("Simulation complete!")
 
-        self.history = np.asarray(
-            self.history
-        )
+        self.history = np.asarray(self.history)
 
-        self.history_time = np.asarray(
-            self.history_time
-        )
+        self.history_time = np.asarray(self.history_time)
 
         return self.history
 
     # --------------------------------------
 
-    def sensor_history(self,
-        sensor_index):
+    def sensor_history(self, sensor_index):
 
         return self.history[:, sensor_index]
 
@@ -392,14 +367,11 @@ if __name__ == "__main__":
 
     geometry.build_blocks()
 
-    generator = NodeGenerator(geometry
-    )
+    generator = NodeGenerator(geometry)
 
     generator.generate()
 
-    graph = ThermalGraph(
-        generator.nodes
-    )
+    graph = ThermalGraph(generator.nodes)
 
     graph.build()
     graph.degree_matrix()
@@ -407,7 +379,8 @@ if __name__ == "__main__":
     graph.eigensystem()
 
     # Choose experimental case here
-    dwell_time = DWELL["case_A"]
+   
+    selected_dwell = DWELL["case_B"]
 
     simulation = DepositionSimulation(
         geometry=geometry,
@@ -418,6 +391,7 @@ if __name__ == "__main__":
         convection=CONVECTION,
         graph_settings=GRAPH,
         dwell_info = DWELL, 
+        dwell_time = selected_dwell,
         block_info = BLOCK
     )
 

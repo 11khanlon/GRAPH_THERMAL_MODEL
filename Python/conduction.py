@@ -5,6 +5,9 @@ Tc = Φ exp(-alpha g Λ tb) Φᵀ T0
 
 import numpy as np
 
+from scipy.sparse import diags
+from scipy.sparse.linalg import expm_multiply
+
 class ConductionSolver:
 
     def __init__(self, graph, gain):

@@ -1,35 +1,34 @@
 Remaining Questions: 
-how do you deal with conduciton and convection, is it recalculated after each timestep? or layer? in convection and conduction in the preceding timestep calculated simulatenously with each other timestep? But doesn't cooling happen to nodes after then laser is moved at the timestep? when do you store new temperatures? YOu calculate conduction, then convection after so convector "lags" after a second or your set timestep? 
-
-
-fix the block.nodes error. The sctivate_block(): function is repeated in nodes.py ?
-fix surface_maks() node class does not contain node.surface 
-how is cooling between node and node dealt with based on time from previous layers and blocks? does the entire graph recalculate or just the singular block? 
-the first layer deposits first, how do we factor its singular existence. How are previous layers incoroporated in future deposition calculations? 
-does the laser raster back and forth 
-
-    
-block.node_indices does not exist in your earlier Geometry/Block class. Your Block stores block.nodes, not indices. Either store node indices when generating nodes or iterate over block.nodes.
-node.surface does not exist in your Node class. The convection solver assumes every node has a Boolean surface attribute. You'll need to add self.surface = False to the Node class and implement a method to identify boundary nodes.
-Material properties are currently treated as constants (material["thermal_diffusivity"], material["specific_heat"]). If you later switch to the temperature-dependent material class (material.py), you'll want to replace these constants with values computed from the current node or layer temperatures
-substrate nodes are active before depostion starts. how do you know you activate each deposition block and those are the active nodes to tell the heatsource.py. Also, the substrate blokcs are active so once the deposition blocks have been activated the heat will just diffuse into the substrate you dont have to do anything else right? 
-does each node start at 25 degrees celcius?
-
-
-
-in laser heat source, you calculate a temperature under laser heat source and this is your delta 
-you do ambient + laser delta. But later you have to iterate the delta based on t current. Is this set up correctly then? 
-Because T0 represents current state, which initially is 25 degree C for first block 
-T1 = Hlaser(T0) The laser heats the current block, temperature increase (25 + initial condition from laser)
-Then condction: Tc = C(T1)
-Then convection: Tb = B(Tc)
-Now you have a new state. you iterate over again. It is implied that the next block tempearture starts at 25 degree C becuase it hasn't been activated. But that state vector also stores previous temperatures 
-In heat_block it includes delta with the initial temperature, is this correct? But if you input temperature doesn't this already have a current state 
-so for the first temperature you put in there is it just 25 deg C? just deposition manager keep adding current temperature to delta T ? 
 
 you apply goldak heating then it conducts, then condcution cooling happens after this. But doesn't cooling happen to nodes after then laser is moved at the timestep? when do you store new temperatures? 
 
+Temperature is stored after each state:
+history[0]
+initial system, t = 0
 
+history[1]
+after Block 1:
+Goldak + conduction + convection
+
+history[2]
+after Block 2:
+Goldak + conduction + 
+For future graphing and debugging, maybe record temperature after T0, conduction, convection
+
+
+there's no dwell after the final layer
+you might want to move where you calculate alpha
+
+How does cooling from previous blocks/layers work?   --> yea so deposition blocks that are active stay active since they are present now right? and for depositoin layers underneath, they can be affected becuase they remain active right?
+
+
+need timestamp of when everything started 
+temperature status and checks during deposition. more things in main.py for checks 
+i want to plot everything in a visual setting 
+is everything being exported in deposition.py to excel? how is the visualzation.py file going to read everything 
+substrate and deposition area are a tannish white color 
+i want to create a laser object in the visualazation to show things are moving 
+i want the visualization to look like FEA with the normalized colors
 
 ---------------------------------
 Overall purpose: Main deposition simulation 
@@ -76,6 +75,7 @@ laser heating --> conduction --> convection/radiation calculation --> next laser
 For example: 
 T0 --> Laser B1 --> conduction --> convection --> T1 
 T1 --> Laser B2 --> Conduction --> convection --> T2 
+Not solving as one coupled equation
 
 Convection:
 qconv = hA(T - Tinfinity)

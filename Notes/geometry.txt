@@ -1,6 +1,8 @@
 remaining questions: 
 test deposition_order
 if i imported a different geometry, how to do this? also add GCODE? 
+does the laser raster back and forth? what if you have single track beads with only one layer, will the code break?
+
 
 
 ----------------------------

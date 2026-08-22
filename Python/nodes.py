@@ -249,12 +249,20 @@ class NodeGenerator:
                 # Substrate top -> forced convection
                 if "top" in node.exposed_faces:
                     node.forced_surface = True
+                    node.free_surface = False
 
                 # Substrate sides/bottom -> free convection
-                if any(
+                elif any(
                     face in node.exposed_faces
-                    for face in ["left", "right", "front", "back", "bottom"]
+                    for face in [
+                        "left",
+                        "right",
+                        "front",
+                        "back",
+                        "bottom"
+                    ]
                 ):
+
                     node.free_surface = True
 
             # DEPOSITION
@@ -262,15 +270,7 @@ class NodeGenerator:
                 # Exposed deposition surfaces -> forced convection
                 node.forced_surface = True
 
-    # -----------------------------------------------------
-    def activate_block(self, block):
-
  
-        #Activate every node inside one deposited block.
-        for node in block.nodes:
-
-            node.active = True
-
     # -----------------------------------------------------
     def active_nodes(self):
 

@@ -84,7 +84,7 @@ class GoldakHeatSource:
             y = node.position[1] - yc
             z = node.position[2] - zc
 
-            delta = MATERIAL["ambient_temperature"] + self.goldak_temperature(x, y, z)
+            delta =  self.goldak_temperature(x, y, z)
 
             T[index] = max(T[index], min(delta, self.Tmelt))
 
@@ -119,7 +119,7 @@ class GoldakHeatSource:
             y = node.position[1] - yc
             z = node.position[2] - zc
 
-            delta = MATERIAL["ambient_temperature"] + self.goldak_temperature(x, y, z)
+            delta =  self.goldak_temperature(x, y, z)
 
             if delta >= threshold:
 
