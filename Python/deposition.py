@@ -6,6 +6,8 @@ from conduction import ConductionSolver
 from convection import ConvectionSolver
 from heat_source import GoldakHeatSource
 from material import Ti64Material
+from datetime import datetime
+import time 
 
 from face import update_exposed_faces
 
@@ -132,6 +134,48 @@ class DepositionSimulation:
         T_layer = self.temperature[indices]
 
         return self.material_model.layer_diffusivity(T_layer)
+
+    #------------------------------------------
+    def print_temperature_status(self, label, block=None):
+
+        active = self.active_mask()
+        inactive = ~active
+
+        print(f"\n--- {label} ---")
+
+        if block is not None:
+            print(
+                f"Block {block.id}, "
+                f"Layer {block.layer}"
+            )
+
+        print(
+            f"Simulation time : "
+            f"{self.time:.3f} s"
+        )
+
+        print(
+            f"Global Tmin/Tmax: "
+            f"{self.temperature.min():.2f} / "
+            f"{self.temperature.max():.2f} °C"
+        )
+
+        print(
+            f"Active nodes    : "
+            f"{np.sum(active)}"
+        )
+
+        print(
+            f"Active Tmax     : "
+            f"{self.temperature[active].max():.2f} °C"
+        )
+
+        if np.any(inactive):
+
+            print(
+                f"Inactive Tmax   : "
+                f"{self.temperature[inactive].max():.2f} °C"
+            )
     
     #-----------------------------------------
     def record_state(self):
@@ -170,6 +214,23 @@ class DepositionSimulation:
 
     def simulate_block(self, block):
 
+        print("\n------ INITIAL STATE ------")
+        print(
+            "Temperature range:",
+            simulation.temperature.min(),
+            simulation.temperature.max()
+        )
+
+        print(
+            "Active nodes:",
+            np.sum(simulation.active_mask())
+        )
+
+        print(
+            "Inactive nodes:",
+            np.sum(~simulation.active_mask())
+        )
+
         self.activate_block(block)
 
         # Update geometry-level exposed faces
@@ -190,6 +251,8 @@ class DepositionSimulation:
             block,
             self.temperature)
 
+        self.print_temperature_status("After Goldak", block)
+
   
         # Step 2 -> Conduction
         alpha = self.current_alpha
@@ -201,6 +264,8 @@ class DepositionSimulation:
             self.block_info["time_per_block"]
                 )
             )
+
+        self.print_temperature_status("After conduction", block)
 
         # Step 3 --> Convection
         cp = self.material_model.specific_heat(self.temperature)
@@ -237,6 +302,8 @@ class DepositionSimulation:
             block_time=self.block_info["time_per_block"]
         )
 
+        self.print_temperature_status("After convection", block)
+
         self.time += self.block_time
         self.record_state()
      
@@ -258,8 +325,7 @@ class DepositionSimulation:
                 )
             )
 
-            cp = self.material_model.specific_heat(
-                self.temperature)
+            cp = self.material_model.specific_heat(self.temperature)
 
             self.temperature = (
                 self.cooling.dwell_cooling(
@@ -292,8 +358,13 @@ class DepositionSimulation:
     # --------------------------------------
     def run(self):
 
+        wall_start = datetime.now()
+        compute_start = time.perf_counter()
         print("----------------------------")
         print("Beginning deposition")
+
+        print(f"\nSimulation start:", wall_start.strftime("%Y-%m-%d %H:%M:%S"))
+        print("----------------------------")
       
 
         current_layer = None
@@ -317,15 +388,25 @@ class DepositionSimulation:
 
                 current_layer = block.layer
 
-                print(
-                    f"Layer {current_layer + 1}"
-                )
+                print(f"Layer {current_layer + 1}")
 
             # Deposit current block
             self.simulate_block(block)
 
+        compute_time = time.perf_counter() - compute_start
+        wall_end = datetime.now()
+
         print("-------------------")
         print("Simulation complete!")
+
+        print(f"\nSimulation end:",
+            wall_end.strftime("%Y-%m-%d %H:%M:%S"))
+        
+        print(f"\nSimulated process time: "
+              f"{self.time:.2f} s")
+        
+        print(f"\nComputer calculation time: "
+            f"{compute_time:.2f} s")
 
         self.history = np.asarray(self.history)
 
@@ -350,7 +431,6 @@ class DepositionSimulation:
     def final_temperature(self):
 
         return self.temperature
-
 
 # ------------------------------------
 
@@ -405,4 +485,10 @@ if __name__ == "__main__":
     print(
         "Stored states:",
         history.shape[0]
+    )
+
+    np.savez_compressed(
+        "thermal_history.npz",
+        temperature=simulation.history,
+        time=simulation.history_time
     )

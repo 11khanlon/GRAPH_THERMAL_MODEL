@@ -49,6 +49,40 @@ class ThermalGraph:
         )
 
     # --------------------------------------------------------
+    def find_sensor_node(
+        nodes,
+        target_position):
+
+        substrate_nodes = [
+            node
+            for node in nodes
+            if node.is_substrate
+        ]
+
+        distances = np.array([
+            np.linalg.norm(
+                node.position
+                - target_position
+            )
+            for node in substrate_nodes
+        ])
+
+        nearest_index = np.argmin(
+            distances
+        )
+
+        sensor_node = (
+            substrate_nodes[
+                nearest_index
+            ]
+        )
+
+        return (
+            sensor_node,
+            distances[nearest_index]
+        )
+
+    #-----------------------------------------------------
 
     def build(self):
 
@@ -281,12 +315,38 @@ if __name__ == "__main__":
 
     geom.build_blocks()
 
+    sensor_position = geom.sensor_position
+
     generator = NodeGenerator(geom)
 
     generator.generate()
 
+    sensor_node, distance = find_sensor_node(
+            generator.nodes,
+            sensor_position
+        )
+    
+    print("\n------ SENSOR NODE ------")
+
+    print(
+        "Original position:",
+        sensor_node.position
+    )
+
+    print(
+        "Target position:",
+        sensor_position
+    )
+
+    print(
+        "Initial distance:",
+        distance * 1000,
+        "mm"
+    )
+    
     graph = ThermalGraph(generator.nodes)
 
+    
     graph.build()
 
     graph.degree_matrix()

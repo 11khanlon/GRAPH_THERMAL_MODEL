@@ -27,8 +27,10 @@ temperature status and checks during deposition. more things in main.py for chec
 i want to plot everything in a visual setting 
 is everything being exported in deposition.py to excel? how is the visualzation.py file going to read everything 
 substrate and deposition area are a tannish white color 
-i want to create a laser object in the visualazation to show things are moving 
+i want to create a laser object in the visualazation to show things are moving. maybe just a long red cylinder?  
 i want the visualization to look like FEA with the normalized colors
+i want the substrate blocks to show up first. then the active blocks show up when activate. inactive blocks aren't present
+
 
 ---------------------------------
 Overall purpose: Main deposition simulation 

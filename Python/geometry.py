@@ -140,6 +140,8 @@ class Geometry:
         self.next_block_id = 0
 
 
+        
+
     # -----------------------------------------
     def build_substrate(self):
 
@@ -166,6 +168,9 @@ class Geometry:
 
         substrate_bottom = self.zmin - self.substrate_height
         substrate_top = self.zmin
+
+        #Store for later 
+
 
      
         #Create substrate blocks
