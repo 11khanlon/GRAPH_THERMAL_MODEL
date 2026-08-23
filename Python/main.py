@@ -32,9 +32,9 @@ Step 4
 from geometry import Geometry
 from nodes import NodeGenerator
 from graph import ThermalGraph
-from visualization import Visualizer
+from Python.Validation.visualization import Visualizer
 from deposition import DepositionSimulation
-from visualization import (
+from Validation.visualization import (
     plot_sensor_temperature,
     plot_final_temperature
 )

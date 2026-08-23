@@ -1,0 +1,41 @@
+Remaining Questions: 
+Replace Experimental data later with real thermocouple placement. .csv data 
+
+
+-------------------------------------------------
+*******This is what you would use for your real data**********
+
+Node convergence study for graph model 
+--> Runs Case A for three graph discretizations 
+--> Compares simulated temperature value to experimental thermocouple data 
+--> Outputs: 
+    - node count
+    - build time
+    - computation time
+    - MAPE
+    - RMSE
+    - thermocouple histories
+
+
+- There's three cases 
+- Insert your experimental data 
+
+
+----------------------------------
+def calculate_errors()
+Interpolate the simulation to experimental timesteps when needed 
+
+Calculate rmse and MAPE errors 
+
+
+-----------------------------------
+def calculate_convergence_error() 
+
+Compare one graph solution against the highest-density reference solution
+The comparison solution is interpolated onto the reference time grid
+
+Returns:
+RMSE between solutions
+maximum absolute difference
+relative L2 error (%)
+interpolated comparison history

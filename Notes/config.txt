@@ -7,6 +7,12 @@ Things you would have to change per material:
 Material properties 
 Change the Laser parameters per machine
 
+constants to closely monitor: 
+gain 
+episilon 
+gaussian sigma 
+surface_thickness
+
 -------------------------------------------------
 Based on:
 

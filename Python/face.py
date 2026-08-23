@@ -120,21 +120,6 @@ def update_exposed_faces(geometry):
 
 
 # ---------------------------------------------------------
-# ACTIVATE BLOCK
-
-def activate_block(geometry, block):
-
-    """
-    Activate a block and update the exposed
-    surfaces of the active geometry.
-    """
-
-    block.active = True
-
-    update_exposed_faces(geometry)
-
-
-# ---------------------------------------------------------
 # ACTIVE BLOCKS
 
 def active_blocks(geometry):

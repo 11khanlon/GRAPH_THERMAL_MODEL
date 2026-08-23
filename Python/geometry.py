@@ -135,12 +135,32 @@ class Geometry:
         self.substrate_width = BUILD["substrate_width"]
         self.substrate_height = BUILD["substrate_height"]
 
+        self.substrate_blocks_x = BUILD["substrate_blocks_x"]
+        self.substrate_blocks_y = BUILD["substrate_blocks_y"]
+        self.substrate_blocks_z = BUILD["substrate_blocks_z"]
+
         
         self.blocks = []
         self.next_block_id = 0
 
+        self.substrate_xmin = (self.xmin - (self.substrate_length - self.length) / 2)
+        self.substrate_xmax = (self.substrate_xmin + self.substrate_length)
 
-        
+        self.substrate_ymin = (self.ymin - (self.substrate_width - self.width) / 2 )
+        self.substrate_ymax = (self.substrate_ymin + self.substrate_width)
+
+        self.substrate_bottom = (self.zmin - self.substrate_height)
+        self.substrate_top = self.zmin
+
+
+        # Case A thermocouple location
+     
+        self.sensor_position = np.array([
+            self.substrate_xmin + 38.1e-3,
+            self.substrate_ymin + 9.7e-3,
+            self.substrate_top - 0.1e-3
+        ])
+
 
     # -----------------------------------------
     def build_substrate(self):
@@ -151,28 +171,25 @@ class Geometry:
         """
 
         #Determine number of blocks in the x,y,z
-        nx = 10
-        ny = 9
-        nz = 28
+        nx = self.substrate_blocks_x
+        ny = self.substrate_blocks_y
+        nz = self.substrate_blocks_z
     
         block_length = self.substrate_length / nx
         block_width  = self.substrate_width / ny
         block_height = self.substrate_height / nz
 
         # Substrate bounds
-        xmin = self.xmin - (self.substrate_length - self.length)/2
-        xmax = xmin + self.substrate_length
+        xmin = self.substrate_xmin
+        xmax = self.substrate_xmax
 
-        ymin = self.ymin - (self.substrate_width - self.width)/2
-        ymax = ymin + self.substrate_width
+        ymin = self.substrate_ymin
+        ymax = self.substrate_ymax
 
-        substrate_bottom = self.zmin - self.substrate_height
-        substrate_top = self.zmin
-
-        #Store for later 
+        substrate_bottom = self.substrate_bottom
+        substrate_top = self.substrate_top
 
 
-     
         #Create substrate blocks
         for k in range(nz):
 
@@ -369,7 +386,7 @@ class Geometry:
 
 if __name__ == "__main__":
 
-    from visualization import plot_geometry, check_geometry_locations, plot_geometry_with_nodes
+    from Validation.visualization import plot_geometry, check_geometry_locations, plot_geometry_with_nodes
     from face import update_exposed_faces, print_exposed_faces, print_exposure_statistics
 
     stl_file = BUILD["stl_file"]

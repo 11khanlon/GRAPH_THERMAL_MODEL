@@ -423,7 +423,7 @@ def print_surface_statistics(nodes):
 if __name__ == "__main__":
 
     from geometry import Geometry
-    from visualization import  plot_geometry_with_nodes
+    from Validation.visualization import  plot_geometry_with_nodes
     from face import update_exposed_faces
     from config import BLOCK
 

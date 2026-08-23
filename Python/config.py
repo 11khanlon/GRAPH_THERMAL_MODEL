@@ -40,11 +40,16 @@ LASER = {
 #---- BUILD GEOMETRY ----
 
 BUILD = {
-    "stl_file": r"C:\\Users\\Kayleigh\\GraphThermalModel\\STL\\Wall.stl",  #insertfile 
+    "stl_file": r"C:\\Users\\Kayleigh\\GraphThermalModel\\STL\\SingleTrak.stl",  #insertfile 
 
     "substrate_length": 76.2e-3,
     "substrate_width": 25.4e-3,
     "substrate_height": 6.4e-3,
+
+    "substrate_blocks_x": 10,
+    "substrate_blocks_y": 9,
+    "substrate_blocks_z": 28, 
+
 
     "blocks_per_layer": 5
     
@@ -69,7 +74,7 @@ BLOCK = {
     # paper uses 5 blocks per hatch
     "length": 7.84e-3,  #m 
     "width": 3.0e-3,    #m 
-    "height": 0.1806e-3,  #m 
+    "height": 0.18e-3,  #m 
 
     "surface_band_thickness": 0.1806e-3 / 2,
     "surface_thickness": 0.1806e-3 / 2, 

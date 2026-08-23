@@ -1,6 +1,6 @@
 Remaining Questions: 
 
-you apply goldak heating then it conducts, then condcution cooling happens after this. But doesn't cooling happen to nodes after then laser is moved at the timestep? when do you store new temperatures? 
+Maybe apply sparse matrices to the conduction matrix. 
 
 Temperature is stored after each state:
 history[0]
@@ -30,6 +30,8 @@ substrate and deposition area are a tannish white color
 i want to create a laser object in the visualazation to show things are moving. maybe just a long red cylinder?  
 i want the visualization to look like FEA with the normalized colors
 i want the substrate blocks to show up first. then the active blocks show up when activate. inactive blocks aren't present
+
+i need to extract the temperature information from the deposition beads as well. maybe we make a seperate tempearture history for them. 
 
 
 ---------------------------------

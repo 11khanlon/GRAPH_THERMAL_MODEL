@@ -1,8 +1,11 @@
 remaining questions: 
-test deposition_order
 if i imported a different geometry, how to do this? also add GCODE? 
-does the laser raster back and forth? what if you have single track beads with only one layer, will the code break?
+for deposition order, there is currently a rastering feature. what if you have single track beads with only one layer, will the code break? 
+For the final layer, is it accurratley portrayed? 
+what dimensions for powder ded single track should i use for .stl?
+what about for Wire-DED? The ER70S-6 we buy is specifically from Lincoln Electric yes. Their L59 Super Arc in 0.045" diameter (lxwxh)
 
+if i imported a square, would that break the code? laser goes to the left, upwards, right, then back
 
 
 ----------------------------

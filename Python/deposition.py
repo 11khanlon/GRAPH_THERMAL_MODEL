@@ -196,7 +196,8 @@ class DepositionSimulation:
     #--------------------------------------------------
     def inactive_node_statistics(self):
 
-        inactive = self.active_mask()
+        active = self.active_mask()
+        inactive = ~active
 
         if not np.any(inactive):
             return
@@ -209,26 +210,89 @@ class DepositionSimulation:
 
         print("Inactive nodes > ambient + 10 C:",
             np.sum(Tinactive > ambient + 10.0))
+
+    #------------------------------------------------
+    def hottest_inactive_node(self):
+
+        active = self.active_mask()
+        inactive = ~active
+
+        if not np.any(inactive):
+            return
+
+        inactive_indices = np.where(inactive)[0]
+
+        local_index = np.argmax(
+            self.temperature[inactive]
+        )
+
+        node_index = inactive_indices[
+            local_index
+        ]
+
+        node = self.nodes[node_index]
+
+        print(
+            f"Hottest inactive node: "
+            f"{node.id}"
+        )
+
+        print(
+            f"Temperature: "
+            f"{self.temperature[node_index]:.2f} °C"
+        )
+
+        print(
+            f"Layer: "
+            f"{node.block.layer}"
+        )
+
+        print(
+            f"Position: "
+            f"{node.position}"
+        )
+
+    #----------------------------------------
+    def print_current_block_temperature(
+        self,
+        block,
+        label
+    ):
+
+        indices = np.array([
+            node.id
+            for node in block.nodes
+        ])
+
+        Tblock = self.temperature[
+            indices
+        ]
+
+        print(
+            f"{label} | "
+            f"Block {block.id}: "
+            f"Tmin={Tblock.min():.2f} °C, "
+            f"Tmax={Tblock.max():.2f} °C"
+        )
   
     # -----------------------------------------------
 
     def simulate_block(self, block):
 
-        print("\n------ INITIAL STATE ------")
         print(
             "Temperature range:",
-            simulation.temperature.min(),
-            simulation.temperature.max()
+            self.temperature.min(),
+            self.temperature.max()
         )
 
         print(
             "Active nodes:",
-            np.sum(simulation.active_mask())
+            np.sum(self.active_mask())
         )
 
         print(
             "Inactive nodes:",
-            np.sum(~simulation.active_mask())
+            np.sum(~self.active_mask())
         )
 
         self.activate_block(block)
@@ -252,6 +316,21 @@ class DepositionSimulation:
             self.temperature)
 
         self.print_temperature_status("After Goldak", block)
+        self.print_current_block_temperature(
+            block,
+            "After Goldak")
+
+        imax = np.argmax(self.temperature)
+        hot_node = self.nodes[imax]
+
+        print(
+            f"Hottest node after Goldak: "
+            f"id={hot_node.id}, "
+            f"block={hot_node.block_id}, "
+            f"layer={hot_node.block.layer}, "
+            f"T={self.temperature[imax]:.2f} °C, "
+            f"position={hot_node.position}"
+        )
 
   
         # Step 2 -> Conduction
@@ -381,10 +460,9 @@ class DepositionSimulation:
                     print(f"Dwell after layer "
                         f"{current_layer + 1}"
                     )
-                    self.current_alpha = (self.diffusivity_from_layer(
-                    current_layer))
 
                     self.simulate_dwell()
+                    self.current_alpha = (self.diffusivity_from_layer(current_layer))
 
                 current_layer = block.layer
 
@@ -436,6 +514,8 @@ class DepositionSimulation:
 
 if __name__ == "__main__":
 
+    import matplotlib.pyplot as plt
+
     from geometry import Geometry
     from nodes import NodeGenerator
     from graph import ThermalGraph
@@ -447,11 +527,16 @@ if __name__ == "__main__":
 
     geometry.build_blocks()
 
+    sensor_position = geometry.sensor_position
+
     generator = NodeGenerator(geometry)
 
     generator.generate()
 
     graph = ThermalGraph(generator.nodes)
+
+    sensor_node, distance = graph.find_sensor_node(sensor_position)
+    sensor_node.position = (sensor_position.copy()) 
 
     graph.build()
     graph.degree_matrix()
@@ -460,7 +545,7 @@ if __name__ == "__main__":
 
     # Choose experimental case here
    
-    selected_dwell = DWELL["case_B"]
+    selected_dwell = 10
 
     simulation = DepositionSimulation(
         geometry=geometry,
@@ -492,3 +577,87 @@ if __name__ == "__main__":
         temperature=simulation.history,
         time=simulation.history_time
     )
+
+    TC_A = simulation.sensor_history(sensor_node.id)
+
+    time = simulation.history_time
+
+
+    time_exp = np.array([
+    250.0,
+    1250.0
+    ])
+
+    T_exp = np.array([
+        200.0,
+        150.0
+    ])
+
+    T_sim_interp = np.interp(
+    time_exp,
+    simulation.history_time,
+    TC_A
+    )
+
+
+    rmse = np.sqrt(
+        np.mean(
+            (T_sim_interp - T_exp) ** 2
+        )
+    )
+
+
+    mape = (
+    np.mean(np.abs(
+            (T_sim_interp - T_exp) / T_exp )
+        )* 100
+    )
+
+    print(f"RMSE = {rmse:.2f} °C")
+
+    print(f"MAPE = {mape:.2f}%")
+
+
+    print(
+    "\n------ THERMOCOUPLE COMPARISON ------"
+    )
+
+    for t_exp, T_reference, T_model in zip(
+        time_exp,
+        T_exp,
+        T_sim_interp
+    ):
+
+        print(
+            f"t = {t_exp:.1f} s | "
+            f"Experimental ≈ {T_reference:.2f} °C | "
+            f"Simulation = {T_model:.2f} °C | "
+            f"Error = {T_model - T_reference:+.2f} °C"
+        )
+
+
+    #Plot temperature 
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(
+        time,
+        TC_A,
+        label="Graph model"
+    )
+
+    plt.scatter(
+        time_exp,
+        T_exp,
+        label="Approx. experimental points"
+    )
+
+    plt.xlabel("Time (s)")
+    plt.ylabel("Temperature (°C)")
+    plt.title(
+        "Case A Thermocouple Temperature"
+    )
+
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()

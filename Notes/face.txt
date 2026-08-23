@@ -1,0 +1,64 @@
+Face.py does not determine deposition order 
+It answers: 
+"Given the blocks that currently exist, which rectangular faces are exposed to the environment" 
+
+------------------------
+def faces_touch(): 
+
+Start by reading each blocks bounds: 
+ax0, ay0, az0 = block_a.start
+ax1, ay1, az1 = block_a.end
+
+bx0, by0, bz0 = block_b.start
+bx1, by1, bz1 = block_b.end 
+
+touching = set() 
+stores any face of A that touches B 
+
+X-direction test:
+y_overlap = min(ay1, by1) - max(ay0, by0)
+z_overlap = min(az1, bz1) - max(az0, bz0)
+If ax,max = bx,min this means they overlap with finite area 
+Y and Z overlap both have to exceed the tolerance
+You add this to touching right
+Then check for touching left 
+
+Repeat for y and z direction 
+
+
+---------------------------------
+def update_exposed_faces()
+
+active_blocks = [block for block in geometry.blocks
+if block.active]
+
+only blocks that are active participate 
+
+for block in active_blocks:
+    for face in block.exposed_faces:
+        block.exposed_faces[face] = True
+this assumes all faces are exposed at first 
+
+opposite = {
+    "left": "right",
+    "right": "left",
+    ...
+}
+the opposite face dictionary helps find faces covered by another block
+
+
+for i, block_a in enumerate(active_blocks):
+    for block_b in active_blocks[i + 1:]:
+this allows each unique pair to be tested once 
+
+Remove internal faces: 
+if touching_faces = {"right"}
+then:
+block_a.exposed_faces["right"] = False
+block_b.exposed_faces["left"] = False
+
+Now geometry knows which faces are internal solid-solid interfaces 
+This allows the convection module to not consider these exposed to atmosphere 
+
+------------------------------------
+def activate_block(): 
