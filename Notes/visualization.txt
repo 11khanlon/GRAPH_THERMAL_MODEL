@@ -2,6 +2,8 @@ Remaining Questions:
 Does it show an active plot of when things are printing?
 self.geometry.nodes  --> does geometry store nodes 
 
+what if you just move substrate blocks visually down a little?
+
 --------------------------------------------------------
 Visualization tools for the graph-theory DED thermal model
 

@@ -1,37 +1,22 @@
-"""
-Thermocouple and numerical probe definitions.
-
-Sensors do not create additional graph nodes.
-
-Instead, each sensor is associated with an existing
-thermal node. That node may optionally be moved to the
-exact sensor coordinate before graph construction.
-"""
+#Thermocouple and numerical probe definitions.
 
 import numpy as np
 
 
 # ---------------------------------------------------------
-# THERMAL PROBE
-# ---------------------------------------------------------
-
+# Thermal probe class
 class ThermalProbe:
 
-    def __init__(
-        self,
-        name,
-        position,
-        region="substrate"
-    ):
+    def __init__(self,
+                 name,
+                 position,
+                 region="substrate", 
+                 layer = None):
 
         self.name = name
-
-        self.position = np.asarray(
-            position,
-            dtype=float
-        )
-
+        self.position = np.asarray(position, dtype=float)
         self.region = region
+        self.layer = layer 
 
         self.node = None
         self.node_id = None
@@ -48,41 +33,9 @@ class ThermalProbe:
         snap_to_position=True
     ):
 
-        """
-        Find the existing thermal node nearest the
-        requested probe position.
-
-        region options:
-            "substrate"
-            "deposition"
-            "all"
-        """
-
-        if self.region == "substrate":
-
-            candidates = [
-                node
-                for node in nodes
-                if node.is_substrate
-            ]
-
-        elif self.region == "deposition":
-
-            candidates = [
-                node
-                for node in nodes
-                if not node.is_substrate
-            ]
-
-        elif self.region == "all":
-
-            candidates = nodes
-
-        else:
-
-            raise ValueError(
-                f"Unknown probe region: {self.region}"
-            )
+        candidates = self._candidate_nodes(
+            nodes
+        )
 
         if len(candidates) == 0:
 
@@ -93,8 +46,7 @@ class ThermalProbe:
 
         distances = np.array([
             np.linalg.norm(
-                node.position
-                - self.position
+                node.position - self.position
             )
             for node in candidates
         ])
@@ -118,8 +70,6 @@ class ThermalProbe:
             distances[nearest_index]
         )
 
-        # Move existing graph node to exact
-        # thermocouple/probe coordinate
         if snap_to_position:
 
             node.position = (
@@ -128,8 +78,164 @@ class ThermalProbe:
 
         return node
 
+
+     #----------- TCA, TCB, TCC, TCD -------------------
+    
+    def temperature_from_nearest_node(
+        self,
+        nodes,
+        temperature,
+        active_only=False
+    ):
+
+        candidates = self._candidate_nodes(
+            nodes
+        )
+
+        if active_only:
+
+            candidates = [
+                node
+                for node in candidates
+                if node.active
+            ]
+
+        if len(candidates) == 0:
+
+            return np.nan
+
+        distances = np.array([
+            np.linalg.norm(
+                node.position - self.position
+            )
+            for node in candidates
+        ])
+
+        nearest = candidates[
+            np.argmin(distances)
+        ]
+
+        return temperature[
+            nearest.id
+        ]
+
+    def interpolate_temperature(
+        self,
+        nodes,
+        temperature,
+        k=8,
+        power=2,
+        active_only=False
+    ):
+
+        candidates = self._candidate_nodes(
+            nodes
+        )
+
+        if active_only:
+
+            candidates = [
+                node
+                for node in candidates
+                if node.active
+            ]
+
+        if len(candidates) == 0:
+
+            return np.nan
+
+        positions = np.array([
+            node.position
+            for node in candidates
+        ])
+
+        node_ids = np.array([
+            node.id
+            for node in candidates
+        ])
+
+        distances = np.linalg.norm(
+            positions - self.position,
+            axis=1
+        )
+
+        k_use = min(
+            k,
+            len(candidates)
+        )
+
+        nearest = np.argsort(
+            distances
+        )[:k_use]
+
+        d = distances[
+            nearest
+        ]
+
+        ids = node_ids[
+            nearest
+        ]
+
+        # Exact node coincidence
+        if np.any(d < 1e-12):
+
+            return temperature[
+                ids[np.argmin(d)]
+            ]
+
+        weights = (
+            1.0
+            / d**power
+        )
+
+        return (
+            np.sum(
+                weights
+                * temperature[ids]
+            )
+            / np.sum(weights)
+        )
     
 
+    def _candidate_nodes(self, nodes):
+
+        if self.region == "substrate":
+
+            candidates = [
+                node
+                for node in nodes
+                if node.is_substrate
+            ]
+
+        elif self.region == "deposition":
+
+            candidates = [
+                node
+                for node in nodes
+                if not node.is_substrate
+            ]
+
+            if self.layer is not None:
+
+                candidates = [
+                    node
+                    for node in candidates
+                    if node.block.layer
+                    == self.layer
+                ]
+
+        elif self.region == "all":
+
+            candidates = list(nodes)
+
+        else:
+
+            raise ValueError(
+                f"Unknown probe region: "
+                f"{self.region}"
+            )
+
+        return candidates
 
     # -----------------------------------------------------
 
@@ -145,11 +251,27 @@ class ThermalProbe:
         )
 
         print(
-            "Node ID:",
-            self.node_id
+            "Region:",
+            self.region
         )
 
+        if self.layer is not None:
+
+            print(
+                "Layer restriction:",
+                self.layer
+            )
+
+        # --------------------------------------------------
+        # Snapped-node mode
+        # --------------------------------------------------
+
         if self.node is not None:
+
+            print(
+                "Node ID:",
+                self.node_id
+            )
 
             print(
                 "Node block:",
@@ -171,24 +293,46 @@ class ThermalProbe:
                 self.node.active
             )
 
-        if self.original_position is not None:
+            if self.original_position is not None:
+
+                print(
+                    "Original node position [mm]:",
+                    self.original_position * 1000
+                )
+
+            if self.snap_distance is not None:
+
+                print(
+                    "Snap distance [mm]:",
+                    self.snap_distance * 1000
+                )
 
             print(
-                "Original node position [mm]:",
-                self.original_position * 1000
+                "Final node position [mm]:",
+                self.node.position * 1000
             )
-
-        if self.snap_distance is not None:
 
             print(
-                "Snap distance [mm]:",
-                self.snap_distance * 1000
+                "Sampling mode: snapped graph node"
             )
 
-        print(
-            "Final node position [mm]:",
-            self.node.position * 1000
-        )
+        # --------------------------------------------------
+        # Passive interpolation mode
+        # --------------------------------------------------
+
+        else:
+
+            print(
+                "Node ID: None"
+            )
+
+            print(
+                "Sampling mode: passive interpolation"
+            )
+
+            print(
+                "Graph modified by probe: False"
+            )
 
         print("--------------------------------")
 
@@ -322,6 +466,7 @@ def check_probe_location(
         and under_wall_y
     )
 
+   
 
 # ============================================================
 # PLOT PROBE LOCATION
@@ -529,39 +674,74 @@ def plot_probe_location(
 if __name__ == "__main__":
 
     from geometry import Geometry
-    from Validation.visualization import  plot_geometry_with_nodes
-    from face import update_exposed_faces
-    from face import update_exposed_faces, print_exposed_faces, print_exposure_statistics
-    from config import BLOCK,BUILD
+    from nodes import NodeGenerator
+
+    from config import BUILD, SENSORS
 
     stl_file = BUILD["stl_file"]
-    
-    geom = Geometry(stl_file)
 
-    geom.build_blocks()
+    geometry = Geometry(stl_file)
+    geometry.build_blocks()
+    generator = NodeGenerator(geometry)
+    generator.generate()
+    nodes = generator.nodes
 
-    print(geom.blocks[0])
+    #------------------------------------
+    #Thermocouple A test 
 
-    print(geom.blocks[-1])
+    test_position = np.array([
+        30.1e-3,
+        -4.0e-3,
+        geometry.substrate_top - 0.1e-3
+    ])
 
-    plot_geometry(geom)
+    probe = ThermalProbe(
+        name="Test_TC",
+        position=test_position,
+        region="substrate"
+    )
 
-    geom.validate_geometry()
+    probe.summary()
 
-    update_exposed_faces(geom)
+    check_probe_location(
+        probe,
+        geometry
+    )
 
-    #print_exposed_faces(geom)
+    plot_probe_location(
+        geometry=geometry,
+        nodes=nodes,
+        probe=probe,
+        show_nodes=True
+    )
 
-    print_exposure_statistics(geom)
+    #---------------------------------------
+    #Meltpool test location 
+
+    middle_block = middle_block_of_layer(
+    geometry,
+    layer=0
+    )
+
+    meltpool_probe = ThermalProbe(
+        name="MeltPoolProbe",
+        position=middle_block.center,
+        region="deposition",
+        layer=0
+    )
+
+    meltpool_probe.summary()
+
+    check_probe_location(
+        meltpool_probe,
+        geometry
+    )
+
+    plot_probe_location(
+        geometry=geometry,
+        nodes=nodes,
+        probe=meltpool_probe,
+        show_nodes=True
+    )
 
 
-    surface_thickness = BLOCK["height"]/2
-    generator.update_node_exposure(surface_thickness)
-
-    print(generator.nodes[0])
-
-    generator.validate_nodes()
-
-    #plot_geometry_with_nodes(geom, generator)
-
-    print_surface_statistics(nodes)

@@ -8,6 +8,14 @@ what about for Wire-DED? The ER70S-6 we buy is specifically from Lincoln Electri
 if i imported a square, would that break the code? laser goes to the left, upwards, right, then back
 
 
+#Center 
+        center_x = (xmin + xmax) / 2
+        center_y = (ymin + ymax) / 2
+
+        #store translation
+        translation = np.array([-center_x, -center_y, -zmin])
+        self.mesh.apply_translation(translation)
+
 ----------------------------
 Based on Section 4.3.1.1 of Riensche et al.
 Thermal Modeling of Directed Energy Deposition Using Graph Theory

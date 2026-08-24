@@ -4,21 +4,7 @@ import time
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
-from geometry import Geometry
-from nodes import NodeGenerator
-from graph import ThermalGraph
-from deposition import DepositionSimulation
-
-from config import (
-    MATERIAL,
-    LASER,
-    GRAPH,
-    CONVECTION,
-    BLOCK,
-    DWELL,
-    BUILD)
-
+import sys
 from pathlib import Path
 
 #-----------------------------
@@ -27,6 +13,12 @@ from pathlib import Path
 VALIDATION_DIR = Path(__file__).resolve().parent
 
 PYTHON_DIR = VALIDATION_DIR.parent
+
+if str(PYTHON_DIR) not in sys.path:
+    sys.path.insert(
+        0,
+        str(PYTHON_DIR)
+    )
 
 RESULTS_DIR = (
     PYTHON_DIR
@@ -44,6 +36,21 @@ FIGURE_DIR.mkdir(
     parents=True,
     exist_ok=True)
 
+from geometry import Geometry
+from nodes import NodeGenerator
+from graph import ThermalGraph
+from deposition import DepositionSimulation
+from thermocouples import ThermalProbe
+
+from config import (
+    MATERIAL,
+    LASER,
+    GRAPH,
+    CONVECTION,
+    BLOCK,
+    DWELL,
+    BUILD, 
+    SENSORS)
 
 # ---------------------------------
 # EXPERIMENTAL CASE-A DATA
@@ -87,22 +94,112 @@ cases = [
 # ERROR METRICS
 
 def calculate_errors(
-    simulation_time,
-    simulation_temperature,
-    experimental_time,
-    experimental_temperature):
+        simulation_time,
+        simulation_temperature,
+        experimental_time,
+        experimental_temperature
+    ):
 
-    # Interpolate simulation to experimental timestamps
-    T_sim = np.interp(experimental_time, simulation_time, simulation_temperature)
+        simulation_time = np.asarray(
+            simulation_time,
+            dtype=float
+        )
 
-    # RMSE
-    rmse = np.sqrt(np.mean((T_sim - experimental_temperature) ** 2))
+        simulation_temperature = np.asarray(
+            simulation_temperature,
+            dtype=float
+        )
 
-    # MAPE
-    mape = (np.mean(np.abs((T_sim - experimental_temperature) / experimental_temperature)) * 100)
+        experimental_time = np.asarray(
+            experimental_time,
+            dtype=float
+        )
 
-    return T_sim, mape, rmse
+        experimental_temperature = np.asarray(
+            experimental_temperature,
+            dtype=float
+        )
 
+
+        # --------------------------------------------------------
+        # Check simulation coverage
+        # --------------------------------------------------------
+
+        if experimental_time.min() < simulation_time.min():
+
+            raise ValueError(
+                "Experimental data begin before "
+                "the simulated time range."
+            )
+
+        if experimental_time.max() > simulation_time.max():
+
+            raise ValueError(
+                "\nExperimental comparison cannot be performed.\n"
+                f"Latest experimental time = "
+                f"{experimental_time.max():.2f} s\n"
+                f"Simulation ends at = "
+                f"{simulation_time.max():.2f} s\n\n"
+                "np.interp would otherwise silently use the "
+                "last simulated temperature for the missing times."
+            )
+
+
+        # --------------------------------------------------------
+        # Interpolate model onto experimental timestamps
+        # --------------------------------------------------------
+
+        T_sim = np.interp(
+            experimental_time,
+            simulation_time,
+            simulation_temperature
+        )
+
+
+        # --------------------------------------------------------
+        # RMSE
+        # --------------------------------------------------------
+
+        rmse = np.sqrt(
+            np.mean(
+                (
+                    T_sim
+                    - experimental_temperature
+                ) ** 2
+            )
+        )
+
+
+        # --------------------------------------------------------
+        # MAPE
+        # --------------------------------------------------------
+
+        if np.any(
+            experimental_temperature == 0
+        ):
+
+            mape = np.nan
+
+        else:
+
+            mape = (
+                np.mean(
+                    np.abs(
+                        (
+                            T_sim
+                            - experimental_temperature
+                        )
+                        / experimental_temperature
+                    )
+                )
+                * 100
+            )
+
+        return (
+            T_sim,
+            mape,
+            rmse
+        )
 
 #-------------------------------------------
 # NUMERICAL CONVERGENCE METRICS
@@ -174,73 +271,113 @@ def percent_difference(
 
 def run_case(case):
 
-    print("\n")
+    print("\n" + "=" * 70)
+    print(
+        f"RUNNING: {case['name']}"
+    )
     print("=" * 70)
-    print(f"RUNNING: {case['name']}")
-    print("=" * 70)
 
-    # Set graph parameters for this case
-    GRAPH["node_density"] = (case["node_density"])
-    GRAPH["epsilon"] = (case["epsilon"])
-    GRAPH["gain"] = (case["gain"])
-    LASER["meltpool_temperature"] = (case["meltpool_temperature"])
-
-  
-    # Start computation timer
-
-    compute_start = (time.perf_counter())
-    
-    # Geometry
-    geometry = Geometry(BUILD["stl_file"])
-    geometry.build_blocks()
-
-    #Create nodes 
-    generator = NodeGenerator(geometry)
-    generator.generate()
-    nodes = generator.nodes
-
-    # Graph
-    graph = ThermalGraph(nodes)
 
     # --------------------------------------------------------
-    # Thermocouple node
+    # Case parameters
+    # --------------------------------------------------------
 
-    sensor_node, sensor_distance = (
-        graph.find_sensor_node(geometry.sensor_position)
+    GRAPH["node_density"] = (
+        case["node_density"]
     )
 
-    sensor_original_position = (sensor_node.position.copy())
-    sensor_node.position = (geometry.sensor_position.copy())
+    GRAPH["epsilon"] = (
+        case["epsilon"]
+    )
 
-    print("\nSensor node:", sensor_node.id)
-    print("Sensor distance before snapping:", sensor_distance * 1000, "mm")
-    print("Original sensor position:", sensor_original_position)
-    print("Final sensor position:", sensor_node.position)
+    GRAPH["gain"] = (
+        case["gain"]
+    )
 
-   
-    # Construct graph ONCE
+    LASER["meltpool_temperature"] = (
+        case["meltpool_temperature"]
+    )
+
+
+    # --------------------------------------------------------
+    # Total computation timer
+    # --------------------------------------------------------
+
+    compute_start = (
+        time.perf_counter()
+    )
+
+
+    # --------------------------------------------------------
+    # Geometry
+    # --------------------------------------------------------
+
+    geometry = Geometry(
+        BUILD["stl_file"]
+    )
+
+    geometry.build_blocks()
+
+
+    # --------------------------------------------------------
+    # Nodes
+    # --------------------------------------------------------
+
+    generator = NodeGenerator(
+        geometry
+    )
+
+    generator.generate()
+
+    nodes = generator.nodes
+
+
+    # --------------------------------------------------------
+    # Passive TC-A
+    # --------------------------------------------------------
+
+    tc_a_config = (
+        SENSORS["TC_A"]
+    )
+
+    tc_a_position = np.array([
+        tc_a_config["x"],
+        tc_a_config["y"],
+        geometry.substrate_top
+        + tc_a_config["z"]
+    ])
+
+    TC_A = ThermalProbe(
+        name="TC_A",
+        position=tc_a_position,
+        region="substrate"
+    )
+
+    print(
+        "\nTC-A position [mm]:",
+        TC_A.position * 1000
+    )
+
+
+    # --------------------------------------------------------
+    # Graph
+    # --------------------------------------------------------
+
+    graph = ThermalGraph(
+        nodes
+    )
+
     graph.build()
-
-    print("\n------ SENSOR GRAPH CHECK ------")
-    print("Sensor neighbors:", len(sensor_node.neighbors))
-    print("Sensor neighbor IDs:", sensor_node.neighbors)
-    print("Sensor weights:", sensor_node.weights)
-    print("TC position [mm]:", geometry.sensor_position * 1000)
-    print("Substrate X [mm]:", geometry.substrate_xmin * 1000, geometry.substrate_xmax * 1000)
-    print("Substrate Y [mm]:", geometry.substrate_ymin * 1000, geometry.substrate_ymax * 1000)
-    print("Substrate Z [mm]:", geometry.substrate_bottom * 1000, geometry.substrate_top * 1000)
-
-
     graph.degree_matrix()
     graph.laplacian()
     graph.eigensystem()
 
-   
-    # Run Case A deposition
-    
+
+    # --------------------------------------------------------
+    # Deposition simulation
+    # --------------------------------------------------------
 
     simulation = DepositionSimulation(
-
         geometry=geometry,
         node_generator=generator,
         graph=graph,
@@ -250,12 +387,15 @@ def run_case(case):
         graph_settings=GRAPH,
         dwell_info=DWELL,
         dwell_time=DWELL["case_A"],
-        block_info=BLOCK)
+        block_info=BLOCK,
+        probes=[TC_A]
+    )
 
-    history = simulation.run()
+    simulation.run()
+
 
     # --------------------------------------------------------
-    # Stop computation timer
+    # Computation time
     # --------------------------------------------------------
 
     computation_time = (
@@ -263,44 +403,87 @@ def run_case(case):
         - compute_start
     )
 
+
     # --------------------------------------------------------
-    # Sensor thermal history
+    # TC-A history sampled from stored graph states
     # --------------------------------------------------------
 
-    sensor_temperature = (
-        simulation.sensor_history(
-            sensor_node.id
+    simulation_time = np.asarray(
+        simulation.history_time,
+        dtype=float
+    )
+
+    sensor_temperature = np.array([
+
+        TC_A.interpolate_temperature(
+            nodes=nodes,
+            temperature=T_state,
+            k=8,
+            power=2,
+            active_only=True
         )
-    )
 
-    simulation_time = (
-        simulation.history_time
-    )
+        for T_state
+        in simulation.history
+
+    ], dtype=float)
+
 
     # --------------------------------------------------------
-    # Error calculation
+    # Experimental error
     # --------------------------------------------------------
 
-    (
-        T_sim_exp,
-        mape,
-        rmse
-    ) = calculate_errors(
-
-        simulation_time,
-
-        sensor_temperature,
-
-        time_exp,
-
-        T_exp
+    experimental_comparison_available = (
+        simulation_time[-1]
+        >= np.max(time_exp)
     )
+
+    if experimental_comparison_available:
+
+        (
+            T_sim_exp,
+            mape,
+            rmse
+        ) = calculate_errors(
+            simulation_time,
+            sensor_temperature,
+            time_exp,
+            T_exp
+        )
+
+    else:
+
+        T_sim_exp = np.full(
+            len(time_exp),
+            np.nan
+        )
+
+        mape = np.nan
+        rmse = np.nan
+
+        print(
+            "\nWARNING: Experimental comparison "
+            "not available for this run."
+        )
+
+        print(
+            f"Simulation ends at "
+            f"{simulation_time[-1]:.2f} s."
+        )
+
+        print(
+            f"Experimental data extend to "
+            f"{np.max(time_exp):.2f} s."
+        )
+
 
     # --------------------------------------------------------
     # Node statistics
     # --------------------------------------------------------
 
-    total_nodes = len(nodes)
+    total_nodes = len(
+        nodes
+    )
 
     substrate_nodes = sum(
         node.is_substrate
@@ -312,19 +495,15 @@ def run_case(case):
         - substrate_nodes
     )
 
-    # --------------------------------------------------------
-    # Simulated physical build time
-    # --------------------------------------------------------
-
-    build_time = simulation.time
 
     # --------------------------------------------------------
-    # Store results
+    # Results
     # --------------------------------------------------------
 
     result = {
 
-        "Case": case["name"],
+        "Case":
+            case["name"],
 
         "Node Density (nodes/mm^3)":
             case["node_density"],
@@ -348,13 +527,18 @@ def run_case(case):
             deposition_nodes,
 
         "Build Time (s)":
-            build_time,
+            simulation.time,
 
         "Computation Time (s)":
             computation_time,
 
         "Peak TC Temperature (C)":
-            np.max(sensor_temperature),
+            np.nanmax(
+                sensor_temperature
+            ),
+
+        "Final TC Temperature (C)":
+            sensor_temperature[-1],
 
         "MAPE (%)":
             mape,
@@ -363,8 +547,9 @@ def run_case(case):
             rmse
     }
 
+
     # --------------------------------------------------------
-    # Print summary
+    # Summary
     # --------------------------------------------------------
 
     print(
@@ -377,28 +562,35 @@ def run_case(case):
             f"{key}: {value}"
         )
 
-    print(
-        "\nExperimental point comparison:"
-    )
 
-    for t, T_reference, T_model in zip(
-        time_exp,
-        T_exp,
-        T_sim_exp
-    ):
+    if experimental_comparison_available:
 
         print(
-            f"t={t:.1f} s | "
-            f"Experiment={T_reference:.2f} C | "
-            f"Simulation={T_model:.2f} C"
+            "\nExperimental point comparison:"
         )
+
+        for (
+            t,
+            T_reference,
+            T_model
+        ) in zip(
+            time_exp,
+            T_exp,
+            T_sim_exp
+        ):
+
+            print(
+                f"t={t:.1f} s | "
+                f"Experiment={T_reference:.2f} C | "
+                f"Simulation={T_model:.2f} C"
+            )
+
 
     return (
         result,
         simulation_time,
         sensor_temperature
     )
-
 
 # ============================================================
 # RUN CONVERGENCE STUDY
@@ -563,14 +755,12 @@ if __name__ == "__main__":
     )
 
     convergence_results.to_csv(
-        "numerical_convergence_results.csv",
+        DATA_DIR
+        / "numerical_convergence_results.csv",
         index=False
     )
 
-    convergence_results.to_excel(
-        "numerical_convergence_results.xlsx",
-        index=False
-    )
+  
 
     # ========================================================
     # PLOT 5
@@ -776,14 +966,11 @@ if __name__ == "__main__":
     # ========================================================
 
     results_df.to_csv(
-        "node_density_convergence.csv",
+        DATA_DIR
+        / "node_density_convergence.csv",
         index=False
     )
 
-    results_df.to_excel(
-        "node_density_convergence.xlsx",
-        index=False
-    )
 
 
     # ========================================================
@@ -833,7 +1020,8 @@ if __name__ == "__main__":
     plt.tight_layout()
 
     plt.savefig(
-        "node_density_temperature_history.png",
+        FIGURE_DIR
+        / "node_density_temperature_history.png",
         dpi=300
     )
 

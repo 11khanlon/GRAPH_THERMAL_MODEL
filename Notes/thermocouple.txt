@@ -1,0 +1,5 @@
+Thermocouple and numerical probe definitions.
+
+Problem: Sensors do not create additional graph nodes.
+--> Instead, each sensor is associated with an existing thermal node
+--> assing a position and interpolate temperature in between nearest points 

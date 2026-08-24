@@ -120,6 +120,7 @@ class Geometry:
         self.width = ymax - ymin
         self.height = zmax - zmin
 
+
         # Bounding box
         self.xmin = xmin
         self.xmax = xmax

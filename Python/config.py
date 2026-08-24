@@ -90,8 +90,8 @@ SENSORS = {
      
     #Thermocouple1
     "TC_A": {
-        "x": 38.1e-3,
-        "y": 6.4e-3,
+        "x": 30.1e-3,
+        "y": -4e-3,
         "z": -0.1e-3,
         "region": "substrate"
     },

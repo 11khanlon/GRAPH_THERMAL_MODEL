@@ -49,9 +49,6 @@ class Node:
         self.forced_surface = False
         self.free_surface = False
 
-        # ambient temperature initially
-        self.temperature = MATERIAL["ambient_temperature"]
-
         # neighbors filled in graph.py
         self.neighbors = []
 
@@ -64,7 +61,7 @@ class Node:
             f"Node("
             f"id={self.id}, "
             f"block={self.block_id}, "
-            f"T={self.temperature:.1f})"
+            f"active={self.active})"
         )
 
     #-------------------------------------------------- 
@@ -289,14 +286,7 @@ class NodeGenerator:
             if not n.active
         ]
 
-    # -----------------------------------------------------
-    def temperatures(self):
-
-        return np.array([
-            n.temperature
-            for n in self.nodes
-        ])
-
+  
     # -----------------------------------------------------
     def coordinates(self):
 

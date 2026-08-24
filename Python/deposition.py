@@ -24,7 +24,8 @@ class DepositionSimulation:
                 graph_settings,
                 dwell_info,
                 dwell_time, 
-                block_info):
+                block_info, 
+                probes = None):
 
         self.geometry = geometry
         self.node_generator = node_generator
@@ -62,8 +63,8 @@ class DepositionSimulation:
         self.time = 0.0                              #simulation time 
 
         #--------- Initial state as history -------------
-        self.history = [self.temperature.copy()]
-        self.history_time = [self.time]
+        self.history = self.temperature.copy()
+        self.history_time = self.time
 
         #------- Solvers ---------- 
         self.conduction = ConductionSolver(graph,
@@ -81,6 +82,28 @@ class DepositionSimulation:
             scaling_factor = laser["goldak_C"],
             meltpool_temperature = laser["meltpool_temperature"],
             liquidus_temperature = material["liquidus_temperature"])
+
+        #------------ Thermocouple History -----------------
+        self.probes = probes if probes is not None else []
+
+        self.probe_history = {
+            probe.name: []
+            for probe in self.probes}
+
+        self.probe_history_time = []
+        self.probe_history_stage = []
+        self.probe_history_block = []
+
+        #----------- Simulation metadata ------------
+        self.wall_start = None
+        self.wall_end = None
+        self.computation_time = None
+        self.active_history = [self.active_mask().copy()]
+        self.active_block_history = None
+        self.stage_history = "initial"
+        self.laser_position_history = [
+            np.array([np.nan, np.nan, np.nan])
+        ]
 
     # -----------------------------------------------------
     #activate nodes belonging to the newly deposited block 
@@ -121,6 +144,7 @@ class DepositionSimulation:
                 and node.block.layer == layer
             )
         ])
+    
     #---------------------------------------
     def diffusivity_from_layer(self, layer):
 
@@ -226,10 +250,7 @@ class DepositionSimulation:
             self.temperature[inactive]
         )
 
-        node_index = inactive_indices[
-            local_index
-        ]
-
+        node_index = inactive_indices[ local_index]
         node = self.nodes[node_index]
 
         print(
@@ -274,6 +295,56 @@ class DepositionSimulation:
             f"Tmin={Tblock.min():.2f} °C, "
             f"Tmax={Tblock.max():.2f} °C"
         )
+
+    def record_probe_state(
+        self,
+        stage,
+        block=None
+    ):
+
+        for probe in self.probes:
+
+            T_probe = (
+                probe.interpolate_temperature(
+                    nodes=self.nodes,
+                    temperature=self.temperature,
+                    k=8,
+                    power=2,
+                    active_only=True
+                )
+            )
+
+            self.probe_history[
+                probe.name
+            ].append(
+                T_probe
+            )
+
+            print(
+                f"{stage} | "
+                f"{probe.name} | "
+                f"T={T_probe:.2f} °C"
+            )
+
+        self.probe_history_time.append(
+            self.time
+        )
+
+        self.probe_history_stage.append(
+            stage
+        )
+
+        if block is None:
+
+            self.probe_history_block.append(
+                None
+            )
+
+        else:
+
+            self.probe_history_block.append(
+                block.id
+            )
   
     # -----------------------------------------------
 
@@ -316,9 +387,7 @@ class DepositionSimulation:
             self.temperature)
 
         self.print_temperature_status("After Goldak", block)
-        self.print_current_block_temperature(
-            block,
-            "After Goldak")
+        self.print_current_block_temperature(block, "After Goldak")
 
         imax = np.argmax(self.temperature)
         hot_node = self.nodes[imax]
@@ -332,6 +401,8 @@ class DepositionSimulation:
             f"position={hot_node.position}"
         )
 
+        self.record_probe_state(stage="after_goldak", block=block)
+
   
         # Step 2 -> Conduction
         alpha = self.current_alpha
@@ -343,7 +414,7 @@ class DepositionSimulation:
             self.block_info["time_per_block"]
                 )
             )
-
+        self.record_probe_state(stage="after_conduction", block=block)
         self.print_temperature_status("After conduction", block)
 
         # Step 3 --> Convection
@@ -360,6 +431,7 @@ class DepositionSimulation:
                 np.sum(overlap)
             )
 
+        self.record_probe_state(stage="Probe after goldak", block=block)
 
         # Forced convection + equivalent radiation
         self.temperature = self.cooling.block_cooling(
@@ -437,6 +509,7 @@ class DepositionSimulation:
     # --------------------------------------
     def run(self):
 
+        self.record_probe_state(stage="initial")
         wall_start = datetime.now()
         compute_start = time.perf_counter()
         print("----------------------------")
@@ -520,7 +593,7 @@ if __name__ == "__main__":
     from nodes import NodeGenerator
     from graph import ThermalGraph
     from config import (MATERIAL, LASER, GRAPH, CONVECTION, BLOCK, DWELL, BUILD, SENSORS)
-    from thermocouples import ThermalProbe
+    from thermocouples import ThermalProbe, middle_block_of_layer, check_probe_location
 
     stl_file = BUILD["stl_file"]
 
@@ -532,7 +605,9 @@ if __name__ == "__main__":
 
     generator.generate()
 
-    tc_a = SENSORS["TC_B"]
+
+    #real thermocouple
+    tc_a = SENSORS["TC_A"]
 
     tc_a_position = np.array([
          tc_a["x"],
@@ -541,87 +616,37 @@ if __name__ == "__main__":
     ])
 
 
-    TC_A = ThermalProbe(name="TC_A", position=tc_a_position, region="substrate")
-    TC_A.assign_node(generator.nodes)
+    TC_A = ThermalProbe(name="TC_A", 
+                        position=tc_a_position, 
+                        region="substrate")
+    
+    check_probe_location(TC_A, geometry)
     TC_A.summary()
+
+    #artificial meltpool thermocouple - used for debuggin 
+
+    middle_block = middle_block_of_layer(geometry, layer=0)
+
+    meltpool_probe = ThermalProbe(
+        name="meltpool_probe",
+        position=middle_block.center,
+        region="deposition",
+        layer=0)
+
+    check_probe_location(meltpool_probe, geometry)
+
+    meltpool_probe.summary()
+
+    #Build graph
 
     graph = ThermalGraph(generator.nodes)
     graph.build()
-
-    print(
-        "\n------ TC-A GRAPH CHECK ------"
-    )
-
-    print(
-        "Node ID:",
-        TC_A.node_id
-    )
-
-    print(
-        "Position [mm]:",
-        TC_A.node.position * 1000
-    )
-
-    print(
-        "Number of neighbors:",
-        len(TC_A.node.neighbors)
-    )
-
-    print(
-        "Neighbor IDs:",
-        TC_A.node.neighbors
-    )
-
-    print(
-        "Neighbor weights:",
-        TC_A.node.weights
-    )
-
-    deposition_nodes = [
-        node
-        for node in generator.nodes
-        if not node.is_substrate
-    ]
-
-    distances = np.array([
-        np.linalg.norm(
-            node.position
-            - TC_A.position
-        )
-        for node in deposition_nodes
-    ])
-
-    nearest_index = np.argmin(
-        distances
-    )
-
-    nearest_dep_node = (
-        deposition_nodes[
-            nearest_index
-        ]
-    )
-
-    print(
-        "Nearest deposition node:",
-        nearest_dep_node.id
-    )
-
-    print(
-        "Nearest deposition node position [mm]:",
-        nearest_dep_node.position * 1000
-    )
-
-    print(
-        "Distance to nearest deposition node [mm]:",
-        distances[nearest_index] * 1000
-    )
 
     graph.degree_matrix()
     graph.laplacian()
     graph.eigensystem()
 
     # Choose experimental case here
-   
     selected_dwell = DWELL["dwell"]
 
     simulation = DepositionSimulation(
@@ -634,15 +659,36 @@ if __name__ == "__main__":
         graph_settings=GRAPH,
         dwell_info = DWELL, 
         dwell_time = selected_dwell,
-        block_info = BLOCK
+        block_info = BLOCK,
+        probes = [TC_A, meltpool_probe]
     )
 
     history = simulation.run()
 
-    tc_a_temperature = (
-        simulation.sensor_history(
-            TC_A.node_id
-        )
+    tc_a_temperature = np.asarray(
+    simulation.probe_history["TC_A"],
+    dtype=float)
+
+    meltpool_temperature = np.asarray(
+        simulation.probe_history["meltpool_probe"],
+        dtype=float)
+
+    probe_time = np.asarray(
+        simulation.probe_history_time,
+        dtype=float)
+
+    valid_tc = np.isfinite(tc_a_temperature)
+
+    print(
+        "TC-A maximum temperature:",
+        np.max(tc_a_temperature[valid_tc]),
+        "°C"
+    )
+
+    print(
+        "TC-A final temperature:",
+        tc_a_temperature[valid_tc][-1],
+        "°C"
     )
 
     print("\n------ SIMULATION SUMMARY ------")
@@ -661,8 +707,4 @@ if __name__ == "__main__":
         time=simulation.history_time,
         tc_a_node_id=TC_A.node_id,
         tc_a_position=TC_A.position,
-        tc_a_temperature=tc_a_temperature
-    )
-
-
-    
+        tc_a_temperature=tc_a_temperature)

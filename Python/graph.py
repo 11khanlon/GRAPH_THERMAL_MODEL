@@ -307,7 +307,6 @@ if __name__ == "__main__":
 
     geom.build_blocks()
 
-    sensor_position = geom.sensor_position
 
     generator = NodeGenerator(geom)
 
@@ -315,28 +314,6 @@ if __name__ == "__main__":
     
     graph = ThermalGraph(generator.nodes)
 
-    sensor_node, distance = graph.find_sensor_node(
-        sensor_position
-    )
-        
-    print("\n------ SENSOR NODE ------")
-
-    print(
-        "Original position:",
-        sensor_node.position
-    )
-
-    print(
-        "Target position:",
-        sensor_position
-    )
-
-    print(
-        "Initial distance:",
-        distance * 1000,
-        "mm"
-    )
-    
     graph.build()
 
     graph.degree_matrix()
