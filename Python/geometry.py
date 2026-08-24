@@ -153,14 +153,6 @@ class Geometry:
         self.substrate_top = self.zmin
 
 
-        # Case A thermocouple location
-     
-        self.sensor_position = np.array([
-            self.substrate_xmin + 38.1e-3,
-            self.substrate_ymin + 9.7e-3,
-            self.substrate_top - 0.1e-3
-        ])
-
 
     # -----------------------------------------
     def build_substrate(self):

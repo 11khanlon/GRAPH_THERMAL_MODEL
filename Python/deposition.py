@@ -519,7 +519,8 @@ if __name__ == "__main__":
     from geometry import Geometry
     from nodes import NodeGenerator
     from graph import ThermalGraph
-    from config import (MATERIAL, LASER, GRAPH, CONVECTION, BLOCK, DWELL, BUILD)
+    from config import (MATERIAL, LASER, GRAPH, CONVECTION, BLOCK, DWELL, BUILD, SENSORS)
+    from thermocouples import ThermalProbe
 
     stl_file = BUILD["stl_file"]
 
@@ -527,25 +528,101 @@ if __name__ == "__main__":
 
     geometry.build_blocks()
 
-    sensor_position = geometry.sensor_position
-
     generator = NodeGenerator(geometry)
 
     generator.generate()
 
+    tc_a = SENSORS["TC_B"]
+
+    tc_a_position = np.array([
+         tc_a["x"],
+         tc_a["y"],
+        geometry.substrate_top + tc_a["z"]
+    ])
+
+
+    TC_A = ThermalProbe(name="TC_A", position=tc_a_position, region="substrate")
+    TC_A.assign_node(generator.nodes)
+    TC_A.summary()
+
     graph = ThermalGraph(generator.nodes)
-
-    sensor_node, distance = graph.find_sensor_node(sensor_position)
-    sensor_node.position = (sensor_position.copy()) 
-
     graph.build()
+
+    print(
+        "\n------ TC-A GRAPH CHECK ------"
+    )
+
+    print(
+        "Node ID:",
+        TC_A.node_id
+    )
+
+    print(
+        "Position [mm]:",
+        TC_A.node.position * 1000
+    )
+
+    print(
+        "Number of neighbors:",
+        len(TC_A.node.neighbors)
+    )
+
+    print(
+        "Neighbor IDs:",
+        TC_A.node.neighbors
+    )
+
+    print(
+        "Neighbor weights:",
+        TC_A.node.weights
+    )
+
+    deposition_nodes = [
+        node
+        for node in generator.nodes
+        if not node.is_substrate
+    ]
+
+    distances = np.array([
+        np.linalg.norm(
+            node.position
+            - TC_A.position
+        )
+        for node in deposition_nodes
+    ])
+
+    nearest_index = np.argmin(
+        distances
+    )
+
+    nearest_dep_node = (
+        deposition_nodes[
+            nearest_index
+        ]
+    )
+
+    print(
+        "Nearest deposition node:",
+        nearest_dep_node.id
+    )
+
+    print(
+        "Nearest deposition node position [mm]:",
+        nearest_dep_node.position * 1000
+    )
+
+    print(
+        "Distance to nearest deposition node [mm]:",
+        distances[nearest_index] * 1000
+    )
+
     graph.degree_matrix()
     graph.laplacian()
     graph.eigensystem()
 
     # Choose experimental case here
    
-    selected_dwell = 10
+    selected_dwell = DWELL["dwell"]
 
     simulation = DepositionSimulation(
         geometry=geometry,
@@ -562,102 +639,30 @@ if __name__ == "__main__":
 
     history = simulation.run()
 
-    print(
-        "Maximum temperature:",
-        simulation.maximum_temperature()
+    tc_a_temperature = (
+        simulation.sensor_history(
+            TC_A.node_id
+        )
     )
 
-    print(
-        "Stored states:",
-        history.shape[0]
-    )
+    print("\n------ SIMULATION SUMMARY ------")
 
+    print("Maximum global temperature:", simulation.maximum_temperature())
+    print("Stored states:", history.shape[0])
+    print("Final simulated time:", simulation.history_time[-1], "s")
+    print("TC-A maximum temperature:", np.max(tc_a_temperature), "°C")
+    print("TC-A final temperature:", tc_a_temperature[-1], "°C")
+
+    # Save raw history
+    
     np.savez_compressed(
         "thermal_history.npz",
         temperature=simulation.history,
-        time=simulation.history_time
-    )
-
-    TC_A = simulation.sensor_history(sensor_node.id)
-
-    time = simulation.history_time
-
-
-    time_exp = np.array([
-    250.0,
-    1250.0
-    ])
-
-    T_exp = np.array([
-        200.0,
-        150.0
-    ])
-
-    T_sim_interp = np.interp(
-    time_exp,
-    simulation.history_time,
-    TC_A
+        time=simulation.history_time,
+        tc_a_node_id=TC_A.node_id,
+        tc_a_position=TC_A.position,
+        tc_a_temperature=tc_a_temperature
     )
 
 
-    rmse = np.sqrt(
-        np.mean(
-            (T_sim_interp - T_exp) ** 2
-        )
-    )
-
-
-    mape = (
-    np.mean(np.abs(
-            (T_sim_interp - T_exp) / T_exp )
-        )* 100
-    )
-
-    print(f"RMSE = {rmse:.2f} °C")
-
-    print(f"MAPE = {mape:.2f}%")
-
-
-    print(
-    "\n------ THERMOCOUPLE COMPARISON ------"
-    )
-
-    for t_exp, T_reference, T_model in zip(
-        time_exp,
-        T_exp,
-        T_sim_interp
-    ):
-
-        print(
-            f"t = {t_exp:.1f} s | "
-            f"Experimental ≈ {T_reference:.2f} °C | "
-            f"Simulation = {T_model:.2f} °C | "
-            f"Error = {T_model - T_reference:+.2f} °C"
-        )
-
-
-    #Plot temperature 
-    plt.figure(figsize=(10, 6))
-
-    plt.plot(
-        time,
-        TC_A,
-        label="Graph model"
-    )
-
-    plt.scatter(
-        time_exp,
-        T_exp,
-        label="Approx. experimental points"
-    )
-
-    plt.xlabel("Time (s)")
-    plt.ylabel("Temperature (°C)")
-    plt.title(
-        "Case A Thermocouple Temperature"
-    )
-
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
+    

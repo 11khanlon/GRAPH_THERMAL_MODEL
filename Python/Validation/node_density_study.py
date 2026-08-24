@@ -93,10 +93,7 @@ def calculate_errors(
     experimental_temperature):
 
     # Interpolate simulation to experimental timestamps
-    T_sim = np.interp(
-        experimental_time,
-        simulation_time,
-        simulation_temperature)
+    T_sim = np.interp(experimental_time, simulation_time, simulation_temperature)
 
     # RMSE
     rmse = np.sqrt(np.mean((T_sim - experimental_temperature) ** 2))
@@ -120,60 +117,31 @@ def calculate_convergence_error(
     # Restrict comparison to common simulated time interval
     common_end_time = min(
         reference_time[-1],
-        comparison_time[-1]
-    )
+        comparison_time[-1])
 
-    mask = (
-        reference_time
-        <= common_end_time
-    )
+    mask = (reference_time <= common_end_time)
 
     t_common = reference_time[mask]
 
-    T_reference = (
-        reference_temperature[mask]
-    )
+    T_reference = (reference_temperature[mask])
 
     # Interpolate comparison onto reference time grid
-    T_comparison = np.interp(
-        t_common,
-        comparison_time,
-        comparison_temperature
-    )
+    T_comparison = np.interp(t_common, comparison_time,comparison_temperature)
 
-    difference = (
-        T_comparison
-        - T_reference
-    )
+    difference = (T_comparison - T_reference)
 
     # RMSE
-    rmse = np.sqrt(
-        np.mean(
-            difference ** 2
-        )
-    )
+    rmse = np.sqrt(np.mean(difference ** 2))
 
     # Maximum absolute temperature difference
-    max_abs_error = np.max(
-        np.abs(
-            difference
-        )
-    )
+    max_abs_error = np.max(np.abs(difference))
 
     # Relative L2 norm
-    denominator = np.linalg.norm(
-        T_reference
-    )
+    denominator = np.linalg.norm(T_reference)
 
     if denominator > 0:
 
-        relative_l2 = (
-            np.linalg.norm(
-                difference
-            )
-            / denominator
-            * 100
-        )
+        relative_l2 = (np.linalg.norm(difference) / denominator* 100)
 
     else:
 
@@ -185,218 +153,104 @@ def calculate_convergence_error(
         relative_l2,
         t_common,
         T_comparison,
-        T_reference
-    )
+        T_reference)
 
 #----------------------------------
 def percent_difference(
     value,
-    reference
-):
+    reference):
 
     if reference == 0:
         return np.nan
 
     return (
-        abs(
-            value - reference
-        )
+        abs(value - reference)
         / abs(reference)
         * 100
     )
 
-# ============================================================
+# ----------------------------------------------
 # RUN ONE CONVERGENCE CASE
-# ============================================================
 
 def run_case(case):
 
     print("\n")
     print("=" * 70)
-    print(
-        f"RUNNING: {case['name']}"
-    )
+    print(f"RUNNING: {case['name']}")
     print("=" * 70)
 
-    # --------------------------------------------------------
     # Set graph parameters for this case
-    # --------------------------------------------------------
+    GRAPH["node_density"] = (case["node_density"])
+    GRAPH["epsilon"] = (case["epsilon"])
+    GRAPH["gain"] = (case["gain"])
+    LASER["meltpool_temperature"] = (case["meltpool_temperature"])
 
-    GRAPH["node_density"] = (
-        case["node_density"]
-    )
-
-    GRAPH["epsilon"] = (
-        case["epsilon"]
-    )
-
-    GRAPH["gain"] = (
-        case["gain"]
-    )
-
-    LASER["meltpool_temperature"] = (
-        case["meltpool_temperature"]
-    )
-
-    # --------------------------------------------------------
+  
     # Start computation timer
-    # --------------------------------------------------------
 
-    compute_start = (
-        time.perf_counter()
-    )
-
-    # --------------------------------------------------------
+    compute_start = (time.perf_counter())
+    
     # Geometry
-    # --------------------------------------------------------
-
-    geometry = Geometry(
-        BUILD["stl_file"]
-    )
-
+    geometry = Geometry(BUILD["stl_file"])
     geometry.build_blocks()
 
-    # --------------------------------------------------------
-    # Nodes
-    # --------------------------------------------------------
-
-    generator = NodeGenerator(
-        geometry
-    )
-
+    #Create nodes 
+    generator = NodeGenerator(geometry)
     generator.generate()
-
     nodes = generator.nodes
 
-    # --------------------------------------------------------
     # Graph
-    # --------------------------------------------------------
-
-    graph = ThermalGraph(
-        nodes
-    )
+    graph = ThermalGraph(nodes)
 
     # --------------------------------------------------------
     # Thermocouple node
-    #
-    # IMPORTANT:
-    # move sensor BEFORE building graph
-    # --------------------------------------------------------
 
     sensor_node, sensor_distance = (
-        graph.find_sensor_node(
-            geometry.sensor_position
-        )
+        graph.find_sensor_node(geometry.sensor_position)
     )
 
-    sensor_original_position = (
-        sensor_node.position.copy()
-    )
+    sensor_original_position = (sensor_node.position.copy())
+    sensor_node.position = (geometry.sensor_position.copy())
 
-    sensor_node.position = (
-        geometry.sensor_position.copy()
-    )
+    print("\nSensor node:", sensor_node.id)
+    print("Sensor distance before snapping:", sensor_distance * 1000, "mm")
+    print("Original sensor position:", sensor_original_position)
+    print("Final sensor position:", sensor_node.position)
 
-    print(
-        "\nSensor node:",
-        sensor_node.id
-    )
-
-    print(
-        "Sensor distance before snapping:",
-        sensor_distance * 1000,
-        "mm"
-    )
-
-    print(
-        "Original sensor position:",
-        sensor_original_position
-    )
-
-    print(
-        "Final sensor position:",
-        sensor_node.position
-    )
-
-    # --------------------------------------------------------
+   
     # Construct graph ONCE
-    # --------------------------------------------------------
-
     graph.build()
 
     print("\n------ SENSOR GRAPH CHECK ------")
-
-    print(
-        "Sensor neighbors:",
-        len(sensor_node.neighbors)
-    )
-
-    print(
-        "Sensor neighbor IDs:",
-        sensor_node.neighbors
-    )
-
-    print(
-        "Sensor weights:",
-        sensor_node.weights
-    )
-
-    print(
-        "TC position [mm]:",
-        geometry.sensor_position * 1000
-    )
-
-    print(
-        "Substrate X [mm]:",
-        geometry.substrate_xmin * 1000,
-        geometry.substrate_xmax * 1000
-    )
-
-    print(
-        "Substrate Y [mm]:",
-        geometry.substrate_ymin * 1000,
-        geometry.substrate_ymax * 1000
-    )
-
-    print(
-        "Substrate Z [mm]:",
-        geometry.substrate_bottom * 1000,
-        geometry.substrate_top * 1000
-    )
+    print("Sensor neighbors:", len(sensor_node.neighbors))
+    print("Sensor neighbor IDs:", sensor_node.neighbors)
+    print("Sensor weights:", sensor_node.weights)
+    print("TC position [mm]:", geometry.sensor_position * 1000)
+    print("Substrate X [mm]:", geometry.substrate_xmin * 1000, geometry.substrate_xmax * 1000)
+    print("Substrate Y [mm]:", geometry.substrate_ymin * 1000, geometry.substrate_ymax * 1000)
+    print("Substrate Z [mm]:", geometry.substrate_bottom * 1000, geometry.substrate_top * 1000)
 
 
     graph.degree_matrix()
-
     graph.laplacian()
-
     graph.eigensystem()
 
-    # --------------------------------------------------------
+   
     # Run Case A deposition
-    # --------------------------------------------------------
+    
 
     simulation = DepositionSimulation(
 
         geometry=geometry,
-
         node_generator=generator,
-
         graph=graph,
-
         material=MATERIAL,
-
         laser=LASER,
-
         convection=CONVECTION,
-
         graph_settings=GRAPH,
-
         dwell_info=DWELL,
-
         dwell_time=DWELL["case_A"],
-
-        block_info=BLOCK
-    )
+        block_info=BLOCK)
 
     history = simulation.run()
 

@@ -56,6 +56,7 @@ BUILD = {
 }
 
 
+
 #------- GRAPH PARAMETERS --------
 
 GRAPH = {
@@ -83,6 +84,26 @@ BLOCK = {
 
 }
 
+#----------------------------
+SENSORS = {
+
+     
+    #Thermocouple1
+    "TC_A": {
+        "x": 38.1e-3,
+        "y": 6.4e-3,
+        "z": -0.1e-3,
+        "region": "substrate"
+    },
+
+    "TC_B": {
+            "x": 19e-3,
+            "y": 1.5e-3,
+            "z": -0.1e-3,
+            "region": "substrate"
+        }
+
+}
 
 #-------- CONVECTION ---------
 
@@ -102,7 +123,8 @@ DWELL = {
     
     "case_A": 20.0,  #seconds 
     "case_B": 3.0 ,   #seconds 
-    "time_step": 1    #seconds
+    "time_step": 1,    #seconds
+    "dwell": 10
 }
 
 

@@ -23,7 +23,9 @@ Node convergence study for graph model
 
 ----------------------------------
 def calculate_errors()
+Input simulation time and temperature and experimental time and temperature
 Interpolate the simulation to experimental timesteps when needed 
+Then calculate the rmse and mape between the two 
 
 Calculate rmse and MAPE errors 
 
@@ -34,8 +36,14 @@ def calculate_convergence_error()
 Compare one graph solution against the highest-density reference solution
 The comparison solution is interpolated onto the reference time grid
 
+The inputs are reference time and temperature, comparison time and temperature
+
 Returns:
 RMSE between solutions
 maximum absolute difference
 relative L2 error (%)
 interpolated comparison history
+
+common_end_time will restrict the comparison time frame to the simulated time interval 
+
+The mask is equal or less than the common end time 
