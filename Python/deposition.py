@@ -8,8 +8,10 @@ from heat_source import GoldakHeatSource
 from material import Ti64Material
 from datetime import datetime
 import time 
+from pathlib import Path
 
 from face import update_exposed_faces
+
 
 #------------------------
 class DepositionSimulation:
@@ -63,8 +65,8 @@ class DepositionSimulation:
         self.time = 0.0                              #simulation time 
 
         #--------- Initial state as history -------------
-        self.history = self.temperature.copy()
-        self.history_time = self.time
+        self.history = [self.temperature.copy()]
+        self.history_time = [self.time]
 
         #------- Solvers ---------- 
         self.conduction = ConductionSolver(graph,
@@ -99,8 +101,8 @@ class DepositionSimulation:
         self.wall_end = None
         self.computation_time = None
         self.active_history = [self.active_mask().copy()]
-        self.active_block_history = None
-        self.stage_history = "initial"
+        self.active_block_history = [None]
+        self.stage_history = ["initial"]
         self.laser_position_history = [
             np.array([np.nan, np.nan, np.nan])
         ]
@@ -131,6 +133,38 @@ class DepositionSimulation:
         print(f"Free surface nodes: "
             f"{np.sum(self.free_surface_mask)}")
 
+    
+
+    #-------------------------------------------
+    def deposition_temperature_history(self):
+
+        deposition_indices = np.array([
+            node.id
+            for node in self.nodes
+            if not node.is_substrate
+        ])
+
+        return (self.history[:, deposition_indices])
+
+    def substrate_temperature_history(self):
+
+        substrate_indices = np.array([
+            node.id
+            for node in self.nodes
+            if node.is_substrate])
+
+        return (self.history[:, substrate_indices])
+
+    #-----------------------------------------
+    def block_temperature_history(self, block):
+
+        indices = np.array([
+            node.id
+            for node in block.nodes
+        ])
+
+        return np.mean(
+            self.history[:, indices], axis=1)
 
     #------------------------------------
     def layer_indices(self, layer):
@@ -202,13 +236,47 @@ class DepositionSimulation:
             )
     
     #-----------------------------------------
-    def record_state(self):
+    def record_state(
+        self,
+        stage,
+        block=None,
+        laser_position=None):
 
-        self.history.append(
-            self.temperature.copy()
+        # Full temperature state
+        self.history.append(self.temperature.copy())
+
+        # Simulation time
+        self.history_time.append(self.time)
+
+        # Which nodes physically exist
+        self.active_history.append(
+            self.active_mask().copy()
         )
 
-        self.history_time.append(self.time)
+        # Which deposition block is currently being processed
+        if block is None:
+
+            self.active_block_history.append(None)
+
+        else:
+
+            self.active_block_history.append(block.id)
+
+        # State label
+        self.stage_history.append(stage)
+
+        # Laser position
+        if laser_position is None:
+
+            self.laser_position_history.append(
+                np.array([np.nan, np.nan, np.nan])
+            )
+
+        else:
+
+            self.laser_position_history.append(
+                np.asarray(laser_position, dtype=float).copy()
+            )
 
     #--------------------------------------------
     def active_mask(self):
@@ -456,7 +524,11 @@ class DepositionSimulation:
         self.print_temperature_status("After convection", block)
 
         self.time += self.block_time
-        self.record_state()
+
+        self.record_state(
+        stage="after_block",
+        block=block,
+        laser_position=block.center)
      
 
     # ----------------------------------
@@ -504,18 +576,23 @@ class DepositionSimulation:
 
             self.time += self.dwell_dt
 
-            self.record_state()
+            self.record_state(
+                stage="dwell",
+                block=None,
+                laser_position=None
+            )
     
     # --------------------------------------
     def run(self):
 
         self.record_probe_state(stage="initial")
-        wall_start = datetime.now()
+        self.wall_start = datetime.now()
         compute_start = time.perf_counter()
+
         print("----------------------------")
         print("Beginning deposition")
 
-        print(f"\nSimulation start:", wall_start.strftime("%Y-%m-%d %H:%M:%S"))
+        print(f"\nSimulation start:", self.wall_start.strftime("%Y-%m-%d %H:%M:%S"))
         print("----------------------------")
       
 
@@ -544,24 +621,40 @@ class DepositionSimulation:
             # Deposit current block
             self.simulate_block(block)
 
-        compute_time = time.perf_counter() - compute_start
-        wall_end = datetime.now()
+        self.computation_time = time.perf_counter() - compute_start
+        self.wall_end = datetime.now()
 
         print("-------------------")
         print("Simulation complete!")
 
         print(f"\nSimulation end:",
-            wall_end.strftime("%Y-%m-%d %H:%M:%S"))
+            self.wall_end.strftime("%Y-%m-%d %H:%M:%S"))
         
         print(f"\nSimulated process time: "
               f"{self.time:.2f} s")
         
         print(f"\nComputer calculation time: "
-            f"{compute_time:.2f} s")
+            f"{self.computation_time:.2f} s")
 
         self.history = np.asarray(self.history)
 
         self.history_time = np.asarray(self.history_time)
+
+        self.active_history = np.asarray(
+            self.active_history,
+            dtype=bool)
+
+        self.active_block_history = np.asarray(
+            self.active_block_history,
+            dtype=object)
+
+        self.stage_history = np.asarray(
+            self.stage_history,
+            dtype=str)
+
+        self.laser_position_history = np.asarray(
+            self.laser_position_history,
+            dtype=float)
 
         return self.history
 
@@ -640,8 +733,10 @@ if __name__ == "__main__":
     #Build graph
 
     graph = ThermalGraph(generator.nodes)
+    node_positions = np.array([node.position for node in generator.nodes])
+    substrate_mask = np.array([node.is_substrate for node in generator.nodes], dtype=bool)
+    node_block_ids = np.array([node.block_id for node in generator.nodes], dtype=int)
     graph.build()
-
     graph.degree_matrix()
     graph.laplacian()
     graph.eigensystem()
@@ -679,17 +774,11 @@ if __name__ == "__main__":
 
     valid_tc = np.isfinite(tc_a_temperature)
 
-    print(
-        "TC-A maximum temperature:",
-        np.max(tc_a_temperature[valid_tc]),
-        "°C"
-    )
+    print("TC-A maximum temperature:",
+        np.max(tc_a_temperature[valid_tc]), "°C")
 
-    print(
-        "TC-A final temperature:",
-        tc_a_temperature[valid_tc][-1],
-        "°C"
-    )
+    print("TC-A final temperature:",
+        tc_a_temperature[valid_tc][-1], "°C")
 
     print("\n------ SIMULATION SUMMARY ------")
 
@@ -700,11 +789,36 @@ if __name__ == "__main__":
     print("TC-A final temperature:", tc_a_temperature[-1], "°C")
 
     # Save raw history
-    
+
+
     np.savez_compressed(
-        "thermal_history.npz",
-        temperature=simulation.history,
-        time=simulation.history_time,
-        tc_a_node_id=TC_A.node_id,
-        tc_a_position=TC_A.position,
-        tc_a_temperature=tc_a_temperature)
+    "thermal_history.npz",
+    temperature=simulation.history,
+    time=simulation.history_time,
+    active_history=simulation.active_history,
+    laser_position_history=simulation.laser_position_history,
+    node_positions= node_positions,
+    tc_a_position=TC_A.position,
+    tc_a_temperature=tc_a_temperature, 
+    substrate_mask=substrate_mask, 
+    node_block_ids=node_block_ids,)
+
+    #----------------------------------
+    #Make result saving directory 
+    RESULT_DIR = (
+        Path(__file__).resolve().parent
+        / "Validation"
+        / "Results"
+        / "Simulation"
+    )
+
+    RESULT_DIR.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    result_file = (
+        RESULT_DIR
+        / "thermal_simulation.npz")
+
+    

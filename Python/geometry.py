@@ -379,7 +379,7 @@ class Geometry:
 
 if __name__ == "__main__":
 
-    from Validation.visualization import plot_geometry, check_geometry_locations, plot_geometry_with_nodes
+    from Visualization.geometry_visualization import plot_geometry, check_geometry_locations
     from face import update_exposed_faces, print_exposed_faces, print_exposure_statistics
 
     stl_file = BUILD["stl_file"]

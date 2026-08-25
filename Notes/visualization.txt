@@ -3,6 +3,16 @@ Does it show an active plot of when things are printing?
 self.geometry.nodes  --> does geometry store nodes 
 
 what if you just move substrate blocks visually down a little?
+maximum temperature in animate_thermal_history --> maybe change later? T0 logic
+node influence absed on substarte and deposition seems small? things to watch out for once we recieve real data 
+
+i feel like we should remove the substrate nodes and focuus on the deposition nodes. there will be a simple flat white surface under it to show a substrate, but not the nodes since they get in the way. the z will start at (0,0). the surface will have black lines surrounding. Maybe make this a separate plotting view? one with substrate the other without
+i thought we could also include the despotion block lines to show when they appear
+make the laser cylinder greyish-black 
+
+stand off distance for laser? maybe deopsition head is far up and laser is red. 
+
+show a normalized temperature gradient across the blocks to show heat. this should spread from the laser still show the point though
 
 --------------------------------------------------------
 Visualization tools for the graph-theory DED thermal model
@@ -55,3 +65,46 @@ This creates the first curve. The x-axis is time and y axis is temperature
 Optional experimental curve: 
 if experimental is not None: 
 "If the user actually gave me experimental data" 
+
+
+
+-----------------------------------
+deposition_visualization.py 
+
+----- def draw_laser(): ---------
+Draw a simple cylindrical representation of the laser above the current laser position.
+Inputs: 
+- ax = Matplotlib 3D axis
+- position = laser position [x, y, z] in meters
+- radius = display radius of laser cylinder 
+- height = display height of laser cylinder 
+
+---- def draw_substrate_surface() --------
+Draw only the top surface of the substrate
+No substrate nodes are shown 
+
+-------- def animate_thermal_history ----------
+
+Animate the transient temperature history of the graph-theory DED simulation
+Only active nodes are plotted
+
+Inputes: 
+- Geometry object 
+- node positions and locations 
+- temperature_history
+    --> Array with shape: (n_states, n_nodes)
+- time_history
+    --> Simulation time corresponding to each stored state
+- active_history
+    -->  Boolean array with shape:  (n_states, n_nodes)
+- laser_position_history
+    --> Array with shape: (n_states, 3)
+        NaN coordinates indicate that the laser is off
+- ambient_temperature
+    --> Minimum color scale temperature.
+- maximum_temperature: Maximum color scale temperature
+
+    interval
+        Animation frame interval in milliseconds.
+    """
+
