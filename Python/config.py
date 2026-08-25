@@ -32,7 +32,7 @@ LASER = {
     "goldak_C": 0.171, 
     "thermal_conductivity": 6.8 ,  #W/mK
     "thermal_diffusivity": 2.7228E-6 , #m^2/s, 
-    "standoff_distance": 11.4E-3 
+    "standoff_distance": 30E-3 
 
 }
 

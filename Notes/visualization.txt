@@ -6,13 +6,11 @@ what if you just move substrate blocks visually down a little?
 maximum temperature in animate_thermal_history --> maybe change later? T0 logic
 node influence absed on substarte and deposition seems small? things to watch out for once we recieve real data 
 
-i feel like we should remove the substrate nodes and focuus on the deposition nodes. there will be a simple flat white surface under it to show a substrate, but not the nodes since they get in the way. the z will start at (0,0). the surface will have black lines surrounding. Maybe make this a separate plotting view? one with substrate the other without
-i thought we could also include the despotion block lines to show when they appear
-make the laser cylinder greyish-black 
-
 stand off distance for laser? maybe deopsition head is far up and laser is red. 
+after each timestep temperature isn't continuosly updated in image
 
 show a normalized temperature gradient across the blocks to show heat. this should spread from the laser still show the point though
+creat meltpool top downview plotting
 
 --------------------------------------------------------
 Visualization tools for the graph-theory DED thermal model

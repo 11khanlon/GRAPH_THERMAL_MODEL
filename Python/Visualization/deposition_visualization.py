@@ -17,6 +17,58 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from geometry_visualization import draw_block
 
 
+#---------------------
+def draw_block_outline(
+    ax,
+    block,
+    linewidth=1.0
+):
+
+    x0, y0, z0 = block.start
+    x1, y1, z1 = block.end
+
+    vertices = np.array([
+
+        [x0, y0, z0],
+        [x1, y0, z0],
+        [x1, y1, z0],
+        [x0, y1, z0],
+
+        [x0, y0, z1],
+        [x1, y0, z1],
+        [x1, y1, z1],
+        [x0, y1, z1]
+
+    ])
+
+    edges = [
+
+        (0, 1),
+        (1, 2),
+        (2, 3),
+        (3, 0),
+
+        (4, 5),
+        (5, 6),
+        (6, 7),
+        (7, 4),
+
+        (0, 4),
+        (1, 5),
+        (2, 6),
+        (3, 7)
+    ]
+
+    for i, j in edges:
+
+        ax.plot(
+            [vertices[i, 0], vertices[j, 0]],
+            [vertices[i, 1], vertices[j, 1]],
+            [vertices[i, 2], vertices[j, 2]],
+            color="black",
+            linewidth=linewidth
+        )
+
 # -----------------------------
 # Draw a laser object  
 
@@ -43,7 +95,7 @@ def draw_laser(
     Y = (y0 + radius * np.sin(theta_grid))
     Z = z_grid
 
-    ax.plot_surface(X, Y, Z, color="dimgray", alpha=0.65, linewidth = 0 )
+    ax.plot_surface(X, Y, Z, color="red", alpha=0.65, linewidth = 0 )
 
 #--------------------------
 #Draw substrate surface 
@@ -52,7 +104,7 @@ def draw_substrate_surface(
     ax,
     geometry,
     alpha=1.0,
-    z_offset=0.0
+    z_offset= -.02
 ):
 
     xmin = geometry.substrate_xmin
@@ -374,6 +426,31 @@ def animate_deposition_view(
             "active_history node dimension does "
             "not match node_positions.")
 
+    #deposition_blocks = 
+    deposition_blocks = [
+    block
+    for block in geometry.blocks
+    if not block.is_substrate]
+
+    dep_xmin = min(
+        block.start[0]
+        for block in deposition_blocks
+    )
+
+    dep_xmax = max(
+        block.end[0]
+        for block in deposition_blocks
+    )
+
+    dep_ymin = min(
+        block.start[1]
+        for block in deposition_blocks
+    )
+
+    dep_ymax = max(
+        block.end[1]
+        for block in deposition_blocks
+    )
 
     # Node coordinates
 
@@ -409,16 +486,11 @@ def animate_deposition_view(
         T = (temperature_history[frame])
 
         # Substrate geometry
-        for block in geometry.blocks:
-
-            if block.is_substrate:
-
-                draw_block(
-                    ax,
-                    block,
-                    color="linen",
-                    alpha=0.15,
-                    edge=False)
+        draw_substrate_surface(
+            ax,
+            geometry,
+            alpha=1.0
+        )
 
         # Thermal graph nodes
 
@@ -427,12 +499,7 @@ def animate_deposition_view(
             & deposition_mask
         )
 
-        draw_substrate_surface(
-            ax,
-            geometry,
-            alpha=1.0,
-            z_offset=0.5e-3
-        )
+       
 
         active_block_ids = np.unique(
             node_block_ids[
@@ -440,52 +507,35 @@ def animate_deposition_view(
             ]
         )
 
-
         for block_id in active_block_ids:
 
             block = block_lookup[
                 int(block_id)
             ]
 
-            if block.is_substrate:
-
-                continue
-
-            draw_block(
+            draw_block_outline(
                 ax,
                 block,
-                color="white",
-                alpha=0.02,
-                edge=True,
-                edge_color="black"
+                linewidth=1.0
             )
 
         # Thermal graph nodes
-        ax.scatter(
-            node_positions[
-                visible_mask,
-                0
-            ],
+        scatter = ax.scatter(
+            node_positions[visible_mask, 0],
+            node_positions[visible_mask, 1],
+            node_positions[visible_mask, 2],
 
-            node_positions[
-                visible_mask,
-                1
-            ],
-
-            node_positions[
-                visible_mask,
-                2
-            ],
-
-            c=temperature_history[
-                frame,
-                visible_mask
-            ],
+            c=T[visible_mask],
 
             cmap=cmap,
             norm=norm,
-            s=18
+
+            s=40,
+
+            depthshade=False
         )
+
+        scatter.set_zorder(10)
 
     
         # Laser
@@ -500,14 +550,22 @@ def animate_deposition_view(
         ax.set_zlabel("Z (m)")
 
         # Geometry limits
+        padding = 2.0e-3
+
         ax.set_xlim(geometry.substrate_xmin, geometry.substrate_xmax)
         ax.set_ylim(geometry.substrate_ymin, geometry.substrate_ymax)
-        ax.set_zlim(geometry.substrate_bottom, geometry.zmax)
+
+        ax.set_zlim(
+            geometry.substrate_top - 0.25e-3,
+            geometry.zmax + 0.5e-3
+        )
 
         ax.set_box_aspect(
-            (geometry.substrate_length,
+            (
+                geometry.substrate_length,
                 geometry.substrate_width,
-                geometry.substrate_height + geometry.height
+                geometry.substrate_height
+                + geometry.height
             )
         )
 
