@@ -72,30 +72,187 @@ def draw_block_outline(
 # -----------------------------
 # Draw a laser object  
 
-def draw_laser(
+def draw_deposition_head(
     ax,
-    position,
-    radius=0.4e-3,
-    height=8e-3):
-    
-    position = np.asarray(position, dtype=float)
+    laser_position,
+    standoff_distance,
+    head_height,
+    head_top_radius,
+    head_tip_radius,
+    beam_radius
+):
+    """
+    Draw:
+        1. Red laser beam
+        2. Dark gray conical deposition head
 
-    # No laser during dwell / inactive periods
-    if np.any(np.isnan(position)):
+    laser_position is the current interaction point
+    on the deposited material.
+    """
+
+    laser_position = np.asarray(
+        laser_position,
+        dtype=float
+    )
+
+    # Laser off during dwell
+    if np.any(
+        np.isnan(laser_position)
+    ):
         return
 
-    x0, y0, z0 = position
-
-    theta = np.linspace(0, 2 * np.pi, 30)
-    z = np.linspace(z0, z0 + height,20)
-    theta_grid, z_grid = np.meshgrid(theta, z)
+    x0, y0, z0 = laser_position
 
 
-    X = (x0 + radius * np.cos(theta_grid))
-    Y = (y0 + radius * np.sin(theta_grid))
-    Z = z_grid
+    # ========================================================
+    # NOZZLE / HEAD POSITION
+    # ========================================================
 
-    ax.plot_surface(X, Y, Z, color="red", alpha=0.65, linewidth = 0 )
+    # Tip of deposition head sits one standoff distance
+    # above the melt-pool / laser interaction point.
+    tip_z = (
+        z0
+        + standoff_distance
+    )
+
+    top_z = (
+        tip_z
+        + head_height
+    )
+
+
+    # ========================================================
+    # RED LASER BEAM
+    # ========================================================
+
+    theta = np.linspace(
+        0,
+        2 * np.pi,
+        30
+    )
+
+    beam_z = np.linspace(
+        z0,
+        tip_z,
+        20
+    )
+
+    theta_grid, beam_z_grid = np.meshgrid(
+        theta,
+        beam_z
+    )
+
+    X_beam = (
+        x0
+        + beam_radius
+        * np.cos(theta_grid)
+    )
+
+    Y_beam = (
+        y0
+        + beam_radius
+        * np.sin(theta_grid)
+    )
+
+    Z_beam = (
+        beam_z_grid
+    )
+
+    ax.plot_surface(
+        X_beam,
+        Y_beam,
+        Z_beam,
+        color="red",
+        alpha=0.75,
+        linewidth=0
+    )
+
+
+    # ========================================================
+    # CONICAL DEPOSITION HEAD
+    # ========================================================
+
+    head_z = np.linspace(
+        tip_z,
+        top_z,
+        30
+    )
+
+    theta_grid, head_z_grid = np.meshgrid(
+        theta,
+        head_z
+    )
+
+
+    # Radius grows linearly from nozzle tip
+    # toward upper body of the head.
+    radius = (
+        head_tip_radius
+        + (
+            head_top_radius
+            - head_tip_radius
+        )
+        * (
+            (head_z_grid - tip_z)
+            / head_height
+        )
+    )
+
+
+    X_head = (
+        x0
+        + radius
+        * np.cos(theta_grid)
+    )
+
+    Y_head = (
+        y0
+        + radius
+        * np.sin(theta_grid)
+    )
+
+    Z_head = (
+        head_z_grid
+    )
+
+
+    ax.plot_surface(
+        X_head,
+        Y_head,
+        Z_head,
+        color="dimgray",
+        alpha=0.90,
+        linewidth=0
+    )
+
+
+    # ========================================================
+    # NOZZLE OPENING
+    # ========================================================
+
+    theta_tip = np.linspace(
+        0,
+        2 * np.pi,
+        50
+    )
+
+    ax.plot(
+        x0
+        + head_tip_radius
+        * np.cos(theta_tip),
+
+        y0
+        + head_tip_radius
+        * np.sin(theta_tip),
+
+        np.full_like(
+            theta_tip,
+            tip_z
+        ),
+
+        color="black",
+        linewidth=1.0
+    )
 
 #--------------------------
 #Draw substrate surface 
@@ -104,7 +261,7 @@ def draw_substrate_surface(
     ax,
     geometry,
     alpha=1.0,
-    z_offset= -.02
+    z_offset= .8
 ):
 
     xmin = geometry.substrate_xmin
@@ -540,7 +697,26 @@ def animate_deposition_view(
     
         # Laser
         laser_position = (laser_position_history[frame])
-        draw_laser(ax, laser_position)
+        draw_deposition_head(
+            ax=ax,
+
+            laser_position=laser_position,
+
+            standoff_distance=
+                LASER["standoff_distance"],
+
+            head_height=
+                LASER["head_height"],
+
+            head_top_radius=
+                LASER["head_top_radius"],
+
+            head_tip_radius=
+                LASER["head_tip_radius"],
+
+            beam_radius=
+                LASER["beam_radius"]
+        )
 
 
         # Labels
@@ -555,9 +731,14 @@ def animate_deposition_view(
         ax.set_xlim(geometry.substrate_xmin, geometry.substrate_xmax)
         ax.set_ylim(geometry.substrate_ymin, geometry.substrate_ymax)
 
+        head_top_extra = (
+            LASER["standoff_distance"]
+            + LASER["head_height"]
+        )
+
         ax.set_zlim(
             geometry.substrate_top - 0.25e-3,
-            geometry.zmax + 0.5e-3
+            geometry.zmax + 0.5e-3 + head_top_extra
         )
 
         ax.set_box_aspect(
@@ -617,7 +798,7 @@ if __name__ == "__main__":
         )
 
     from geometry import Geometry
-    from config import BUILD
+    from config import BUILD, LASER
     
     # --------------------------------------------------------
     # Locate thermal-history file

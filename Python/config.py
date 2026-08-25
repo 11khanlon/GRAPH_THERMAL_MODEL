@@ -25,14 +25,20 @@ LASER = {
 
     "power": 415,            # Watts
     "scan_speed": 8.5e-3,      # m/s
-    "beam_diameter": 1.5e-3,  # meters
     "layer_height": 0.1806e-3,   # meters
     "hatch_width": 3e-3,    # meters
     "meltpool_temperature": 2200,  # Goldak meltpool temperature, must be above liquidus and fully molten temperature
     "goldak_C": 0.171, 
     "thermal_conductivity": 6.8 ,  #W/mK
     "thermal_diffusivity": 2.7228E-6 , #m^2/s, 
-    "standoff_distance": 30E-3 
+
+    #visualization / process geometry
+    "standoff_distance": 4E-3, 
+    "head_height": 3.0e-3,         # m, visual geometry
+    "head_top_radius": 1.0e-3,     # m
+    "head_tip_radius": 0.8e-3,     # m
+
+    "beam_radius": 0.25e-3         # m
 
 }
 
