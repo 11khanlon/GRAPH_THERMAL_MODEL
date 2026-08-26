@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import sys 
 
 sys.path.append('C:\\Users\\Kayleigh\\GraphThermalModel\\Python')
-from config import LASER, MATERIAL
+from GraphCode.config import LASER, MATERIAL
 
 
 

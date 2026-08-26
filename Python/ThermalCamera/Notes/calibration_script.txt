@@ -1,0 +1,12 @@
+Remaning Questions and edits: 
+
+1. Imports
+import mypkg.data_files.parameter_set as parameter_set
+this can probably come from the config file
+
+from mypkg.heat_analysis.common_img import GetPtsFromImg
+this can be written as a helper function 
+
+
+------------------------------- 
+def Img_TorchTrack() 

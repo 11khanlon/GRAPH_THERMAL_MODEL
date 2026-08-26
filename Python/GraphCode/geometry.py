@@ -379,6 +379,18 @@ class Geometry:
 
 if __name__ == "__main__":
 
+    import os
+    import sys
+
+    # Get the parent "Python" folder
+    python_folder = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..")
+    )
+
+    # Add it to Python's import search path
+    if python_folder not in sys.path:
+        sys.path.insert(0, python_folder)
+        
     from Visualization.geometry_visualization import plot_geometry, check_geometry_locations
     from face import update_exposed_faces, print_exposed_faces, print_exposure_statistics
 

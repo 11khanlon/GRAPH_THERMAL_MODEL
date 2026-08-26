@@ -16,9 +16,9 @@ from mypkg.heat_analysis.common_img import GetPtsFromImg
 # ======================================================================
 
 class Img_TorchTrack():
-    def __init__(s, showsubsteps=False):
-        s._imdebug = showsubsteps
-        s._common_img = GetPtsFromImg()
+    def __init__(self, showsubsteps=False):
+        self._imdebug = showsubsteps
+        self._common_img = GetPtsFromImg()
     
     def _calibrate_torch(s, torch_im):
 
