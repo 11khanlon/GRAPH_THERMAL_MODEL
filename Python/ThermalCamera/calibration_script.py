@@ -15,32 +15,31 @@ from mypkg.heat_analysis.common_img import GetPtsFromImg
 # ======================================================================
 # ======================================================================
 
-class Img_TorchTrack():
-    def __init__(self, showsubsteps=False):
-        self._imdebug = showsubsteps
-        self._common_img = GetPtsFromImg()
-    
-    def _calibrate_torch(s, torch_im):
+class ThermalCameraCalibration():
+
+    def __init__(self, 
+                 show_debug=False):
+        
+        self.show_debug = show_debug
+        self.common_img = GetPtsFromImg()
+
+    #---------------------------------------
+    def calibrate_torch(self, torch_im):
 
         if isinstance(torch_im, str): 
             # Reading in image
-            img = cv2.imread(
-                str(torch_im),
-                cv2.IMREAD_GRAYSCALE
-            )
+            img = cv2.imread(str(torch_im), cv2.IMREAD_GRAYSCALE)
         else: 
             img = torch_im
 
-        # ==================
-        # TORCH MASK 
-        # ==================
+        # ----- Creating torch mask ------- 
         print("->>Click on as many points around the torch as you can.")
-        torch_pts = s._common_img.clickfind_pts(img)
+        torch_pts = self.common_img.clickfind_pts(img)
 
         filled_img = img.copy()
         filled_img = cv2.fillPoly(filled_img, np.int32([torch_pts]), (255,0,0))
         
-        if s._imdebug:
+        if self._imdebug:
             cv2.imshow("Filled Polygon", filled_img)
             cv2.imshow("Original", img)
             cv2.waitKey(0)
@@ -51,22 +50,22 @@ class Img_TorchTrack():
         # val='N'
         # while val=='N':
         if x == '1': 
-            center_pt = s._common_img.clickfind_pts(img)
+            center_pt = self.common_img.clickfind_pts(img)
             center_pt = center_pt[0]
-        if x=='2':
+        if x == '2':
             x = input('Type your x position (will be rounded to ~0.000 mm).')
             y = input('Type your y position (will be rounded to ~0.000 mm).')
             # Find u,v of node x,y
             H = np.load(os.path.join(os.getcwd(),r'Thesis_Work/Obj 3 - Online Control/OBJ3_PACKAGE/src/mypkg/data_files/h_matrix.npy'))
             p_hom = [float(x), float(y), 1] # (float(parameter_set.DICT['Substrate Length'].split(' ')[0])*25.4) - 
-            p1_hom = H@p_hom
+            p1_hom = H @ p_hom
             p1 = [x / p1_hom[2] for x in p1_hom[:-1]]
             # print("P:{}, H@P:{}".format(pt, p1))
             center_pt = [np.round(p1[0],3), np.round(p1[1],3)]
             
 
         filled_img = cv2.circle(filled_img, (int(round(center_pt[0],0)),int(round(center_pt[1],0))), radius=5, color=(255, 255, 255), thickness=-1)
-        if s._imdebug: 
+        if self._imdebug: 
             cv2.imshow("Labelled Centerpt", filled_img)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
@@ -84,24 +83,22 @@ class Img_TorchTrack():
             torch_mask_pts
         )
 
-    def _calibrate_plate(s, plate_im):
+    #--------------------------------------
+    def calibrate_plate(self, plate_im):
         val='N'
         
         while val=='N':
-            # ==================
+       
             # BUILD PLATE MASK
-            # ==================
             if isinstance(plate_im, str): 
+                
                 # Reading in image
-                img = cv2.imread(
-                    str(plate_im),
-                    cv2.IMREAD_GRAYSCALE
-                )
+                img = cv2.imread(str(plate_im), cv2.IMREAD_GRAYSCALE)
             else: 
                 img = plate_im
 
             print("->>Click on corners starting from [0,0], CW.")
-            crop_pts = s._common_img.clickfind_pts(img)
+            crop_pts = self.common_img.clickfind_pts(img)
 
             newimg = img
             for i in range(0,len(crop_pts)-1): 
@@ -117,15 +114,12 @@ class Img_TorchTrack():
 
         np.save(
             os.path.join(os.getcwd(),r'Thesis_Work\Obj 3 - Online Control\OBJ3_PACKAGE\src\mypkg\data_files\buildplate_pts.npy'),
-            crop_pts
-        )
+            crop_pts)
 
         # crop_pts = np.load(os.path.join(os.getcwd(),'Thesis_Work\Obj 3 - Online Control\OBJ3_PACKAGE\src\mypkg\data_files','buildplate_pts.npy'))
 
-        # ==================
+        
         # FIND H MATRIX
-        # ==================
-
         dst = np.array(crop_pts) 
         src = np.array([
             [0,0], #1
@@ -175,6 +169,12 @@ class Img_TorchTrack():
         for i, txt in enumerate(txt_list): 
             plt.annotate(txt,(p1s[i,0], p1s[i,1]))
         plt.show()
+
+
+
+
+
+        
 
     # ==========================
     # ==== UNUSED FUNCTIONS ====

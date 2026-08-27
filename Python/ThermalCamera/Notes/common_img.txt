@@ -1,0 +1,65 @@
+Remaining Questions: 
+
+what is clickevent
+
+separate the coordinates with u,v for the camera 
+and real world coordinates as x,y
+
+---------------------
+Class GetPtsFromImg:
+
+This class groups interactive image-selection methods 
+
+
+----------------------------
+def clickfind_pts()
+
+this is what the previous calibration code calls in torch_pts and crop_pts 
+
+it starts by resetting two global lists:
+global xpts, ypts
+xpts = []
+ypts = []
+
+everytime you click on the image clickevent() adds: 
+xpts.append(x)
+ypts.append(y)
+
+
+cv2.namedWindow("Resizable Window", cv2.WINDOW_NORMAL)
+this makes a resiable window 
+
+cv2.imshow("Resizable Window", img)
+This displays an image 
+
+cv2.setMouseCallback("Resizable Window", clickevent)
+Whenever something happen with the mouse in this window, call clickevent() 
+Then cv2.waitKey(0) 
+Keep the window open indefinityely until a keyboard key is pressed
+
+fin_pts = []
+for i in range(len(xpts)):
+    fin_pts.append([
+        xpts[i],
+        ypts[i]
+])
+
+This build the homography matrix 
+
+
+-------------------------------
+def clickfind_indp_lines(self, image):
+
+This lets you draw independent line segments 
+
+if i % 2 == 1: --> this means you process every click 
+For example, when i=1 you have 
+start = click 0
+end   = click 1
+discrete_line = list(zip(*skimage.draw.line(*start, *end))) --> find every integer pixel lying between two clicked endpoints 
+No longer storing pixels. you're storing every entry along the line 
+building lines: lines = np.zeros((img.shape[0],img.shape[1]))
+this creates a blank binary image the same size as the original 
+
+def clickfind_cont_lines(self, img):
+This is independent pairs and manually drawing a contour

@@ -3,13 +3,12 @@ import numpy as np
 import skimage
 
 class GetPtsFromImg:
-    def __init__(s):
+    def __init__(self):
         pass
 
-    def clickfind_pts(s, img):
-        global xpts, ypts
-        xpts=[]
-        ypts=[]
+    def clickfind_pts(self, img):
+        self.xpts = []
+        self.ypts = []
 
         cv2.namedWindow("Resizable Window", cv2.WINDOW_NORMAL)
         cv2.imshow("Resizable Window", img)
@@ -23,7 +22,7 @@ class GetPtsFromImg:
         
         return fin_pts
     
-    def clickfind_indp_lines(s, img):
+    def clickfind_indp_lines(self, img):
         global xpts, ypts
         xpts=[]
         ypts=[]
@@ -57,7 +56,7 @@ class GetPtsFromImg:
 
         return lines, line_loc
     
-    def clickfind_cont_lines(s, img):
+    def clickfind_cont_lines(self, img):
         global xpts, ypts
         xpts=[]
         ypts=[]
@@ -100,9 +99,68 @@ class GetPtsFromImg:
 
         return img[ypts[0]:ypts[3],xpts[0]:xpts[3]]
 
-def clickevent(event,x, y, flags, param):
-    global xpts, ypts
+def clickevent(self, event,x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         print(f"X: {x}\tY: {y}")
-        xpts.append(x)
-        ypts.append(y)
+        self.xpts.append(x)
+        self.ypts.append(y)
+
+def _mouse_callback(
+    self,
+    event,
+    x,
+    y,
+    flags,
+    param
+):
+
+    if event == cv2.EVENT_LBUTTONDOWN:
+
+        self.points.append(
+            [x, y]
+        )
+
+        number = len(
+            self.points
+        )
+
+        cv2.circle(
+            self.display_image,
+            (x, y),
+            radius=5,
+            color=255,
+            thickness=-1
+        )
+
+        cv2.putText(
+            self.display_image,
+            str(number),
+            (x + 8, y - 8),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            255,
+            2
+        )
+
+        cv2.imshow(
+            self.window_name,
+            self.display_image
+        )
+
+        print(
+            f"Point {number}: "
+            f"u={x}, v={y}"
+        )
+
+elif event == cv2.EVENT_RBUTTONDOWN:
+
+    if self.points:
+
+        removed = (
+            self.points.pop()
+        )
+
+        print(
+            "Removed point:",
+            removed
+        )

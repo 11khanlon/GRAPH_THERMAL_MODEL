@@ -7,7 +7,7 @@ import datetime
 import cv2 
 from queue import Queue #object type is still used even if this says otherwise
 import threading
-import multiprocessing as mp
+
 
 # Add parent directory to path
 import sys 
@@ -17,8 +17,6 @@ sys.path.append(str(Path(__file__).parent.parent))
 import mypkg.data_files.parameter_set as parameter_set
 
 """
-    Written by Kathryn Kelly.
-
     IRHandler Class is created. Ensure correct installation 
     of camera checking feed through SpinView SDK, and that 
     FLIR camera is on the same subgroup as the ethernet adapter. 
@@ -30,70 +28,70 @@ import mypkg.data_files.parameter_set as parameter_set
 # Gige ex. refers to gige_example_A400_A700.py
 
 class Flag: 
-    def __init__(s,val=True):
-        s.val = val
+    def __init__(self,val=True):
+        self.val = val
     
-    def set(s, val):
-        s.val = val
+    def set(self, val):
+        self.val = val
 
-    def __bool__(s):
-        return s.val
+    def __bool__(self):
+        return self.val
     
 class IRHandler:
 
-    def __init__(s):
+    def __init__(self):
         print("IR CAMERA :: Initializing IR Camera...")
 
-        s._init_fail = False
+        self.init_fail = False
 
-        s.outpath = os.path.join(parameter_set.DICT['Root Folder'],str(parameter_set.DICT['Experiment Name']+"_IR_Values"))
-        if not os.path.isdir(s.outpath):
-            os.mkdir(s.outpath)
+        self.outpath = os.path.join(parameter_set.DICT['Root Folder'],str(parameter_set.DICT['Experiment Name']+"_IR_Values"))
+        if not os.path.isdir(self.outpath):
+            os.mkdir(self.outpath)
         else:
             print(f"\nPath ({parameter_set.DICT['Experiment Name']}_IR_Values) already exists!\n")
-            s.outpath = os.path.join(parameter_set.DICT['Root Folder'],str(parameter_set.DICT['Experiment Name']+"-1_IR_Values"))
-            if not os.path.isdir(s.outpath):
-                os.mkdir(s.outpath)
+            self.outpath = os.path.join(parameter_set.DICT['Root Folder'],str(parameter_set.DICT['Experiment Name']+"-1_IR_Values"))
+            if not os.path.isdir(self.outpath):
+                os.mkdir(self.outpath)
                 print(f"Using path ({str(parameter_set.DICT['Experiment Name'])}-1_IR_Values) instead.")
             else:
                 found_files = 1
                 for file in os.listdir(parameter_set.DICT['Root Folder']):
                     if parameter_set.DICT['Experiment Name'] in file:
                         found_files=found_files+1
-                s.outpath = os.path.join(parameter_set.DICT['Root Folder'],str(parameter_set.DICT['Experiment Name']+"-"+str(found_files)+"_IR_Values"))
-                os.mkdir(s.outpath)
+                self.outpath = os.path.join(parameter_set.DICT['Root Folder'],str(parameter_set.DICT['Experiment Name']+"-"+str(found_files)+"_IR_Values"))
+                os.mkdir(self.outpath)
                 print(f"Using path ({str(parameter_set.DICT['Experiment Name'])}-{str(found_files)}_IR_Values) instead.")
 
 
         # ===== Gige ex. {def main:} =====
 
         # Retrieve singleton reference to system object
-        s.system = PySpin.System.GetInstance()
+        self.system = PySpin.System.GetInstance()
 
         # Retrieve list of cameras from the system
-        s.cam_list = s.system.GetCameras()
-        num_cameras = s.cam_list.GetSize()
+        self.cam_list = self.system.GetCameras()
+        num_cameras = self.cam_list.GetSize()
 
         # There should be one camera detected. 
         # See Gige ex. if adding more cameras and change the below code.
         if num_cameras == 0:
-            s.cam_list.Clear()
-            s.system.ReleaseInstance()
+            self.cam_list.Clear()
+            self.system.ReleaseInstance()
 
             print('IR CAMERA :: No cameras detected. Aborting init...')
-            s._init_fail = True
+            self._init_fail = True
             return
         elif num_cameras > 1: 
             print("IR CAMERA :: Multiple cameras detected! Aborting init...")
-            s._init_fail = True
+            self._init_fail = True
             return
         
-        s.cam = s.cam_list[0]
+        self.cam = self.cam_list[0]
         
         try: 
             # ===== Gige ex. {def run_single_camera:} =====
             # Initialize camera
-            s.cam.Init()
+            self.cam.Init()
 
             # Retrieve GenICam nodemap
             s.nodemap = s.cam.GetNodeMap()
@@ -209,7 +207,7 @@ class IRHandler:
 
             K2 = r1 + r2 + r3
 
-            s._ir_val_list={'J0' : J0,
+            self.radiometric_calibration = {'J0' : J0,
                             'J1' : J1,
                             'B' : B,
                             'R' : R,
@@ -220,28 +218,28 @@ class IRHandler:
             
         except PySpin.SpinnakerException as ex:
             print('IR CAMERA :: Error: %s' % ex)
-            s._init_fail = True
+            self._init_fail = True
             return
         
-    def run_camera(s, msgqueue, runflag, savequeue, imgqueue=0, robo_flag=0): 
+    def run_camera(self, msgqueue, runflag, savequeue, imgqueue=0, robo_flag=0): 
         # If setup was not performed properly, do not run this code. 
-        # Do not pass go. Do not collect $200.
-        if s._init_fail:
+      
+        if self._init_fail:
             print("IR CAMERA :: Initialization of camera failed.")
             return
 
         #  Begin acquiring images
-        s.cam.BeginAcquisition() 
+        self.cam.BeginAcquisition() 
 
         # Retrieve and display images
         print("IR CAMERA :: Reading Camera Data!")
-        s.count = 0
+        self.count = 0
         # s.start = datetime.datetime.now()
         while runflag.val:
             try:
                 #  Retrieve next received image
-                s.image_result = s.cam.GetNextImage()
-                if s.image_result.IsIncomplete():
+                self.image_result = self.cam.GetNextImage()
+                if self.image_result.IsIncomplete():
                     pass
 
                 else:

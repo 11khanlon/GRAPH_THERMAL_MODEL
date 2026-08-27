@@ -163,8 +163,7 @@ class DepositionSimulation:
             for node in block.nodes
         ])
 
-        return np.mean(
-            self.history[:, indices], axis=1)
+        return np.mean(self.history[:, indices], axis=1)
 
     #------------------------------------
     def layer_indices(self, layer):

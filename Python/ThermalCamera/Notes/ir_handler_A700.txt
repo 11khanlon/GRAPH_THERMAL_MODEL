@@ -1,0 +1,143 @@
+Remaining Questions: 
+for code later, replace the self.val logic with threading Event()
+change the path and naming system 
+
+maybe don't need the subgroup ethernet feature
+what is GetNodeMap()? GetTLStreamNodeMap() 
+
+H2O = Humidity * np.exp(1.5587 + 0.06939 * TAtmC - 0.00027816 * TAtmC * TAtmC + 0.00000068455 * TAtmC * TAtmC * TAtmC) 
+--> where does this come from? cool prop library? 
+
+is PySpin jsut a package that holds and stores FLIR values ?
+
+Maybe calculate and extract IR camera values before everything else happens? code is messy lienarly 
+
+why is s.cam.BeginAcquisition() empty? it refers to a method that was never defined? Same with GetNextImage
+if s.image_result.IsIncomplete():
+    pass weka need to log it later 
+-----------------------------------
+IRHandler class is created. 
+Ensure correct installation of camera checking feed through SpinView SDK, 
+and that FLIR camera is on the same subgroup as the ethernet adapter 
+
+
+FLIR A700
+   ↓
+PySpin acquisition
+   ↓
+raw detector values
+   ↓
+radiometric calibration
+   ↓
+temperature array [°C]
+   ↓
+queue 1 → save TIFF image
+queue 2 → pass temperature array to other code
+queue 3 → send metadata / Tmax
+
+imports: 
+PySpin: FLIR/Teledyne Spinnaker SDK Python interface
+Queue: passes data safely between threads 
+threading: one thread aquires frames, another writes files 
+cv2: saves images 
+datetime/pandas: timestamps 
+
+-------------------------------------
+class Flag:
+this contains boolean operators 
+For val = true, this helps the user set to false to stop the program later 
+
+This can be simplified later with .Event and .clear() 
+
+--------------------------------------
+class IRHandler: 
+self.init_fail = False 
+
+s.outpath = os.path.join(
+    parameter_set.DICT['Root Folder'],
+    parameter_set.DICT['Experiment Name'] + "_IR_Values"
+)
+
+This idea makes sure nothing over writes the previous experiment 
+Experiment_001-1_IR_Values
+Experiment_001-2_IR_Values
+...
+
+Camera system initialization 
+self.system = PySpin.System.GetInstance() this connects to the Spinnaker system 
+
+
+self.camlist
+This get the number of cameras  and counts them 
+Is this for livetreaming? I'm analyzing data after collection though 
+s.cam = s.cam_list[0]  this takes the first camera and initializes it 
+
+node_bufferhandling_mode.GetEntryByName('NewestOnly')
+If processing cannot keep up with the camera, discard old buffered frames and always give me the newest frame 
+
+IRFormat = Radiometric:
+this tells the FLIR camera to output radiometric detector for temperature conversion rather than merely a display image 
+It means that: 
+image_data = image_result.GetNDArray()
+is not just arbitrary grayscale brightness 
+its raw/radiometric image information that can be transformed into temperature 
+
+Acquisition Mode:
+this means the camera continuosly captures frame until End Acquistion is called 
+
+FLIR calibration constant:
+the camera exposes radiometric calibration constants 
+They're used to convert raw detector signal into radiance and ultimately temperature 
+
+Convert taw image singal into pseudo-radiance: 
+J1 = gain 
+J0 = Offset 
+
+image_Radiance = (image_data - J0) / J1 
+This is similar conceptually to converting: digital detector counts --> radiometric quantity 
+
+Emissivity: controls how much of the observed radiation is attributed to the actual emitting surface 
+TRefl = reflected apparent temperature 
+The camera doesn't only see radiation emitted by your target, it also sees reflected environmental radiation 
+For metallic DED surface, reflection can matter a lot because emissivity can be low 
+atmospheric temperature: 293.15 
+humidity = 0.55 --> this means 55% relative humidity. It's used because water vapor absorbs infared radiation 
+Distance: It almost certainly represents camera-to-target distance, presumably in meters 
+
+External optics:
+ExtOpticsTransmission = 1
+ExtOpticsTemp = 311.4
+These account for a window/lens/protective optical element between the target and camera 
+Transmission = 1 means assumes no additional attentuation 
+
+Tau = ... calculates atmospheric transmission 
+
+r1 = reflected radiance r1
+this estimates the radiation refleceted by the target from its surroundings 
+1 - Emissivity represents the reflective portion for an opaque 
+atmospheric radiance r2 accounts for radiation emitted by the atmosphere itself and the effect of atmospheric attenuation 
+external-optics radiance r3: accounts for radiation contributed by the protective optics/window 
+Then K2 = r1 + r2 + r3 combines the corrections 
+
+Dictionary values get stored 
+
+--------------------------------
+def run_camera()
+This is the continuos acquisition loop 
+msgqueue --> metadata back to main process 
+savequeue --> image file waiting to be written 
+imgqueue --> actual temperature array for live processing 
+
+camera acquisition should not stop while disk is writing a big TIFF 
+so keeping acquisition thread --> queue --> saving thread separately 
+
+Begin Acquistion() start the stream 
+
+self.cam.GetNextImage() --> this retrieves the next camera frame 
+
+raw array:
+image_data = (self.image_result.GetNDArray())
+comment says 480 x 640 so image_data.shape == (480, 640). Each pixel is a raw radiometric detector value 
+
+convert raw values to temperature: 
+image_Radiance = (image_data )
