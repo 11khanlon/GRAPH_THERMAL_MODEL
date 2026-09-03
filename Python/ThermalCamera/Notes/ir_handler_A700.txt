@@ -15,6 +15,10 @@ Maybe calculate and extract IR camera values before everything else happens? cod
 why is s.cam.BeginAcquisition() empty? it refers to a method that was never defined? Same with GetNextImage
 if s.image_result.IsIncomplete():
     pass weka need to log it later 
+
+
+does it work with the homography.py calibration? do all of these scripts in the themal camera stuff go together 
+
 -----------------------------------
 IRHandler class is created. 
 Ensure correct installation of camera checking feed through SpinView SDK, 

@@ -79,8 +79,7 @@ class Geometry:
 
     def __init__(self, stl_file):
 
-        # Load deposited part
-        self.mesh = trimesh.load_mesh(stl_file)
+    
 
         # -----------------------------------------
         #Check if Trimesh import works 
@@ -108,10 +107,20 @@ class Geometry:
 
         #---------------------------------
         #Import mesh geometry
-
         self.mesh.apply_scale(1e-3)
 
-        # Dimensions obtained directly from STL
+        #Get original stl and center is to origin. This makes the substrate generation easier
+        bounds = self.mesh.bounds
+
+        xmin, ymin, zmin = bounds[0]
+        xmax, ymax, zmax = bounds[1]
+
+        x_center = (xmin + xmax) / 2
+        y_center = (ymin + ymax) / 2
+
+        self.mesh.apply_translation([-x_center, -y_center, -zmin])
+
+        #recalculated bounds 
         self.bounds = self.mesh.bounds
         xmin, ymin, zmin = self.bounds[0]
         xmax, ymax, zmax = self.bounds[1]
@@ -119,8 +128,7 @@ class Geometry:
         self.length = xmax - xmin
         self.width = ymax - ymin
         self.height = zmax - zmin
-
-
+        
         # Bounding box
         self.xmin = xmin
         self.xmax = xmax
@@ -140,21 +148,20 @@ class Geometry:
         self.substrate_blocks_y = BUILD["substrate_blocks_y"]
         self.substrate_blocks_z = BUILD["substrate_blocks_z"]
 
-        
+
+        #block storage
         self.blocks = []
         self.next_block_id = 0
 
-        self.substrate_xmin = (self.xmin - (self.substrate_length - self.length) / 2)
-        self.substrate_xmax = (self.substrate_xmin + self.substrate_length)
-
-        self.substrate_ymin = (self.ymin - (self.substrate_width - self.width) / 2 )
-        self.substrate_ymax = (self.substrate_ymin + self.substrate_width)
-
-        self.substrate_bottom = (self.zmin - self.substrate_height)
-        self.substrate_top = self.zmin
-
-
-
+        #substrate bounds 
+        self.substrate_xmin = -self.substrate_length / 2
+        self.substrate_xmax = self.substrate_length / 2
+        self.substrate_ymin = -self.substrate_width / 2
+        self.substrate_ymax = self.substrate_width / 2
+        
+        self.substrate_top = 0.0
+        self.substrate_bottom = -self.substrate_height
+        
     # -----------------------------------------
     def build_substrate(self):
 

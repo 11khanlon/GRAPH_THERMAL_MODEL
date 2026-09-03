@@ -1,76 +1,40 @@
 Remaning Questions and edits: 
 
-1. Imports
-import mypkg.data_files.parameter_set as parameter_set
-this can probably come from the config file
-
-from mypkg.heat_analysis.common_img import GetPtsFromImg
-this can be written as a helper function 
+Need to import images. How many images? 
 
 
-img = cv2.imread(
-                str(torch_im),
-                cv2.IMREAD_GRAYSCALE
-can you explain what the cv2 package is? whats going on here? 
+when you hit click points is there a coordinate system 
 
-torch_pts = self.common_img.clickfind_pts(img)
-where donts clickfind pts come from ? 
-what scripts and information is missing
-where does the H matrix come from? what file format? is it from in-situ data? is this alwasy the case? 
-
-
-Change the inches conversion 
-
-change this process? 
-H = cv2.getPerspectiveTransform(
-    src.astype(np.float32),
-    dst.astype(np.float32)
-)
-
-H, mask = cv2.findHomography(
-    src,
-    dst
-)
-
+You as the person click where the substrate starts and ends, will it still warp how the image looks? or is it just an estimate? 
 how do you check the H matrix and verification process? 
 
-------------------------------- 
-class ThermalCameraCalibration(): 
-Initialize the calibration object for camera 
-show_debug = False (boolean)
-If show_debug violaet some logic it will turn true to show there is a problem 
+If we import geometry.py, this is still in GraphCode folder. Python will not know where it is
+
 
 ----------------------------------
-def calibrate_torch(): 
-
-if isinstance(torch_im, str): 
-            # Reading in image
-            img = cv2.imread(
-                str(torch_im),
-                cv2.IMREAD_GRAYSCALE
-            )
-        else: 
-            img = torch_im
-
-This means if you passed a filename load the image. If you already passed an image array, just use it 
-So img becomes a Numpy image matrix:
---> For example: 
-1024 × 768 thermal image
-img[v, u]
-
-Manually selecting the torch: 
-print("->>Click on as many points around the torch as you can.")
-torch_pts = self.common_img.clickfind_pts(img)
-This allows the user to select as many points as they can around torch/nozzle 
-
-then copy the image, an fille it with points 
-
-find center point 
-center_pt = (self._common_img.clickfind_pts(img))
-center_pt = center_pt[0]
-
 What is homography? 
-Your camera is viewing a flat surface from some angle 
+
+* Homography is a projective transformation between two planes 
+* Homography matrix is what connects the camera coordinates (u, v) to real coordinates (x, y) 
+
+Your camera is viewing a flat surface from some angle:
+camera image [u, v]:
+       1────────────2
+      /              \
+     /                \
+    4──────────────────3
+
+
+But physically, you know that substrate is a rectangle: 
+physical world [x,y]:
+(0,W) ───────── (L,W)
+  2                 3
+  │                 │
+  │                 │
+  1─────────────────4
+(0,0)             (L,0)
+
+
 The physical coordinates could be flat, but the image looks slanted (like a parallelogram)
 A homography transforms coordinates on one flat plane into coordiantes in another view 
 [u', v', w']^T = H[x, y, 1]^T 
@@ -82,100 +46,140 @@ where:
 
 p_hom = [float(x), float(y), 1]
 p1_hom = H @ p_hom
-This is exactly what this is doing above 
-you take all your x and y coordinates from real life 
-multiply H matrix by those to get transformed values. 
 
 
-After identifying the torch polygon and its center,
-they convert the torch outline into coordinates realtive to the torch center 
+To find H matrix:
+Use the known physical substrate coordinates [x,y]
+Manually identify camera pixels [u,v]
+Solve for the H matrix 
 
-torch_mask_ptsx = (np.array(torch_pts)[:,0] - center_pt[0])
-torch_mask_ptsy = (np.array(torch_pts)[:,1] - center_pt[1])
 
-for example, instead of storing: 
-torch polygon: [420,160], [460,160], [470,210]
-relative to torch center: [-20,-30], [+20,-30], [+30,+20]
+------------------------------- 
+class ThermalCameraCalibration(): 
+Initialize the calibration object for camera 
 
-Why? because if the torch moves to another image location, you can translate the same mask: 
+This class pairs camera coordinates [u ,v] with known physical coordinates [x, y]
+Then calculates homography --> [u,v] <-> [x, y]
 
--------------------------------
+show_debug = False (boolean)
+If show_debug violaet some logic it will turn true to show there is a problem 
+
+----------------------------------
+def load_image(): 
+
+ if isinstance(image, (str, Path)):
+ This asks is image either a string path or path object 
+ If yes, load it up 
+
+image = cv2.imread(str(image), cv2.IMREAD_UNCHANGED) 
+This function allows the user to read images
+The first argument tells OpenCV where the file is 
+the second tells how to interpret the image. 
+--> UNCHANGED means don't intentionally convert the image
+
+
+------------------------------
 def calibrate plate(): 
-This function takes an image showing the build plate and asks you to identify its corners 
-You get a print statemen stating "Click on corners starting from [0,0], CW."
+--> Find H matrix
+--> This function input an image showing the build plate 
+--> Camera uv coordinates:  manually identify the buildplate corners 
+--> Real xy cooridnates: substrate geometry (real xy coordinates)
+
+self.plate_points_xy = np.array(....) --> this loads real xy coordinates from geometry
+
+Get uv points from image: 
+Call the select point function from ImagePointExtractor() class
 Click on the four plate corners:
 1 ---------------- 2
 |                  |
 |                  |
 4 ---------------- 3
 
-crop_pts  = self._common_img.clickfind_pts(img)
-These are pixel coordinates 
-For example: 
-crop_pts = np.array([
-    [180, 620],
-    [210, 180],
-    [890, 160],
-    [920, 640]
-])
-These represent where four physical corners appear in the image 
-The code then draws lines between them simple to let the user verify they clicked correctly 
+.astype(np.float64) --> converts the data type to 64-bit floating point numbers 
 
-src vs dst 
-dst = np.array(crop_pts) --> these are image pixel coordinates 
-src = np.array([[0,0], [0, substrate_length], [substrate_width, substrate_length], [substrate_width,0]])
+self.H_xy_to_uv = (
+cv2.getPerspectiveTransform(
+self.plate_points_xy.astype(np.float32),
+self.plate_points_uv.astype(np.float32))
+)
 
-So you are pairing: 
-physical plate location       camera pixel
+This function tells OpenCV: 
+I have four points in coordinate system A and the same four points in coordinate system B. 
+Find the projective transformation that maps Hxy --> Huv
 
-(0,0)                    ↔    corner 1
-(0,L)                    ↔    corner 2
-(W,L)                    ↔    corner 3
-(W,0)                    ↔    corner 4
+------------------------------------
+def physical_to_pixel():
 
-pimage = H @ p_physical 
+Use the newly found homography matrix to map the physical domain to pixel 
+Create an array of x,y points and add 1 at the end (standard homography, add 1 in next dimension)
+Find uv points my multiplying H matrix by xy points 
+Return elements 0,1
 
-Why they multiply by 25.4:
-float(
-    parameter_set.DICT[
-        'Substrate Length'
-    ].split(' ')[0]
-) * 25.4
-Their configuration stored substrate dimensions in inches 
-I do not need to do this because geometry is already stored in SI
+--------------------------
+def pixel_to_physical(): 
 
-The matrix A 
-This part: 
-A = np.zeros((9,9))
-followed by:
-A[j,:] = ...
-A[j+1,:] = ...
-This build the 3x3 H matrix 
-Fix h9 equal to 1 
+Use the H matrix to do the reverse 
+------------------------------------
 
 
-for i in range(4):
-
-    p = src[i]
-    q = dst[i]
-
-    p_hom = [
-        p[0],
-        p[1],
-        1
-    ]
-
-    p1_hom = H @ p_hom
-
-    p1 = [
-        x / p1_hom[2]
-        for x in p1_hom[:-1]
-    ]
-This test If I transform the physical corner using H, do I recover the clicked image corner? 
-This calculates expected image plot: [180, 620] 
-calculated: [180.0001,619.9998] 
 
 
-Plots: 
-The plots compare physical plate coordinates versus camera image coordinates 
+------------------------------------
+def calibrate_torch(): 
 
+Define a polygon around the torch/nozzle
+Load image and click/define points 
+
+The polygon is stored relative to the torch center so
+that it can later be translated to another image position
+
+center_xy:
+Optional physical torch location [x, y].
+
+If provided, plate calibration must already exist
+and the physical location will be converted into
+camera coordinates [u, v].
+
+If None, the user manually clicks the center
+
+
+--------------------------------------
+def move_torch_mask():
+
+Translate the calibrated torch mask to a new camera position
+
+Parameters
+center_uv : [u, v]
+Current torch center in camera coordinates.
+
+Returns
+
+polygon_uv : Nx2 ndarray
+Torch polygon at its new image position
+
+-----------------------------------------
+def create_torch_mask() 
+
+Create a binary image mask for the torch
+1 = torch / occluded region
+0 = visible region
+        
+---------------------------
+def save_calibration() 
+
+Save both plate and torch spatial calibration
+
+-----------------------------
+def load_calibration() 
+
+Load previously saved spatial calibration 
+
+-------------------------------------
+def show_plate_calibration():
+Display the selected substrate points on the calibration image
+
+
+-------------------------------------
+def show_torch_calibration() 
+
+Display torch polygon and center

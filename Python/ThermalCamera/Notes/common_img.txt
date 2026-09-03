@@ -1,65 +1,62 @@
 Remaining Questions: 
 
-what is clickevent
 
-separate the coordinates with u,v for the camera 
-and real world coordinates as x,y
+
+line_mask = np.zeros(img.shape[:2], dtype = np.uint8)
+can you explain this notation
+
+when you select the points, how to select you are done? is this just for the substrate selection? 
 
 ---------------------
 Class GetPtsFromImg:
 
 This class groups interactive image-selection methods 
 
+What is cv2? 
+cv2 is the Python library interface to OpenCV, a computer-vision/image processing library 
+
+What is skimage? 
+skimage is scikit-image, another image-processing library
+skimage.draw.line() --> takes two endpoint coordinates and calculates all teh discrete image pixels connecting them  
+
+Homography coordinates: 
+reserve x,y,z exclusively for physical coordinates 
+reserve u,v,w for camera coordinates
+(x,y) --> (u,v)
+--------------------------------------
+def clickevent() 
+This function determines a singluar click event used for point selection 
+Left button adds points, right button removes points 
+
+---------------------------------------------
+def redraw_points() 
+
+copy the original inputted image 
+iterature through each point in the u,v list from the selected points 
+Create a circle 
+Put into text to describe that circle, then show the display image 
+
 
 ----------------------------
-def clickfind_pts()
+def select_points()
 
 this is what the previous calibration code calls in torch_pts and crop_pts 
 
-it starts by resetting two global lists:
-global xpts, ypts
-xpts = []
-ypts = []
 
-everytime you click on the image clickevent() adds: 
-xpts.append(x)
-ypts.append(y)
-
-
-cv2.namedWindow("Resizable Window", cv2.WINDOW_NORMAL)
-this makes a resiable window 
-
-cv2.imshow("Resizable Window", img)
-This displays an image 
-
-cv2.setMouseCallback("Resizable Window", clickevent)
-Whenever something happen with the mouse in this window, call clickevent() 
-Then cv2.waitKey(0) 
-Keep the window open indefinityely until a keyboard key is pressed
-
-fin_pts = []
-for i in range(len(xpts)):
-    fin_pts.append([
-        xpts[i],
-        ypts[i]
-])
-
-This build the homography matrix 
+1. cv2.namedWindow("Resizable Window", cv2.WINDOW_NORMAL)
+--> This creates an OpenCv Window. 
+--> WINDOW_NORMAL means the user can resize it. Without this, OpenCV displays an image as its native resolution 
+2. cv2.imshow("Resizable Window", img)
+--> This puts numpy img into that window 
+3. cv2.setMouseCallback("Resizable Window", clickevent)
+--> When the user clicks or moves the mouse in this window, call this function.
+4. cv2.waitKey(0)
+--> Wait indefinitely until the user presses a keyboard key
+5. cv2.destroyAllWindows()
+--> close all OpenCV windows 
+Process = open image --> allow user to click points --> wait until use says they're done by pressing a key --> cloe
 
 
--------------------------------
-def clickfind_indp_lines(self, image):
+--------------------------------
+def select_independent_lines(): 
 
-This lets you draw independent line segments 
-
-if i % 2 == 1: --> this means you process every click 
-For example, when i=1 you have 
-start = click 0
-end   = click 1
-discrete_line = list(zip(*skimage.draw.line(*start, *end))) --> find every integer pixel lying between two clicked endpoints 
-No longer storing pixels. you're storing every entry along the line 
-building lines: lines = np.zeros((img.shape[0],img.shape[1]))
-this creates a blank binary image the same size as the original 
-
-def clickfind_cont_lines(self, img):
-This is independent pairs and manually drawing a contour

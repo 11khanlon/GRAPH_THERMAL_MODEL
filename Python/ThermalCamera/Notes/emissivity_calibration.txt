@@ -1,0 +1,90 @@
+Remaining questions: 
+
+is this tailored only for aluminum ? how to deal with steel values? 
+do you have to recalculate emissivty for steel? 
+
+
+
+-----------------------------
+old solve for emiss: If I have an independent known temperature, what emissivity makes the thermal camera agree with that temperature? 
+
+New way to solve emissivity. Suppose thermocouple says T = 200 C 
+The camera has the corresponding raw detector measurement S 
+We want epsilon star = argmin|Tcamera(S, epsilon) - T|
+
+Things to add: 
+--> calibrate using more than one image. This result could be affected by noise, spatial registration error, TC uncerntainty, reflection 
+--> Calibrate using more than one pixel 
+
+
+------------------------------
+This class is converting between three related things:
+raw detector counts <--> radiance like camera signal <--> temperature 
+
+FLIR documents that quantitative thermal measurement depends on emissivity, relfected apparaent temeprature, 
+atmospheric temperature, humidity, distance, and external IR-window properties 
+
+The constants R, B, F and the atmospheric attenutaion coefficients are associated with the camera's 
+radiometric model/calibration not the aluminum specimen 
+----------------------------
+Constant answer key:
+
+R = Planck/radiometric calibration constant. Found from calibration / camera metadata 
+B = Planck temperature coefficient. Found from calibration / camera metadata 
+F = Planck model coefficient. Found from calibration / camera metadata  
+J0 = Detector offset. Camera Calibration 
+J1 = Detector gian. Camera Calibration 
+X = Atmospheric transmission weighting coefficient. FLIR atmospheric model/metadata 
+A1, A2 = atmosphere attenuation coefficients. FLIR model / camera metadata 
+TRef1 = Reflected apparanet temperature. Experiment / setup 
+TAtm = atmospheric temperature K. Exeriment/setup 
+Humidity = relative humidity. Experiment / setup 
+Dist = camera - to - object distance. Experiment/distance 
+EOR = external optics transmission. Experiment/setup 
+EOT = External optics temperature . Experiment/setup 
+emissivity = effective surface emissivity. Material/surface/expeirment 
+
+
+CAMERA-SPECIFIC
+R, B, F
+J0, J1
+X, A1, A2, B1, B2
+
+EXPERIMENT-SPECIFIC
+TRefl
+TAtm
+Humidity
+Distance
+External optics transmission
+External optics temperature
+
+MATERIAL/SURFACE-SPECIFIC
+emissivity
+
+--------------------------
+H20 variable is estimating the water vapor conter from RH and atmospheric temperature 
+The reason is because water vapor absorbs infrared radiaiton 
+
+Tau = IR radiation reaching camera / IR radiation leaving target 
+If tau = 1 the atmosphere transmits everything 
+If tau < 1 some radiation is abosrbed before reaching the camera 
+
+r1, r2, r3. These correction terms for radiation that isn't simple emitted by your target 
+for example, r1 accounts for reflected environmental radiation 
+for an opaque surface approximately: epsilon + p = 1 
+Low emissivity aluminum can therefore reflect a significant amount of surrounding IR radiation 
+That's why reflected temperature become especially important for metals.
+r2 accounts for atmospheric emission. THe atmosphere doesn't only absorb IR it can emit radiation as well 
+r3 accounts for external optics/window radiation 
+
+def calculate(): 
+This function converts raw camera data to temperature 
+image_radiance  = (data - J0) / J1 
+
+
+def reverse_calc(): 
+this does the reverse temperature --> expected raw detector signal 
+Suppose old image is already temperature data calculated , Eold 
+but then later I determined Enew 
+Don't directly scale temperature, instead do: 
+old temperature --> reverse radiometric conversion --> estimated detector signal --> new emissivity --> new temperature 
