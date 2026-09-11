@@ -7,7 +7,14 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 
 
-class RadiometricCalibration:
+#---------------------------------
+'''
+Factory/radiometric camera calibration 
+Constants such as R, B, F, J0, J1, X, alpha1, alpha2, Beta1, Beta2 are stored throught the camera
+You are not experimentally determining these yourself 
+
+'''
+class RadiometricModel:
 
     def __init__(self, camera_constants, environment, emissivity):
 
@@ -91,7 +98,7 @@ class RadiometricCalibration:
 
     def temperature_to_raw(self, temperature_c):
 
-        temperature_k = temperature_k = np.asarray(temperature_c, dtype=float) + 273.15
+        temperature_k = np.asarray(temperature_c, dtype=float) + 273.15
         signal = (self.K2 - 
                   self.R / (self.F - np.exp(self.B / temperature_k))
                   )
@@ -99,6 +106,14 @@ class RadiometricCalibration:
         raw_data = self.J1 * self.tau * self.emissivity * signal + self.J0
 
         return raw_data
+
+
+#--------------------
+'''
+Emissivity calibration 
+This is where we try to match the emissivity to sensor (FLIR or thermocouple) temperature 
+
+'''
        
 def correct_emissivity(temperature_data,
                         old_emissivity, 
@@ -106,8 +121,8 @@ def correct_emissivity(temperature_data,
                         camera_constants,
                         environment):
 
-    old_model = RadiometricCalibration(camera_constants, environment, old_emissivity)
-    new_model = RadiometricCalibration(camera_constants, environment, new_emissivity)
+    old_model = RadiometricModel(camera_constants, environment, old_emissivity)
+    new_model = RadiometricModel(camera_constants, environment, new_emissivity)
     raw_data = old_model.temperature_to_raw(temperature_data)
     corrected_temperature = new_model.raw_to_temperature(raw_data)
 

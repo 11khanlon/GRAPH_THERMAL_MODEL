@@ -37,7 +37,6 @@ LASER = {
     "head_height": 3.0e-3,         # m, visual geometry
     "head_top_radius": 1.0e-3,     # m
     "head_tip_radius": 0.8e-3,     # m
-
     "beam_radius": 0.25e-3         # m
 
 }

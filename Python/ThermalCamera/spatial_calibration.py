@@ -9,9 +9,14 @@ from image_extractor import ImagePointExtractor
 
 sys.path.append(r"C:\Users\Kayleigh\GraphThermalModel\Python\GraphCode")
 
+'''
+Homography code determines (x, y) <--> (u, v)
+Helps map off axis camera orientation to top view 
+
+'''
 
 # ----------------------------------------
-class ThermalCameraCalibration():
+class SpatialCalibration():
 
     def __init__(self, show_debug = False):
         

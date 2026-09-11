@@ -1,22 +1,4 @@
-#Thermal camera radiometric settings 
-RADIOMETRY = {
-
-    # Environmental conditions
-    "reflected_temperature": 293.15,   # K
-    "atmospheric_temperature": 293.15, # K
-    "relative_humidity": 0.55,         # 0-1
-
-    # Camera-to-target geometry
-    "object_distance": 2.0,            # m
-
-    # External optics / IR window
-    "external_optics_transmission": 1.0,
-    "external_optics_temperature": 273.15,  # K
-
-}
-
-
-A700_FACTORY_CALIBRATION = {
+A700_FALLBACK_CONSTANTS = {
 
     "R": 19457.3671875,
     "B": 1517.0,
@@ -29,31 +11,38 @@ A700_FACTORY_CALIBRATION = {
     "atmospheric_beta2": 0.0031802000012248755,
 
     "J1": 9.749829292297363,
-    "J0": 5877,
+    "J0": 5877
 }
 
 
-'''
-       calib_vals = [  19457.3671875, # ------------ R
-                        1517.0, # ------------------- B
-                        1.5, # ---------------------- F
-                        0.7319999933242798, # ------- X
-                        1.2390000136974777e-08, # --- A1
-                        1.1094999585736787e-08, # --- A2
-                        0.0031799999997019768, # ---- B1
-                        0.0031802000012248755, # ---- B2
-                        9.749829292297363, # -------- J1
-                        5877, # --------------------- J0
-                        293.15, # ------------------- TRefl
-                        293.15, # ------------------- TAtm
-                        20.0, # --------------------- TAtmC
-                        0.55, # --------------------- Humidity
-                        2, # ------------------------ Dist
-                        1, # ------------------------ EOR
-                        273.15, # ------------------- EOT
-                    ]
+#Thermal camera radiometric settings 
+RADIOMETRIC_ENVIRONMENT = {
+
+    # Temperatures in Kelvin
+    "reflected_temperature": 293.15,
+    "atmospheric_temperature": 293.15,
+
+    # Fraction: 0.55 = 55% RH
+    "relative_humidity": 0.55,
+
+    # Camera-to-target distance [m]
+    "object_distance": 2.0,
+
+    # External IR optics/window
+    "external_optics_transmission": 1.0,
+    "external_optics_temperature": 293.15
+}
+
+
+# Emissivity calibration
+INITIAL_EMISSIVITY = 0.30
+EMISSIVITY_BOUNDS = (0.05, 1.0)
+EMISSIVITY_TEMPERATURE_BINS_C = [100, 150, 200, 250, 300, 350, 400]
+EMISSIVITY_BIN_HALF_WIDTH_C = 10.0
 
 
 
-
-'''
+# Acquisition
+FRAME_TIMEOUT_MS = 1000
+SAVE_RAW_FRAMES = True
+SAVE_TEMPERATURE_FRAMES = True

@@ -1,0 +1,38 @@
+emissivity.py
+determine ε from thermocouple error
+determine ε(T)
+correct data for a new ε
+apply spatial emissivity masks
+
+
+The thermocouple is based on the Seebeck effect 
+Yes. A type K thermocouple works through the Seeback effect. Two dissimilar 
+conductors for a junction; a temperature difference between that measurement junction and 
+the reference junction produces a thermoelectric voltage
+
+Type K, the conductors are conventionally Chromel and Alumel 
+error by bolting them down? 
+
+McMaster probe says: 
+Type K
+Surface bolt-on
+Grounded
+Response time = 2 s
+Maximum temperature = 900°F ≈ 482°C
+the timestep is: 0.922 seconds 
+response time for thermocouple is 2 seconds. 
+
+accuracy is between plus minus 2.22 degrees C 
+above 533 degree F: manufacturer gives plus minus .75% 
+max sensing rate is 10 Hz 
+
+FLIR A700 thermal camera: 
+30 frames per second 
+640 x 480 pixel resolution 
+dynamically selectable images: 300 degreeC to 2000 deg C 
+
+uncerntainty: probe, daq, contact, position, time 
+
+
+Initiate homography sequence to extract photo
+need to extract image ROI for thermcouple 

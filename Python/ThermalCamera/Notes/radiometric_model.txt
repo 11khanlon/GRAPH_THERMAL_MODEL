@@ -4,8 +4,6 @@ is this tailored only for aluminum ? how to deal with steel values?
 do you have to recalculate emissivty for steel? 
 
 
-
------------------------------
 old solve for emiss: If I have an independent known temperature, what emissivity makes the thermal camera agree with that temperature? 
 
 New way to solve emissivity. Suppose thermocouple says T = 200 C 
@@ -16,6 +14,19 @@ Things to add:
 --> calibrate using more than one image. This result could be affected by noise, spatial registration error, TC uncerntainty, reflection 
 --> Calibrate using more than one pixel 
 
+emissitvity.py 
+What emissivity should I give to the radiometric model?
+emissivity_calibration.py
+
+correct_emissivity()
+solve_effective_emissivity()
+solve_emissivity_at_temperature()
+
+TemperatureDependentEmissivity
+raw_to_temperature_variable_emissivity()
+This should be the error and correction script 
+
+what emissivity constnat should you use for steel initially? 
 
 ------------------------------
 This class is converting between three related things:
@@ -26,6 +37,8 @@ atmospheric temperature, humidity, distance, and external IR-window properties
 
 The constants R, B, F and the atmospheric attenutaion coefficients are associated with the camera's 
 radiometric model/calibration not the aluminum specimen 
+
+
 ----------------------------
 Constant answer key:
 
@@ -60,6 +73,24 @@ External optics temperature
 
 MATERIAL/SURFACE-SPECIFIC
 emissivity
+
+------------------------------------
+class RadiometricCalibration
+
+--> this class contains the mathematical model that converts raw A700 detector signal to temperature 
+--> You use constants R, B, F, J0, J1.....
+--> Not calibrating the camera every time this class runs. You're applying the radiometric model 
+
+Conceptually, how everything works is: 
+
+                CAMERA CONSTANTS
+                R, B, F, J0, J1...
+                        │
+                        ↓
+Raw detector ──► Radiometric model ──► Temperature
+                        ↑
+                        │
+                 Environment + emissivity ε
 
 --------------------------
 H20 variable is estimating the water vapor conter from RH and atmospheric temperature 

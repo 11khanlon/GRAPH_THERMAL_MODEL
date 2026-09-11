@@ -1,0 +1,29 @@
+              FLIR A700
+                  │
+                  │ PySpin
+                  ▼
+           A700Camera.py
+                  │
+        raw frame S(u,v,t)
+                  │
+                  ├──────────────► frame_writer.py
+                  │                    │
+                  │                 save raw
+                  │
+                  ▼
+         radiometric_model.py
+                  │
+            needs ε value
+                  │
+        ┌─────────┴────────────┐
+        │                      │
+constant ε                ε = ε(T)
+        ▲                      ▲
+        │                      │
+        └──── emissivity.py ───┘
+                  ▲
+                  │
+          thermocouple data
+                  │
+                  ▼
+        minimize camera-TC error
