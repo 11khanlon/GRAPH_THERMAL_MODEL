@@ -307,7 +307,6 @@ if __name__ == "__main__":
 
     geom.build_blocks()
 
-
     generator = NodeGenerator(geom)
 
     generator.generate()

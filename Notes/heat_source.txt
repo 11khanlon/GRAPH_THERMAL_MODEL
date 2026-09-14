@@ -4,6 +4,17 @@ does this resemble Goldak heat source? Does it calibrate it like the article?
 
 might need to change deposition logic
 KDTree.query_ball_point() --> maybe use later to replace "for node in nodes:"
+
+
+I was thinking of trying three different ways for the laser model: 
+first method is to try and keep the orginal goldak model with C parameter and vary heat from radius of the laser but reaplce the power with the calculated power,
+ try the other students work, try other sutdents work and then add weights, try original goldak model 
+
+ current and arc varies
+
+ i think how they calculate the volume and area depends on the shape here. i think they are assumming a bead so thats what they are using (or are the calculating laser?)
+ I'm starting out with a block, so my equation looks different. is this correct?
+
 -----------------------
 Possible edits:
 - In the Heat Source for To, they keep k constant (6.8), but it may change 

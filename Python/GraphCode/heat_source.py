@@ -34,7 +34,8 @@ class GoldakHeatSource:
         self.Tmelt = meltpool_temperature
         self.Tliquidus = liquidus_temperature
 
-    # ------------------------------------
+
+    # --------------DED Powder Information -----------------
 
     def goldak_temperature(self, x, y, z):
 
@@ -145,7 +146,7 @@ if __name__ == "__main__":
 
     from geometry import Geometry
     from nodes import NodeGenerator
-    from config import LASER, MATERIAL, BUILD
+    from config import LASER, MATERIAL, BUILD, WAAM
  
 
     stl_file = BUILD["stl_file"]

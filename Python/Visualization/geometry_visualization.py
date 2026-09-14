@@ -296,11 +296,14 @@ def plot_geometry(geometry):
     
     # Substrate dimensions
 
-    xmin = (geometry.xmin - (geometry.substrate_length - geometry.length) / 2 )
-    xmax = xmin + geometry.substrate_length
+    xmin = 0.0
+    xmax = geometry.substrate_length
 
-    ymin = (geometry.ymin - (geometry.substrate_width - geometry.width) / 2)
-    ymax = ymin + geometry.substrate_width
+    ymin = 0.0
+    ymax = geometry.substrate_width
+
+    zmin = 0.0
+    zmax = geometry.substrate_height
 
    
     # Aspect ratio

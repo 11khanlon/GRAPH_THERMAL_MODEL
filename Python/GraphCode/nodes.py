@@ -412,8 +412,20 @@ def print_surface_statistics(nodes):
 # --------- Testing ----------
 if __name__ == "__main__":
 
+    import os
+    import sys
+
+    # Get the parent "Python" folder
+    python_folder = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..")
+    )
+
+    # Add it to Python's import search path
+    if python_folder not in sys.path:
+        sys.path.insert(0, python_folder)
+
     from geometry import Geometry
-    from Visualization.node_visualization import  plot_geometry_with_nodes
+    from Visualization.node_visualization import plot_geometry_with_nodes
     from face import update_exposed_faces
     from config import BLOCK
 
@@ -436,6 +448,6 @@ if __name__ == "__main__":
 
     generator.validate_nodes()
 
-    #plot_geometry_with_nodes(geom, generator)
+    plot_geometry_with_nodes(geom, generator)
 
     print_surface_statistics(nodes)

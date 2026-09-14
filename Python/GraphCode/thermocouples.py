@@ -27,70 +27,43 @@ class ThermalProbe:
 
     # -----------------------------------------------------
 
-    def assign_node(
-        self,
-        nodes,
-        snap_to_position=True
-    ):
+    def assign_node(self, nodes, snap_to_position=True):
 
-        candidates = self._candidate_nodes(
-            nodes
-        )
+        candidates = self._candidate_nodes(nodes)
 
         if len(candidates) == 0:
 
-            raise ValueError(
-                f"No candidate nodes available "
-                f"for probe {self.name}"
-            )
+            raise ValueError(f"No candidate nodes available for probe {self.name}")
 
         distances = np.array([
-            np.linalg.norm(
-                node.position - self.position
-            )
-            for node in candidates
-        ])
+            np.linalg.norm(node.position - self.position) 
+            for node in candidates])
 
-        nearest_index = np.argmin(
-            distances
-        )
-
-        node = candidates[
-            nearest_index
-        ]
+        nearest_index = np.argmin(distances)
+        node = candidates[nearest_index]
 
         self.node = node
         self.node_id = node.id
 
-        self.original_position = (
-            node.position.copy()
-        )
-
-        self.snap_distance = (
-            distances[nearest_index]
-        )
+        self.original_position = (node.position.copy())
+        self.snap_distance = (distances[nearest_index])
 
         if snap_to_position:
 
-            node.position = (
-                self.position.copy()
-            )
+            node.position = (self.position.copy())
 
         return node
 
 
-     #----------- TCA, TCB, TCC, TCD -------------------
+     #----------- TC0, TC1, TC2, TC3 -------------------
     
     def temperature_from_nearest_node(
         self,
         nodes,
         temperature,
-        active_only=False
-    ):
+        active_only=False):
 
-        candidates = self._candidate_nodes(
-            nodes
-        )
+        candidates = self._candidate_nodes(nodes)
 
         if active_only:
 
@@ -105,19 +78,12 @@ class ThermalProbe:
             return np.nan
 
         distances = np.array([
-            np.linalg.norm(
-                node.position - self.position
-            )
-            for node in candidates
-        ])
+            np.linalg.norm(node.position - self.position)
+            for node in candidates])
 
-        nearest = candidates[
-            np.argmin(distances)
-        ]
+        nearest = candidates[np.argmin(distances)]
 
-        return temperature[
-            nearest.id
-        ]
+        return temperature[nearest.id]
 
     def interpolate_temperature(
         self,
@@ -125,12 +91,9 @@ class ThermalProbe:
         temperature,
         k=8,
         power=2,
-        active_only=False
-    ):
+        active_only=False):
 
-        candidates = self._candidate_nodes(
-            nodes
-        )
+        candidates = self._candidate_nodes(nodes)
 
         if active_only:
 
@@ -154,47 +117,20 @@ class ThermalProbe:
             for node in candidates
         ])
 
-        distances = np.linalg.norm(
-            positions - self.position,
-            axis=1
-        )
-
-        k_use = min(
-            k,
-            len(candidates)
-        )
-
-        nearest = np.argsort(
-            distances
-        )[:k_use]
-
-        d = distances[
-            nearest
-        ]
-
-        ids = node_ids[
-            nearest
-        ]
+        distances = np.linalg.norm(positions - self.position, axis = 1)
+        k_use = min(k, len(candidates))
+        nearest = np.argsort(distances)[:k_use]
+        d = distances[nearest]
+        ids = node_ids[nearest]
 
         # Exact node coincidence
         if np.any(d < 1e-12):
 
-            return temperature[
-                ids[np.argmin(d)]
-            ]
+            return temperature[ids[np.argmin(d)]]
 
-        weights = (
-            1.0
-            / d**power
-        )
+        weights = (1.0/ d**power)
 
-        return (
-            np.sum(
-                weights
-                * temperature[ids]
-            )
-            / np.sum(weights)
-        )
+        return (np.sum(weights * temperature[ids]) / np.sum(weights))
     
 
     def _candidate_nodes(self, nodes):
@@ -222,7 +158,7 @@ class ThermalProbe:
                     for node in candidates
                     if node.block.layer
                     == self.layer
-                ]
+                    ]
 
         elif self.region == "all":
 
@@ -238,116 +174,51 @@ class ThermalProbe:
         return candidates
 
     # -----------------------------------------------------
-
     def summary(self):
 
-        print(
-            f"\n------ PROBE: {self.name} ------"
-        )
-
-        print(
-            "Target position [mm]:",
-            self.position * 1000
-        )
-
-        print(
-            "Region:",
-            self.region
-        )
+        print(f"\n------ PROBE: {self.name} ------")
+        print("Target position [mm]:", self.position * 1000)
+        print("Region:", self.region)
 
         if self.layer is not None:
+            print("Layer restriction:", self.layer)
 
-            print(
-                "Layer restriction:",
-                self.layer
-            )
-
-        # --------------------------------------------------
         # Snapped-node mode
-        # --------------------------------------------------
-
         if self.node is not None:
 
-            print(
-                "Node ID:",
-                self.node_id
-            )
-
-            print(
-                "Node block:",
-                self.node.block_id
-            )
-
-            print(
-                "Node layer:",
-                self.node.block.layer
-            )
-
-            print(
-                "Substrate:",
-                self.node.is_substrate
-            )
-
-            print(
-                "Active:",
-                self.node.active
-            )
+            print("Node ID:", self.node_id)
+            print("Node block:", self.node.block_id)
+            print("Node layer:", self.node.block.layer)
+            print("Substrate:", self.node.is_substrate)
+            print("Active:", self.node.active)
 
             if self.original_position is not None:
-
-                print(
-                    "Original node position [mm]:",
-                    self.original_position * 1000
-                )
+                print("Original node position [mm]:", self.original_position * 1000)
 
             if self.snap_distance is not None:
+                print("Snap distance [mm]:", self.snap_distance * 1000)
 
-                print(
-                    "Snap distance [mm]:",
-                    self.snap_distance * 1000
-                )
+            print("Final node position [mm]:", self.node.position * 1000)
 
-            print(
-                "Final node position [mm]:",
-                self.node.position * 1000
-            )
+            print("Sampling mode: snapped graph node")
 
-            print(
-                "Sampling mode: snapped graph node"
-            )
-
-        # --------------------------------------------------
+        
         # Passive interpolation mode
-        # --------------------------------------------------
-
         else:
 
-            print(
-                "Node ID: None"
-            )
-
-            print(
-                "Sampling mode: passive interpolation"
-            )
-
-            print(
-                "Graph modified by probe: False"
-            )
-
+            print("Node ID: None")
+            print("Sampling mode: passive interpolation")
+            print("Graph modified by probe: False")
         print("--------------------------------")
 
     # ============================================================
 # SELECT MIDDLE BLOCK OF A DEPOSITION LAYER
 # ============================================================
 
-def middle_block_of_layer(
-    geometry,
-    layer=0
-):
-    """
-    Return the middle deposition block
-    from a selected layer.
-    """
+def middle_block_of_layer(geometry, layer=0): 
+
+    #Return the middle deposition block from a selected layer 
+   
 
     layer_blocks = [
         block
@@ -676,7 +547,7 @@ if __name__ == "__main__":
     from geometry import Geometry
     from nodes import NodeGenerator
 
-    from config import BUILD, SENSORS
+    from config import BUILD, SENSORS, SENSORS
 
     stl_file = BUILD["stl_file"]
 

@@ -8,7 +8,7 @@ graph_ded/
 │── conduction.py   
 │── convection.py   
 │── material.py  
-│── deposition.py  [working on this]
+│── deposition.py 
 │── visualization.py 
 │── main.py
 

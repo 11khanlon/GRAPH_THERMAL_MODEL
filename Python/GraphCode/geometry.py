@@ -20,7 +20,7 @@ import os
 import time
 
 
-from config import BUILD, BLOCK
+from config import BUILD, BLOCK, WAAM
 
 # -----------------------------------------
 class Block:
@@ -79,8 +79,6 @@ class Geometry:
 
     def __init__(self, stl_file):
 
-    
-
         # -----------------------------------------
         #Check if Trimesh import works 
 
@@ -105,31 +103,70 @@ class Geometry:
 
         print(f"STL loaded in {elapsed:.2f} seconds. Success!")
 
-        #---------------------------------
-        #Import mesh geometry
+
+        # Convert STL from mm -> m
         self.mesh.apply_scale(1e-3)
 
-        #Get original stl and center is to origin. This makes the substrate generation easier
+        # -----------------------------------
+        # SUBSTRATE PARAMETERS
+        # -----------------------------------
+        self.substrate_length = BUILD["substrate_length"]
+        self.substrate_width = BUILD["substrate_width"]
+        self.substrate_height = BUILD["substrate_height"]
+
+        self.substrate_blocks_x = BUILD["substrate_blocks_x"]
+        self.substrate_blocks_y = BUILD["substrate_blocks_y"]
+        self.substrate_blocks_z = BUILD["substrate_blocks_z"]
+
+        # -----------------------------------
+        # IMPORTANT: initialize block storage
+        # -----------------------------------
+        self.blocks = []
+        self.next_block_id = 0
+
+        # -----------------------------------
+        # ORIGINAL STL BOUNDS
+        # -----------------------------------
         bounds = self.mesh.bounds
 
         xmin, ymin, zmin = bounds[0]
         xmax, ymax, zmax = bounds[1]
 
-        x_center = (xmin + xmax) / 2
-        y_center = (ymin + ymax) / 2
+        stl_length = xmax - xmin
+        stl_width = ymax - ymin
+        stl_height = zmax - zmin
 
-        self.mesh.apply_translation([-x_center, -y_center, -zmin])
+        # -----------------------------------
+        # CENTER STL ON SUBSTRATE
+        # -----------------------------------
+        target_xmin = (
+            self.substrate_length - stl_length
+        ) / 2
 
-        #recalculated bounds 
+        target_ymin = (
+            self.substrate_width - stl_width
+        ) / 2
+
+        target_zmin = self.substrate_height
+
+        dx = target_xmin - xmin
+        dy = target_ymin - ymin
+        dz = target_zmin - zmin
+
+        self.mesh.apply_translation([dx, dy, dz])
+
+        # -----------------------------------
+        # UPDATED STL BOUNDS
+        # -----------------------------------
         self.bounds = self.mesh.bounds
+
         xmin, ymin, zmin = self.bounds[0]
         xmax, ymax, zmax = self.bounds[1]
 
         self.length = xmax - xmin
         self.width = ymax - ymin
         self.height = zmax - zmin
-        
-        # Bounding box
+
         self.xmin = xmin
         self.xmax = xmax
 
@@ -139,62 +176,44 @@ class Geometry:
         self.zmin = zmin
         self.zmax = zmax
 
-        # Substrate dimensions
-        self.substrate_length = BUILD["substrate_length"]
-        self.substrate_width = BUILD["substrate_width"]
-        self.substrate_height = BUILD["substrate_height"]
+        # -----------------------------------
+        # SUBSTRATE BOUNDS
+        # -----------------------------------
+        self.substrate_xmin = 0.0
+        self.substrate_xmax = self.substrate_length
 
-        self.substrate_blocks_x = BUILD["substrate_blocks_x"]
-        self.substrate_blocks_y = BUILD["substrate_blocks_y"]
-        self.substrate_blocks_z = BUILD["substrate_blocks_z"]
+        self.substrate_ymin = 0.0
+        self.substrate_ymax = self.substrate_width
 
+        self.substrate_bottom = 0.0
+        self.substrate_top = self.substrate_height
 
-        #block storage
-        self.blocks = []
-        self.next_block_id = 0
-
-        #substrate bounds 
-        self.substrate_xmin = -self.substrate_length / 2
-        self.substrate_xmax = self.substrate_length / 2
-        self.substrate_ymin = -self.substrate_width / 2
-        self.substrate_ymax = self.substrate_width / 2
-        
-        self.substrate_top = 0.0
-        self.substrate_bottom = -self.substrate_height
         
     # -----------------------------------------
     def build_substrate(self):
 
-        """
-        Discretize the entire substrate into blocks
-        The top of the substrate is flush with the bottom of the deposited part.
-        """
-
-        #Determine number of blocks in the x,y,z
         nx = self.substrate_blocks_x
         ny = self.substrate_blocks_y
         nz = self.substrate_blocks_z
-    
+
         block_length = self.substrate_length / nx
         block_width  = self.substrate_width / ny
         block_height = self.substrate_height / nz
 
-        # Substrate bounds
-        xmin = self.substrate_xmin
-        xmax = self.substrate_xmax
+        xmin = 0.0
+        xmax = self.substrate_length
 
-        ymin = self.substrate_ymin
-        ymax = self.substrate_ymax
+        ymin = 0.0
+        ymax = self.substrate_width
 
-        substrate_bottom = self.substrate_bottom
-        substrate_top = self.substrate_top
+        zmin = 0.0
+        zmax = self.substrate_height
 
 
-        #Create substrate blocks
         for k in range(nz):
 
-            z0 = self.zmin - (nz - k) * block_height
-            z1 = z0 + block_height
+            z0 = zmin + k * block_height
+            z1 = min(z0 + block_height, zmax)
 
             for j in range(ny):
 
@@ -207,7 +226,7 @@ class Geometry:
                     x1 = min(x0 + block_length, xmax)
 
                     start = (x0, y0, z0)
-                    end = (x1, y1, z1)
+                    end   = (x1, y1, z1)
 
                     self.blocks.append(
                         Block(
@@ -215,7 +234,7 @@ class Geometry:
                             k - nz,
                             start,
                             end,
-                            is_substrate=True,
+                            is_substrate=True
                         )
                     )
 
@@ -226,12 +245,14 @@ class Geometry:
 
     def build_deposition(self):
 
-        block_length = BLOCK["length"]
+        
         block_height = BLOCK["height"]
         total_layers = int(np.ceil(self.height / BLOCK["height"]))
         z = self.zmin
 
         blocks_per_layer = BUILD["blocks_per_layer"]
+        block_length = self.length / blocks_per_layer
+        time_per_block = block_length / WAAM["scan_speed"]
 
         # Center the deposition on the substrate
         deposit_xmin = self.xmin
