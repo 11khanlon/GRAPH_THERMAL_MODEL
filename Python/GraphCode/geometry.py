@@ -38,8 +38,7 @@ class Block:
         layer,
         start,
         end,
-        is_substrate=False
-    ):
+        is_substrate=False):
 
         self.id = block_id
         self.layer = layer
@@ -60,8 +59,7 @@ class Block:
             "left": False,
             "right": False,
             "front": False,
-            "back": False
-        }
+            "back": False}
 
     def __repr__(self):
 
@@ -107,9 +105,8 @@ class Geometry:
         # Convert STL from mm -> m
         self.mesh.apply_scale(1e-3)
 
-        # -----------------------------------
+ 
         # SUBSTRATE PARAMETERS
-        # -----------------------------------
         self.substrate_length = BUILD["substrate_length"]
         self.substrate_width = BUILD["substrate_width"]
         self.substrate_height = BUILD["substrate_height"]
@@ -118,15 +115,13 @@ class Geometry:
         self.substrate_blocks_y = BUILD["substrate_blocks_y"]
         self.substrate_blocks_z = BUILD["substrate_blocks_z"]
 
-        # -----------------------------------
+         #--------------------
         # IMPORTANT: initialize block storage
-        # -----------------------------------
         self.blocks = []
         self.next_block_id = 0
 
-        # -----------------------------------
+        #--------------------
         # ORIGINAL STL BOUNDS
-        # -----------------------------------
         bounds = self.mesh.bounds
 
         xmin, ymin, zmin = bounds[0]
@@ -136,17 +131,11 @@ class Geometry:
         stl_width = ymax - ymin
         stl_height = zmax - zmin
 
-        # -----------------------------------
+         #--------------------
         # CENTER STL ON SUBSTRATE
-        # -----------------------------------
-        target_xmin = (
-            self.substrate_length - stl_length
-        ) / 2
+        target_xmin = (self.substrate_length - stl_length) / 2
 
-        target_ymin = (
-            self.substrate_width - stl_width
-        ) / 2
-
+        target_ymin = (self.substrate_width - stl_width) / 2
         target_zmin = self.substrate_height
 
         dx = target_xmin - xmin
@@ -155,9 +144,8 @@ class Geometry:
 
         self.mesh.apply_translation([dx, dy, dz])
 
-        # -----------------------------------
+        #--------------------
         # UPDATED STL BOUNDS
-        # -----------------------------------
         self.bounds = self.mesh.bounds
 
         xmin, ymin, zmin = self.bounds[0]
@@ -176,9 +164,8 @@ class Geometry:
         self.zmin = zmin
         self.zmax = zmax
 
-        # -----------------------------------
+        #-------------------------
         # SUBSTRATE BOUNDS
-        # -----------------------------------
         self.substrate_xmin = 0.0
         self.substrate_xmax = self.substrate_length
 
@@ -363,7 +350,7 @@ class Geometry:
 
         print(f"\nSubstrate blocks :", substrate_blocks)
         print(f"Deposition blocks:", deposition_blocks)
-        print(f"Total blocks     :", len(self.blocks))
+        print(f"Total blocks:", len(self.blocks))
 
     
         # Check interface

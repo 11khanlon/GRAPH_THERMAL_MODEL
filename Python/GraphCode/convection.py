@@ -103,8 +103,8 @@ if __name__ == "__main__":
 
     from geometry import Geometry
     from nodes import NodeGenerator
-    from config import MATERIAL, CONVECTION, BLOCK, BUILD
-    from material import Ti64Material
+    from config import MATERIAL, CONVECTION, BLOCK, BUILD, WAAM
+    from material import A36Material
     from face import update_exposed_faces
 
     surface_band_thickness = BLOCK["surface_band_thickness"]
@@ -145,11 +145,14 @@ if __name__ == "__main__":
 
     temperature[forced_surface_mask] = 1200.0
 
+    blocks_per_layer = BUILD["blocks_per_layer"]
+    block_length = geom.length / blocks_per_layer
+
     solver = ConvectionSolver(
         density = MATERIAL["density"],
-        block_length = BLOCK["length"])
+        block_length = block_length)
 
-    material = Ti64Material() 
+    material = A36Material() 
     cp = material.specific_heat(temperature)
 
     cooled_forced = solver.block_cooling(
@@ -173,25 +176,17 @@ if __name__ == "__main__":
 
     print("\n------ CONVECTION TEST ------")
 
-    print(
-        f"Forced surface nodes : "
-        f"{np.sum(forced_surface_mask)}"
-    )
+    print(f"Forced surface nodes : "
+        f"{np.sum(forced_surface_mask)}")
 
-    print(
-        f"Free surface nodes   : "
-        f"{np.sum(free_surface_mask)}"
-    )
+    print(f"Free surface nodes   : "
+          f"{np.sum(free_surface_mask)}")
 
-    print(
-    "Maximum forced-surface temperature before:",
-    np.max(temperature[forced_surface_mask])
-    )
+    print("Maximum forced-surface temperature before:",
+    np.max(temperature[forced_surface_mask]))
 
-    print(
-        "Maximum forced-surface temperature after:",
-        np.max(cooled_forced[forced_surface_mask])
-    )
+    print("Maximum forced-surface temperature after:",
+        np.max(cooled_forced[forced_surface_mask]))
 
     print("\n------ SURFACE MASK TEST ------")
 

@@ -6,6 +6,8 @@ Is there a way to concatenate all these helper functions?
 
 the x = -.75 mm you would have to change for calibration
 
+you average material properties (thermal diffusivities) based on node temperatures in the cell rather than varying them along the distance from the laser 
+
 ------------------------------------------------
 What is material.py 
 This class stores the material properties of the alloy so the solver can look them up whenever 

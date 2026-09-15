@@ -7,6 +7,8 @@ what about for Wire-DED? The ER70S-6 we buy is specifically from Lincoln Electri
 
 if i imported a square, would that break the code? laser goes to the left, upwards, right, then back
 
+bead geometry changing
+
 
 #Center 
         center_x = (xmin + xmax) / 2

@@ -18,9 +18,7 @@ class ConductionSolver:
         """
 
         if graph.eigenvalues is None:
-            raise ValueError(
-                "Graph eigensystem has not been computed."
-            )
+            raise ValueError("Graph eigensystem has not been computed.")
 
         self.graph = graph
         self.gain = gain
@@ -76,27 +74,6 @@ class ConductionSolver:
                          dt)
 
     
-    # ---------------------------------------------------------
-
-    def propagate(self,
-                  temperature,
-                  alpha,
-                  total_time,
-                  block_time):
-
-        
-        #Repeatedly apply conduction
-      
-        T = temperature.copy()
-
-        nsteps = int(np.ceil(total_time / block_time))
-
-        for _ in range(nsteps):
-
-            T = self.step(T, alpha, block_time)
-
-        return T
-
 
 # ------------------------------------------------------------
 
@@ -105,8 +82,8 @@ if __name__ == "__main__":
     from geometry import Geometry
     from nodes import NodeGenerator
     from graph import ThermalGraph
-    from config import GRAPH, MATERIAL, BLOCK, BUILD, LASER
-    from material import Ti64Material
+    from config import GRAPH, MATERIAL, BLOCK, BUILD, WAAM
+    from material import A36Material
 
     stl = BUILD["stl_file"]
 
@@ -130,53 +107,56 @@ if __name__ == "__main__":
 
     solver = ConductionSolver(graph, gain = GRAPH["gain"])
 
-    material = Ti64Material()
+    material = A36Material()
 
     T0 = np.full(graph.N, MATERIAL["ambient_temperature"])
 
-    # Example: heat first 25 nodes
     block = geom.deposition_order()[0]
 
+    # Activate the newly deposited block
     for node in block.nodes:
-        T0[node.id] = 2200.0
+        node.active = True
 
-    #alpha = LASER["thermal_diffusivity"]
-    alpha = material.layer_diffusivity(T0)
+    block_node_ids = np.array([
+        node.id
+        for node in block.nodes
+    ], dtype=int)
+
+    if block_node_ids.size == 0:
+        raise ValueError(
+            "Selected deposition block contains no nodes. "
+            "Check node generation and block-node assignment.")
+
+    # Apply test heat
+    T0[block_node_ids] = 1500.0
+
+    T_average = np.mean(T0[block_node_ids])
+
+    alpha = material.diffusivity(T_average)
+
+    print(f"Current block average temperature : " f"{T_average:.2f} °C")
+    print(f"Thermal diffusivity: " f"{alpha:.3e} m²/s")
 
     print("\n----------- Conduction Verification -----------")
+    print(f"Initial maximum temperature : "f"{T0.max():.2f} °C")
 
-    print(
-        f"Initial maximum temperature : "
-        f"{T0.max():.2f} °C"
-    )
+    print(f"Layer average temperature   : "
+        f"{np.mean(T0):.2f} °C")
 
-    print(
-        f"Layer average temperature   : "
-        f"{np.mean(T0):.2f} °C"
-    )
-
-    print(
-        f"Diffusivity                 : "
-        f"{alpha:.3e} m²/s"
-    )
+    print(f"Diffusivity: "
+        f"{alpha:.3e} m²/s")
 
     # Conduct for one block
-
     T1 = solver.block_conduction(
         temperature=T0,
         alpha = alpha,
-        block_time =BLOCK["time_per_block"]
-    )
+        block_time =BLOCK["time_per_block"])
 
-    print(
-        f"Final maximum temperature   : "
-        f"{T1.max():.2f} °C"
-    )
+    print(f"Final maximum temperature: "
+        f"{T1.max():.2f} °C")
 
-    print(
-        f"Final minimum temperature   : "
-        f"{T1.min():.2f} °C"
-    )
+    print(f"Final minimum temperature: "
+        f"{T1.min():.2f} °C")
 
     print("\nTemperature statistics")
     

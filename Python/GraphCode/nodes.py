@@ -23,8 +23,7 @@ class Node:
                  position,
                  block_id, 
                  block, 
-                 is_substrate=False
-                 ):
+                 is_substrate=False):
 
         self.id = node_id
 

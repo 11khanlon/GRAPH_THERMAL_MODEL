@@ -12,7 +12,7 @@ MATERIAL = {
     "name": "SteelA36",
     "density": 7.85e3,                  # rho, kg/m^3
     "ambient_temperature": 25,    #  ambient temperature,C
-    "liquidus_temperature": 1.5e3      # liquidus temperature, C
+    "liquidus_temperature": 1500      # liquidus temperature, C
 }
 
 #--------- WAAM PARAMETERS ---------------
@@ -28,6 +28,9 @@ WAAM = {
 
     # Deposition geometry
     "layer_height": 2.5e-3,       # m
+
+    #max meltpool temperature 
+    "meltpool_temperature": 2200, 
 
     # Torch visualization
     "torch_contact_tip_distance": 15e-3, #m
@@ -69,8 +72,8 @@ BUILD = {
     "substrate_width": 50.8e-3,      #m
     "substrate_height": 12.7e-3,     #m
 
-    "substrate_blocks_x": 1,
-    "substrate_blocks_y": 1,
+    "substrate_blocks_x": 2,
+    "substrate_blocks_y": 2,
     "substrate_blocks_z": 1, 
 
     "blocks_per_layer": 10
@@ -86,7 +89,8 @@ BLOCK = {
     "height": 2.501e-3,  #m 
 
     "surface_band_thickness": 0.1806e-3 / 2,
-    "surface_thickness": 0.1806e-3 / 2, 
+    "surface_thickness": 0.1806e-3 / 2,
+     "time_per_block": 1
 }
 
 
@@ -137,20 +141,15 @@ SENSORS = {
 
 
 CONVECTION = {
-
     "free": 5.0,      # W/m^2-K
     "forced": 50.0,   # W/m^2-K, free*10
-
 }
 
 
 #------- DWELL TIME ---------
 
 DWELL = {
-    
-    "case_A": 20.0,  #seconds 
-    "case_B": 3.0 ,   #seconds 
-    "time_step": 1,    #seconds
+    "dwell_time_step": 1,    #seconds
     "dwell": 30
 }
 

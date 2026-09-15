@@ -250,10 +250,7 @@ def middle_block_of_layer(geometry, layer=0):
 
     return middle_block
 
-def check_probe_location(
-    probe,
-    geometry
-):
+def check_probe_location(probe, geometry):
 
     x, y, z = probe.position
 

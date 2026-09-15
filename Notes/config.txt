@@ -2,6 +2,15 @@ Remaining Questions:
 Change the Goldak C to the calibration feature 
 Later, make .stl upload more adaptable
 
+Things that may cause uncertainty: 
+current, voltage, thermal efficiency 
+surface_band_thickness and surface_thickness
+
+epsilon, gain, and node density 
+convection coefficients 
+
+
+
 -----------------------
 Things you would have to change per material:
 Material properties 

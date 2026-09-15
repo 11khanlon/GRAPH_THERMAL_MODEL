@@ -1,7 +1,7 @@
 Remaining Questions: 
 recheck temperature dependent material properties 
 The characteristic length of a lumped cooling model is Lc = V/ As --> something to consider for later 
-What determines the threshold for a surface? 
+What determines the threshold for a surface? maybe find from literature thickness for WAAM where convection happens
 
 ----------------------------------------------------------
 Heat loss through convection (and radiation approximation)

@@ -7,37 +7,65 @@ This module ONLY applies laser heating
 --> No convection
 --> No graph operations
 
-Implements Section 4.3.3
-Goldak's double ellipsoid model (Paper Equation 19)
-
+Implements Section 4.3.3 of paper and modified for Arc 
 """
 
 import numpy as np
 
-class GoldakHeatSource:
+class ArcHeatSource:
 
-    def __init__(self,
-                laser_power,
-                conductivity,
-                alpha, 
-                scan_speed,
-                scaling_factor,
-                meltpool_temperature,
-                liquidus_temperature):
+    def __init__(
+        self,
+        material_model,
+        reference_temperature,
+        liquidus_temperature,
+        meltpool_temperature, 
+        waam):
 
-        self.P = laser_power
-        self.alpha = alpha
-        self.k = conductivity
-        self.V = scan_speed
-        self.C = scaling_factor
+        # Material model
+        self.material = material_model
 
-        self.Tmelt = meltpool_temperature
+        # Constant-property reference temperature
+        # for Rosenthal source equation
+        self.Tref = reference_temperature
+
+        # Look up material properties at Tref
+        self.k = self.material.conductivity(self.Tref)
+        self.cp = self.material.specific_heat(self.Tref)
+        self.alpha = self.material.diffusivity(self.Tref)
+
         self.Tliquidus = liquidus_temperature
+        self.meltpool_temperature = meltpool_temperature
 
+        # WAAM process parameters
+        self.V = waam["scan_speed"]
+        self.voltage = waam["voltage"]
+        self.current = waam["current"]
+        self.thermal_efficiency = waam["thermal_efficiency"]
+
+        # Constant effective arc power
+        self.power = self.waam_arc_power()
+
+        print("\n------ ARC SOURCE MATERIAL PROPERTIES ------")
+        print(f"Reference temperature: {self.Tref:.2f} °C")
+        print(f"Thermal conductivity:  {self.k:.4f} W/m-K")
+        print(f"Specific heat:         {self.cp:.2f} J/kg-K")
+        print(f"Thermal diffusivity:   {self.alpha:.6e} m²/s")
+        print(f"Effective arc power:   {self.power:.2f} W")
+
+
+
+    #-------- WAAM Information ------
+    def waam_arc_power(self):
+
+        effective_power = self.thermal_efficiency * self.voltage * self.current
+
+        return effective_power
+    
 
     # --------------DED Powder Information -----------------
 
-    def goldak_temperature(self, x, y, z):
+    def arc_temperature_rise(self, x, y, z):
 
         """
         Equation (19)
@@ -49,9 +77,8 @@ class GoldakHeatSource:
         # avoid 0 in denomenator
         r = max(r, 1e-8)
 
-
         #Equation 19 
-        temperature = (self.C * self.P
+        delta_T = (self.power
             / (2 * np.pi * self.k * r)
             * np.exp(
                 -(self.V / (2 * self.alpha))
@@ -59,7 +86,7 @@ class GoldakHeatSource:
             )
         )
 
-        return temperature
+        return delta_T
 
     # -------------------------------
 
@@ -85,9 +112,9 @@ class GoldakHeatSource:
             y = node.position[1] - yc
             z = node.position[2] - zc
 
-            delta =  self.goldak_temperature(x, y, z)
+            delta_T =  self.arc_temperature_rise(x, y, z)
 
-            T[index] = max(T[index], min(delta, self.Tmelt))
+            T[index] = max(T[index], min(delta_T, self.Tmelt))
 
         return T
 
@@ -120,11 +147,11 @@ class GoldakHeatSource:
             y = node.position[1] - yc
             z = node.position[2] - zc
 
-            delta =  self.goldak_temperature(x, y, z)
+            delta_T =  self.arc_temperature_rise(x, y, z)
 
-            if delta >= threshold:
+            if delta_T >= threshold:
 
-                T[i] = max(T[i], min(delta, self.Tmelt))
+                T[i] = max(T[i], min(delta_T, self.Tmelt))
 
         return T
 
@@ -146,49 +173,44 @@ if __name__ == "__main__":
 
     from geometry import Geometry
     from nodes import NodeGenerator
-    from config import LASER, MATERIAL, BUILD, WAAM
+    from config import  MATERIAL, BUILD, WAAM
+    from material import A36Material
  
 
     stl_file = BUILD["stl_file"]
-
     geom = Geometry(stl_file)
-
     geom.build_blocks()
-
     generator = NodeGenerator(geom)
-
     generator.generate()
-
     nodes = generator.nodes
 
-    heat = GoldakHeatSource(
+    material_model = A36Material
 
-        laser_power = LASER["power"],
-
-        conductivity = LASER["thermal_conductivity"], 
-            
-        alpha = LASER["thermal_diffusivity"],
-
-        scan_speed = LASER["scan_speed"],
-
-        scaling_factor = LASER["goldak_C"],
-
-        meltpool_temperature = LASER["meltpool_temperature"],
-
-        liquidus_temperature = MATERIAL["liquidus_temperature"]
-    )
+    heat = ArcHeatSource(
+        material_model = material_model,
+        reference_temperature=MATERIAL["ambient_temperature"],
+        liquidus_temperature=MATERIAL["liquidus_temperature"],
+        meltpool_temperature = WAAM["meltpool_temperature"],
+        waam = WAAM)
 
 
     temperature = np.full(len(nodes), MATERIAL["ambient_temperature"])
 
-    #block = geom.blocks[2560]
-    block = geom.blocks[0]
-    #block = next(block for block in geom.blocks  if not block.is_substrate)
+    block = next(
+        block
+        for block in geom.blocks
+        if not block.is_substrate
+    )
+
+    block.active = True
+
+    for node in block.nodes:
+        node.active = True
 
     heated = heat.apply(nodes, block, temperature)
 
 
-    print("\n----------- Goldak Verification -----------")
+    print("\n----------- Arc Heating Verification -----------")
 
     print(f"Block ID        : {block.id}")
     print(f"Layer           : {block.layer}")
@@ -230,7 +252,7 @@ if __name__ == "__main__":
 
         r = np.sqrt(x**2 + y**2 + z**2)
 
-        delta_T = heat.goldak_temperature(x, y, z)
+        delta_T = heat.arc_temperature_rise(x, y, z)
 
         print(
             f"Node {node.id}: "
