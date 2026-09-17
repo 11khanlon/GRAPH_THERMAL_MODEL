@@ -22,6 +22,8 @@ WAAMRosenthalHeatSource
 
 how are the material properties here determined
 
+I might not need the subsurface stuff 
+
 -----------------------
 Possible edits:
 - In the Heat Source for To, they keep k constant (6.8), but it may change 

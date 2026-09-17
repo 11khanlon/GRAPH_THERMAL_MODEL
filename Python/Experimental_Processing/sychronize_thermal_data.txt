@@ -1,0 +1,35 @@
+Remaining questions:
+
+Need to relocate constants in the config file
+
+
+
+
+
+
+
+---------------------------------
+Use the Fronius.csv as the master clock
+Process active is a boolean that will give the information that is needed 
+
+For each pass:
+tstart = False --> True
+tend = True --> False 
+tdeposit = tend - tstart 
+
+tdwell, end = tend  + 30 seconds 
+
+total window time: 
+twindow,start = tstart - 5 seconds 
+twindow,end = tend + 30 + 5 
+
+trelative = t - tstart 
+trelative = 0 [analysis infinitely easier]
+
+
+Need to align thermocouple and FLIR camera data spatiotemporally. when welder turns on or TRUE, the coordinates turn (0,0). then it goes the length of the bead which is 128mm
+For the second pass, the welder comes back the opposite way. Starts at 128 mm then goes back to zero (rastering)
+
+need to show on sheets which one is pass one and which one is pass 2 on the sheets. maybe like a boolean? 
+
+make sure columns contain units 

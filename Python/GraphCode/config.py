@@ -27,10 +27,7 @@ WAAM = {
     "scan_speed": 0.762 / 60,     # m/s
 
     # Deposition geometry
-    "layer_height": 2.5e-3,       # m
-
-    #max meltpool temperature 
-    "meltpool_temperature": 2200, 
+    "layer_height": 2.5e-3,       # m 
 
     # Torch visualization
     "torch_contact_tip_distance": 15e-3, #m
@@ -72,8 +69,8 @@ BUILD = {
     "substrate_width": 50.8e-3,      #m
     "substrate_height": 12.7e-3,     #m
 
-    "substrate_blocks_x": 2,
-    "substrate_blocks_y": 2,
+    "substrate_blocks_x": 1,
+    "substrate_blocks_y": 1,
     "substrate_blocks_z": 1, 
 
     "blocks_per_layer": 10
@@ -97,9 +94,9 @@ BLOCK = {
 #------- GRAPH PARAMETERS --------
 
 GRAPH = {
-    "epsilon": 4.75e-3,  # neighborhood radius ε, m
-    "gain": 1.5E6,     # gain factor g, m^-2
-    "node_density": 0.1  # node density, nodes/mm^3
+    "epsilon": 3e-3,  # neighborhood radius ε, m
+    "gain": 4E6,     # gain factor g, m^-2
+    "node_density": 0.05  # node density, nodes/mm^3
 }
 
 

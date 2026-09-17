@@ -1,0 +1,2 @@
+Pass,DepositionStart,DepositionEnd,DepositionDuration_s,DwellDuration_s,DwellEnd,WindowStart,WindowEnd,A700_DepositionStart_Count,A700_DepositionEnd_Count,A700_DwellEnd_Count,A700_WindowStart_Count,A700_WindowEnd_Count
+2,2025-10-09 12:54:21.961550,2025-10-09 12:54:31.834928,9.873378,30.0,2025-10-09 12:55:01.834928,2025-10-09 12:54:20.961550,2025-10-09 12:55:06.834928,2482,2778,3678,2451,3828

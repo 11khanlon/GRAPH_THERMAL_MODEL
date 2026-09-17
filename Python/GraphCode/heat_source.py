@@ -19,7 +19,6 @@ class ArcHeatSource:
         material_model,
         reference_temperature,
         liquidus_temperature,
-        meltpool_temperature, 
         waam):
 
         # Material model
@@ -35,7 +34,6 @@ class ArcHeatSource:
         self.alpha = self.material.diffusivity(self.Tref)
 
         self.Tliquidus = liquidus_temperature
-        self.meltpool_temperature = meltpool_temperature
 
         # WAAM process parameters
         self.V = waam["scan_speed"]
@@ -67,11 +65,8 @@ class ArcHeatSource:
 
     def arc_temperature_rise(self, x, y, z):
 
-        """
-        Equation (19)
-        Returns laser-induced temperature at local coordinates (x,y,z)
-        """
-
+        #Returns laser-induced temperature at local coordinates (x,y,z)
+  
         r = np.sqrt(x**2 + y**2 + z**2)
 
         # avoid 0 in denomenator
@@ -90,81 +85,78 @@ class ArcHeatSource:
 
     # -------------------------------
 
-    def heat_block(self, block, temperature):
+    def heat_block(self, nodes, block):
         
         """
         This function heats only the newly deposited block
         Returns updated temperature vector
         """
 
+        delta_T = np.zeros(len(nodes), dtype = float)
+
         xc, yc, zc = block.center
-        
-        T = temperature.copy()
 
         for node in block.nodes:
 
             if not node.active:
                 continue
 
-            index = node.id
-
             x = node.position[0] - xc
             y = node.position[1] - yc
             z = node.position[2] - zc
 
-            delta_T =  self.arc_temperature_rise(x, y, z)
+            delta_T[node.id] = (self.arc_temperature_rise(x, y, z))
 
-            T[index] = max(T[index], min(delta_T, self.Tmelt))
-
-        return T
+        return delta_T
 
     # ------------------------------------
 
-    def heat_subsurface(self,
-                        nodes,
-                        block,
-                        temperature,
-                        cutoff = 0.20):
+    def heat_subsurface(self, nodes, block, temperature, cutoff = 0.20):
+
+        # Calculate arc-induced temperature rise for previously existing active material within the subsurface heating threshold
         
-        """
-        Heat underlying layers
-        Paper considers reheating down to approximately
-        20% of liquidus temperature
-        """
+        delta_T = np.zeros(len(nodes), dtype=float)
 
-        T = temperature.copy()
-
-        threshold = (cutoff * self.Tliquidus)
-
+        threshold = cutoff * self.Tliquidus
+        
         xc, yc, zc = block.center
 
-        for i, node in enumerate(nodes):
+        for node in nodes:
 
             if not node.active:
+                continue
+
+            # Current block is already handled by heat_block()
+            if node.block_id == block.id:
                 continue
 
             x = node.position[0] - xc
             y = node.position[1] - yc
             z = node.position[2] - zc
 
-            delta_T =  self.arc_temperature_rise(x, y, z)
+            node_delta_T = self.arc_temperature_rise(x, y, z)
 
-            if delta_T >= threshold:
+            predicted_temperature = temperature[node.id] + node_delta_T
+            
+            if predicted_temperature >= threshold:
 
-                T[i] = max(T[i], min(delta_T, self.Tmelt))
+                delta_T[node.id] = node_delta_T
+                
 
-        return T
+        return delta_T
 
     # ------------------------------
     #Surface + subsurface heating
 
     def apply(self, nodes, block, temperature):
-    
-        T = self.heat_block(block, temperature)
 
-        T = self.heat_subsurface(nodes, block, T)
+        delta_T_block = self.heat_block(nodes, block)
 
-        return T
+        delta_T_subsurface = self.heat_subsurface(nodes, block, temperature)
+        
+        delta_T_arc = delta_T_block + delta_T_subsurface
+        
+        return delta_T_arc
 
 
 # ---------------------------------------
@@ -184,13 +176,12 @@ if __name__ == "__main__":
     generator.generate()
     nodes = generator.nodes
 
-    material_model = A36Material
+    material_model = A36Material()
 
     heat = ArcHeatSource(
         material_model = material_model,
-        reference_temperature=MATERIAL["ambient_temperature"],
-        liquidus_temperature=MATERIAL["liquidus_temperature"],
-        meltpool_temperature = WAAM["meltpool_temperature"],
+        reference_temperature = MATERIAL["ambient_temperature"],
+        liquidus_temperature = MATERIAL["liquidus_temperature"],
         waam = WAAM)
 
 
@@ -199,15 +190,15 @@ if __name__ == "__main__":
     block = next(
         block
         for block in geom.blocks
-        if not block.is_substrate
-    )
+        if not block.is_substrate )
 
     block.active = True
 
     for node in block.nodes:
         node.active = True
 
-    heated = heat.apply(nodes, block, temperature)
+    delta_T_arc = heat.apply(nodes, block, temperature)
+    heated = temperature + delta_T_arc
 
 
     print("\n----------- Arc Heating Verification -----------")
@@ -222,9 +213,7 @@ if __name__ == "__main__":
     print(f"Maximum Temp    : {heated.max():.1f} °C")
     print(f"Minimum Temp    : {heated.min():.1f} °C")
 
-    heated_nodes = np.sum(
-        heated > MATERIAL["ambient_temperature"]
-    )
+    heated_nodes = np.sum(heated > MATERIAL["ambient_temperature"])
 
     print(f"Total Heated Nodes    : {heated_nodes}")
 

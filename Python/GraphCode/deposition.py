@@ -48,7 +48,7 @@ class DepositionSimulation:
 
         #------ Temperature dependent material model ---------
         self.material_model = A36Material()
-        self.current_alpha = (self.material_model.diffusivity_linear_si(self.material_settings["ambient_temperature"]))
+        self.current_alpha = (self.material_model.diffusivity(self.material_settings["ambient_temperature"]))
 
         #-------- Surface band definition -----------
         self.surface_thickness = block_info["surface_thickness"]
@@ -84,8 +84,7 @@ class DepositionSimulation:
         material_model = self.material_model,
         reference_temperature = self.material_settings["ambient_temperature"],
         liquidus_temperature = self.material_settings["liquidus_temperature"],
-        meltpool_temperature = self.waam["meltpool_temperature"],
-        waam=self.waam)
+        waam = self.waam)
 
         #------------ Thermocouple History -----------------
         self.probes = probes if probes is not None else []
@@ -185,7 +184,7 @@ class DepositionSimulation:
         indices = self.layer_indices(layer)
 
         if len(indices) == 0:
-            return self.material_model.diffusivity_linear_si(
+            return self.material_model.diffusivity(
                 self.material_settings["ambient_temperature"]
             )
 
@@ -201,12 +200,12 @@ class DepositionSimulation:
         T_active = self.temperature[active]
 
         if T_active.size == 0:
-            return self.material_model.diffusivity_linear_si(
+            return self.material_model.diffusivity(
                 self.material_settings["ambient_temperature"])
 
         T_average = np.mean(T_active)
 
-        return self.material_model.diffusivity_linear_si(T_average)
+        return self.material_model.diffusivity(T_average)
 
     #------------------------------------------
     def print_temperature_status(self, label, block=None):
@@ -429,35 +428,16 @@ class DepositionSimulation:
 
     def simulate_block(self, block):
 
-        print(
-            "Temperature range:",
-            self.temperature.min(),
-            self.temperature.max()
-        )
-
-        print(
-            "Active nodes:",
-            np.sum(self.active_mask())
-        )
-
-        print(
-            "Inactive nodes:",
-            np.sum(~self.active_mask())
-        )
+        print("Temperature range:", self.temperature.min(), self.temperature.max())
+        print("Active nodes:", np.sum(self.active_mask()))
+        print("Inactive nodes:", np.sum(~self.active_mask()))
 
         self.activate_block(block)
 
-        # Update geometry-level exposed faces
-        update_exposed_faces(self.geometry)
-
-        # Convert block faces → exposed nodes
-        self.node_generator.update_node_exposure(self.surface_thickness)
-
-        # Classify nodes as forced/free
-        self.node_generator.update_surface_types()
-
-        # Rebuild masks
-        self.update_surface_masks()
+        update_exposed_faces(self.geometry)                              # Update geometry-level exposed faces
+        self.node_generator.update_node_exposure(self.surface_thickness)  # Convert block faces → exposed nodes
+        self.node_generator.update_surface_types()                        # Classify nodes as forced/free
+        self.update_surface_masks()                                        # Rebuild masks
 
         # Step 1 -> Laser heating
         self.temperature = self.heat_source.apply(
@@ -465,14 +445,14 @@ class DepositionSimulation:
             block,
             self.temperature)
 
-        self.print_temperature_status("After Goldak", block)
-        self.print_current_block_temperature(block, "After Goldak")
+        self.print_temperature_status("After HeatSource", block)
+        self.print_current_block_temperature(block, "After HeatSource")
 
         imax = np.argmax(self.temperature)
         hot_node = self.nodes[imax]
 
         print(
-            f"Hottest node after Goldak: "
+            f"Hottest node after heat source: "
             f"id={hot_node.id}, "
             f"block={hot_node.block_id}, "
             f"layer={hot_node.block.layer}, "
@@ -480,7 +460,7 @@ class DepositionSimulation:
             f"position={hot_node.position}"
         )
 
-        self.record_probe_state(stage="after_goldak", block=block)
+        self.record_probe_state(stage="after_heatsource", block=block)
 
   
         # Step 2 -> Conduction
@@ -511,7 +491,6 @@ class DepositionSimulation:
                 np.sum(overlap)
             )
 
-        self.record_probe_state(stage="Probe after goldak", block=block)
 
         # Forced convection + equivalent radiation
         self.temperature = self.cooling.block_cooling(
@@ -520,7 +499,7 @@ class DepositionSimulation:
             h=self.convection["forced"],
             cp=cp,
             ambient_temperature = self.material_settings["ambient_temperature"],
-            block_time = self.block_info["time_per_block"]
+            block_time = self.block_time
         )
 
         cp = self.material_model.specific_heat(self.temperature)
@@ -532,9 +511,10 @@ class DepositionSimulation:
             h=self.convection["free"],
             cp=cp,
             ambient_temperature=self.material_settings["ambient_temperature"],
-            block_time=self.block_info["time_per_block"]
+            block_time=self.block_time
         )
 
+        self.record_probe_state(stage="Probe after convection", block=block)
         self.print_temperature_status("After convection", block)
 
         self.time += self.block_time
@@ -718,7 +698,7 @@ if __name__ == "__main__":
     from geometry import Geometry
     from nodes import NodeGenerator
     from graph import ThermalGraph
-    from config import (MATERIAL, LASER, GRAPH, CONVECTION, BLOCK, DWELL, BUILD, SENSORS, WAAM)
+    from config import (MATERIAL,GRAPH, CONVECTION, BLOCK, DWELL, BUILD, SENSORS, WAAM)
     from thermocouples import ThermalProbe, middle_block_of_layer, check_probe_location
 
     stl_file = BUILD["stl_file"]
@@ -762,7 +742,7 @@ if __name__ == "__main__":
 
     meltpool_probe.summary()
 
-    all_probes = thermocouples + meltpool_probe
+    all_probes = thermocouples + [meltpool_probe]
 
     #Build graph
     graph = ThermalGraph(generator.nodes)
@@ -782,12 +762,12 @@ if __name__ == "__main__":
         node_generator=generator,
         graph=graph,
         material=MATERIAL,
-        laser=LASER,
         convection=CONVECTION,
         graph_settings=GRAPH,
         dwell_info = DWELL, 
         dwell_time = selected_dwell,
         block_info = BLOCK,
+         build_info=BUILD,
         probes = all_probes, 
         waam = WAAM)
 
@@ -831,7 +811,7 @@ if __name__ == "__main__":
     time=simulation.history_time,
     active_history=simulation.active_history,
     stage_history=simulation.stage_history,
-    source_position_history=simulation.source_position_history,
+    source_position_history=simulation.laser_position_history,
 
     # Geometry
     node_positions=node_positions,

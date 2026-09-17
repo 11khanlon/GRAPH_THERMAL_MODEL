@@ -1,0 +1,33 @@
+The synchrozing data will tell you what frames you need and don't need - go in and delete them from the folder 
+the filing naming system on the jpegs is correct though. 
+
+choose the first photo of the selection, select the substrate reference points once 
+This will direct to a certain file path on my computer and clean up the files. 
+calculate the transformation H once, save the transformation and apply the matrix to every image. 
+since the homography matrix has been saved, load the homogrpahy matrix and apply it to each photo in the folder. rotate the image 180 degrees. this will be saved as a folder named substrate and bead extracted images
+
+once those images are created, also create a zoom in on the bead. this folder will be named bead images 
+the substrate width corresponds to known physical width and occupy Nx pixel. 
+therefore, you can find m/pixel by doing sx = Ws/Nx or pixels/m Nx/Ws 
+this creates a pixel grid. how many pixels are in a FLIR A700 photo? how does a pixel work as a form of data 
+Once you find pixels/m, this creates a pixel grid. temperature should be taken at the center of the pixel. 
+how do you read greyscale intensity to temperature mapping? 
+the camera images are in greyscale, not a rainbow temperature gird. find a package that shows this 
+
+Then, the simulation coordinates can map to image coordinates : 
+u = u0 + x/sx 
+v = v0 - y/sy 
+
+Then block geometry can map directly onto the camera. 
+Suppose block j occupies: 
+umin = u(xj - Lb/2)
+umax = u(xj + Lb/2)
+--> what is xj? what is Lb? why divide is by 2? 
+
+then do the same for bead width: 
+vmin = v(yj - Wb/2)
+vmax = v(yi + Wb/2)
+--> what is yi? what is Wb? why divide it by two ? 
+
+
+
