@@ -1,7 +1,7 @@
 Remaining questions:
 
 Need to relocate constants in the config file
-
+also i say the position is based on the bead. but we should also create a reference frame with respect to substrate position as well
 
 
 

@@ -1,0 +1,87 @@
+This will direct to a certain file path on my computer and clean up the files. 
+choose the first photo of the selection, select the substrate reference points once. This photo is named Substrate_Calibration
+calculate the transformation H once, save the transformation and apply the matrix to every image. 
+since the homography matrix has been saved, load the homogrpahy matrix and apply it to each photo in the folder.these folders are names Thermal_Images_Pass1 and Thermal_Images_Pass2
+ rotate the image 180 degrees. this will be saved as a folder named substrate and bead extracted images
+
+once those images are created, also create a zoom in on the bead. this folder will be named bead images 
+the substrate width corresponds to known physical width and occupy Nx pixel. 
+therefore, you can find m/pixel by doing sx = Ws/Nx or pixels/m Nx/Ws 
+this creates a pixel grid. how many pixels are in a FLIR A700 photo? how does a pixel work as a form of data . How many bites? 16bit? is this 1920 x 1080 pixels? why is a .tff file so large ocmpared to jpeg and png?
+Once you find pixels/m, this creates a pixel grid. temperature should be taken at the center of the pixel. 
+how do you read greyscale intensity to temperature mapping? 
+the camera images are in greyscale, not a rainbow temperature gird. find a package that shows this.
+How to map greyscale? 
+
+
+
+
+-----------------------------------------
+you have an original image with a set amount of pixels.  
+you then filter out the amount of total pixels by selecting substrate corners 
+you know the substrate dimensions
+should you determine how many pixels them substrate area has after tranforming the selected image? does the image size tell you how many total pixels there are 
+
+you know length and width of substrate
+you have number of pixels 
+you can get pixels per meter by dividing number pixels in the x by substrate length. same thing for y 
+how do you determine pixel size? how many pixels per meter? 
+
+What is an A700 pixel: 
+
+Then, the simulation coordinates can map to image coordinates : 
+u = u0 + x/sx 
+v = v0 - y/sy 
+
+Then block geometry can map directly onto the camera. 
+Suppose block j occupies: 
+umin = u(xj - Lb/2)
+umax = u(xj + Lb/2)
+--> what is xj? what is Lb? why divide is by 2? 
+
+then do the same for bead width: 
+vmin = v(yj - Wb/2)
+vmax = v(yi + Wb/2)
+--> what is yi? what is Wb? why divide it by two ? 
+
+you need to get center of the pixel for temperautre mapping. how do you do this? 
+
+-----------------------------------------------
+Need to create a physical ROI for the bead crop
+
+BEAD_X_MIN_M = 0.0
+BEAD_X_MAX_M = 0.128
+
+BEAD_Y_MIN_M = ...
+BEAD_Y_MAX_M = ...
+
+
+Then convert those physical dimensions to pixels: 
+u_min = int(BEAD_X_MIN_M / PIXEL_SIZE_M)
+u_max = int( BEAD_X_MAX_M / PIXEL_SIZE_M)
+v_min = int(BEAD_Y_MIN_M / PIXEL_SIZE_M)
+v_max = int(BEAD_Y_MAX_M / PIXEL_SIZE_M)
+
+
+bead_image = transformed[v_min:v_max, u_min:u_max]
+
+
+
+
+
+
+--------------------------------------
+Raw thermal data 
+Substrate_Calibration.tiff
+Thermal_Images_Pass1/
+Thermal_Images_Pass2/
+
+Use spatial_calibration.py to calibrate and find the homography matrix (it has the image_extractor.py integrated into it)
+substrate_calibration.tiff --> select 4 corners once --> calculate H --> spatial_calibration.npz 
+
+iterate throughout each image:
+Apply H matrix 
+rotate 180 degrees 
+then create substrate and bead images 
+crop bead ROI 
+then you get bead images 

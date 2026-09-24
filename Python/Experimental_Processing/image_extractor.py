@@ -63,7 +63,8 @@ class ImagePointExtractor:
     #-----------------------------------
     def select_points(self, 
                       img, 
-                      window_name = "Select Image Points"):
+                      window_name = "Select Image Points",
+                      max_points = None):
 
         self.points = []
         self.original_image = (img.copy())
@@ -78,6 +79,21 @@ class ImagePointExtractor:
         print("\nLEFT CLICK  : add point")
         print("\nRIGHT CLICK : remove last point")
         print("\nPRESS KEY   : finish selection")
+
+        while True:
+
+            key = cv2.waitKey(20) & 0xFF
+
+            if max_points is not None:
+                if len(self.points) >= max_points:
+                    break
+
+            if key == 13:
+                break
+
+            if key == 27:
+                self.points = []
+                break
 
         cv2.waitKey(0)
         cv2.destroyAllWindows()

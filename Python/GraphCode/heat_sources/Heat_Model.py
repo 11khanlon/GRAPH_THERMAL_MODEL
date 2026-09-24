@@ -327,7 +327,7 @@ class Model():
         q = C_constant * np.exp(
             (-3 * (Y**2 / a**2))+(     # Orthogonal
             -3 * (Z**2 / b**2))+(     # Height
-            -3 * ((NewX)**2 / c) )          # Deposit dir
+            -3 * ((NewX)**2 / c**2) )          # Deposit dir
         )
 
         # Quick validation

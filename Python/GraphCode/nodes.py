@@ -343,9 +343,7 @@ class NodeGenerator:
                 abs(z1-z0)*1000
             )
 
-            densities.append(
-                n / volume_mm3
-            )
+            densities.append(n / volume_mm3)
 
         print(f"\nMinimum Nodes per Block : {min(nodes_per_block)}")
         print(f"Maximum Nodes per Block : {max(nodes_per_block)}")

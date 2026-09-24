@@ -98,9 +98,8 @@ TC_CHANNELS = ["ch0", "ch1", "ch2", "ch3"]
 
 for channel in TC_CHANNELS:
 
-    # Original values look like:
-    # " '0030.05409'"
-    #
+    
+    # Example: "0030.05409" becomes: 30.05409 C
     # Remove whitespace and quotation marks first.
     tc[channel] = (
         tc[channel]
@@ -111,12 +110,9 @@ for channel in TC_CHANNELS:
         .str.strip()
     )
 
-    # Then convert:
-    # '0030.05409' -> 30.05409
+    # Then convert: '0030.05409' -> 30.05409
     tc[channel] = pd.to_numeric(tc[channel], errors="coerce")
 
-
-# Example: "0030.05409" becomes: 30.05409 C
 
 # Find Fronius deposition starts and ends
 active = fronius["PROCESSACTIVE"]
@@ -135,21 +131,15 @@ print("\n========== FRONIUS PASSES ==========")
 print(f"Detected deposition starts:{len(start_times)} ")
 print(f"Detected deposition ends: {len(end_times)} ")
 
-
 if len(start_times) < NUMBER_OF_PASSES:
-
-    raise ValueError("Fewer than two deposition starts were detected")
-      
+    raise ValueError("Fewer than two deposition starts were detected") 
 
 if len(end_times) < NUMBER_OF_PASSES:
-
     raise ValueError("Fewer than two deposition ends were detected")
       
 
-
 # ============================================================
 # Helper: interpolate thermocouples exactly at torch start
-
 
 def interpolate_tc_at_time(tc_data, target_time):
 
@@ -239,25 +229,17 @@ def assign_stage(timestamps, deposition_start, deposition_end, dwell_end):
         return np.select(conditions, choices, default="Unknown")
 
 
-def add_pass_coordinates(
-    data,
-    deposition_start,
-    deposition_end,
-    pass_number
-):
+def add_pass_coordinates(data, deposition_start, deposition_end, pass_number):
 
     data = data.copy()
 
     # Relative experimental time
-    data["RelativeTime_s"] = (
-        data["Timestamp"] - deposition_start
-    ).dt.total_seconds()
+    data["RelativeTime_s"] = (data["Timestamp"] - deposition_start).dt.total_seconds()
 
     # Is the torch actively depositing?
     data["IsDepositing"] = (
         (data["Timestamp"] >= deposition_start)
-        &
-        (data["Timestamp"] <= deposition_end)
+        & (data["Timestamp"] <= deposition_end)
     )
 
     # Position only exists while depositing
@@ -265,54 +247,24 @@ def add_pass_coordinates(
 
     depositing = data["IsDepositing"]
 
-    t = data.loc[
-        depositing,
-        "RelativeTime_s"
-    ]
-
+    t = data.loc[depositing, "RelativeTime_s"]
 
     if pass_number == 1:
 
-        # Pass 1:
-        # 0 m --> 0.128 m
+        # Pass 1: 0 m --> 0.128 m
         position = SCAN_SPEED_M_S * t
 
-        data.loc[
-            depositing,
-            "Position_m"
-        ] = np.clip(
-            position,
-            0.0,
-            BEAD_LENGTH_M
-        )
-
+        data.loc[ depositing,  "Position_m"] = np.clip(position, 0.0, BEAD_LENGTH_M)
 
     elif pass_number == 2:
 
-        # Pass 2:
-        # 0.128 m --> 0 m
-        position = (
-            BEAD_LENGTH_M
-            - SCAN_SPEED_M_S * t
-        )
+        # Pass 2: 0.128 m --> 0 m
+        position = BEAD_LENGTH_M - SCAN_SPEED_M_S * t
 
-        data.loc[
-            depositing,
-            "Position_m"
-        ] = np.clip(
-            position,
-            0.0,
-            BEAD_LENGTH_M
-        )
-
+        data.loc[depositing, "Position_m"] = np.clip(position, 0.0, BEAD_LENGTH_M)
 
     else:
-
-        raise ValueError(
-            f"Unsupported pass number: "
-            f"{pass_number}"
-        )
-
+        raise ValueError(f"Unsupported pass number: {pass_number} ")
 
     data["Pass"] = pass_number
 
@@ -406,21 +358,11 @@ for pass_index in range(NUMBER_OF_PASSES):
                 .round(6)
             )
 
-        output.to_csv(
-            filepath,
-            index=False
-        )
+        output.to_csv(filepath, index=False )
 
     def organize_columns(data):
 
-        preferred_columns = [
-            "Timestamp",
-            "RelativeTime_s",
-            "Position_m",
-            "Pass",
-            "IsDepositing",
-            "Stage"
-        ]
+        preferred_columns = ["Timestamp", "RelativeTime_s", "Position_m", "Pass", "IsDepositing", "Stage"]
 
         existing_preferred = [
             column
@@ -439,17 +381,9 @@ for pass_index in range(NUMBER_OF_PASSES):
             + remaining_columns
         ]
 
-    fronius_pass = organize_columns(
-     fronius_pass
-    )
-
-    tc_pass = organize_columns(
-        tc_pass
-    )
-
-    a700_pass = organize_columns(
-        a700_pass
-    )
+    fronius_pass = organize_columns(fronius_pass)
+    tc_pass = organize_columns(tc_pass)
+    a700_pass = organize_columns(a700_pass)
 
     # Save processed copies
     save_processed_csv(fronius_pass, pass_dir / f"Fronius_Pass{pass_number}.csv")
@@ -504,6 +438,5 @@ for pass_index in range(NUMBER_OF_PASSES):
 
 
     pass_info.to_csv(pass_dir / f"Pass{pass_number}_Info.csv", index=False)
-
 
 print("\nExperimental synchronization complete.")

@@ -671,23 +671,14 @@ class DepositionSimulation:
 
         return self.history
 
-    # --------------------------------------
-
-    def sensor_history(self, sensor_index):
-
-        return self.history[:, sensor_index]
 
     # --------------------------------------
-
     def maximum_temperature(self):
-
+        
         return np.max(self.temperature)
 
-    # ------------------------------
 
-    def final_temperature(self):
 
-        return self.temperature
 
 # ------------------------------------
 
