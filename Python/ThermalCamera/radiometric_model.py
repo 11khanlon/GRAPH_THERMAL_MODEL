@@ -169,8 +169,6 @@ def apply_emissivity_mask(raw_data,
 
 
 
-
-
 #------------------------------
 class TemperatureDependentEmissivity:
 

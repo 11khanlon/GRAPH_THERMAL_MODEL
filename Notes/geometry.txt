@@ -4,6 +4,7 @@ for deposition order, there is currently a rastering feature. what if you have s
 For the final layer, is it accurratley portrayed? 
 what dimensions for powder ded single track should i use for .stl?
 what about for Wire-DED? The ER70S-6 we buy is specifically from Lincoln Electric yes. Their L59 Super Arc in 0.045" diameter (lxwxh)
+does it matter if the substrate has less nodes then the deposition bead? 
 
 if i imported a square, would that break the code? laser goes to the left, upwards, right, then back
 

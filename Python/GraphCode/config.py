@@ -95,7 +95,7 @@ BLOCK = {
 
 GRAPH = {
     "epsilon": 5e-3,  # neighborhood radius ε, m
-    "gain": 3E6,     # gain factor g, m^-2
+    "gain": 1.3E4,     # gain factor g, m^-2
     "node_density": 0.01  # node density, nodes/mm^3
 }
 

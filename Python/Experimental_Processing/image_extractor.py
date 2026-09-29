@@ -70,7 +70,18 @@ class ImagePointExtractor:
         self.original_image = (img.copy())
         self.display_image = (img.copy())
         self.window_name = window_name
-        
+
+         # Keep original data untouched
+        if img.dtype == np.uint16:
+
+            display = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+
+        else:
+            display = img.copy()
+
+        self.original_image = display
+        self.display_image = display.copy()
+
 
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
         cv2.imshow(self.window_name, self.display_image)
@@ -145,9 +156,7 @@ class ImagePointExtractor:
     # --------------------------------------------------------
     # Continuous polyline
     
-    def select_continuous_line(
-        self,
-        img):
+    def select_continuous_line(self, img):
 
         points = self.select_points(
             img,
@@ -156,8 +165,8 @@ class ImagePointExtractor:
         if len(points) < 2:
 
             raise ValueError(
-                "At least two points are required "
-                "to create a continuous line.")
+                "At least two points are required to create a continuous line.")
+             
 
         line_mask = np.zeros(img.shape[:2], dtype=np.uint8)
 
@@ -185,10 +194,7 @@ class ImagePointExtractor:
     # --------------------------------------------------------
     # Bounding-box crop
 
-    def crop_image(
-        self,
-        img,
-        corners):
+    def crop_image(self,img, corners):
 
         corners = np.asarray(corners, dtype=int)
 
@@ -202,8 +208,13 @@ class ImagePointExtractor:
 
 if __name__ == "__main__":
 
+    import sys
+    from pathlib import Path
+
     # Create artificial test image
-    image = np.zeros((500, 800), dtype=np.uint8)
+    image = Path(
+        r"C:\\Users\\Kayleigh\\GraphThermalModel\\Python\\ThermalData\\Substrate_Calibration.tiff"
+    )
 
     # Draw test rectangle
     cv2.rectangle(

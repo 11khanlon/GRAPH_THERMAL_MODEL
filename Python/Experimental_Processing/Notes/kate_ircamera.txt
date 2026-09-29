@@ -1,0 +1,66 @@
+Pyspin is the Python interface to FLIR/Teledyne's Spinnaker SDK 
+Python is directly controlling and reading from the A700 through the camera SDK 
+
+commands that are directly controlling the camera:
+s.cam.BeginAcquisition()
+s.cam.GetNextImage()
+s.image_result.GetNDArray()
+s.cam.EndAcquisition()
+
+--------------------------------------------------------
+The old IRHandler is doing two different temperature conversions. One happened live while the camera was running and the other is a second normalization for saving the TIFF 
+The camera itself did not appear to hand the script a 480×640 array of temperatures in °C
+GetNDArray() returned the camera's raw radiometric signal --> image_data = s.image_result.GetNDArray()
+GetNDArray() comes from FLIR Python API. It returns an image object representing the next camera frame 
+Then, the script converted that raw detector signal into temperature
+image_radiance = (image_data - J0)/ J1 
+--> then it used the FLIR radiometric calibration equation 
+image_temp = B / np.log(R /((image_Radiance/ Emissivity/ Tau) - K2) + F))) - 273.15
+
+the workflow goes from: 
+RAW CAMERA SIGNAL
+image_data[v,u]
+        ↓
+camera calibration
+J0, J1, R, B, F
+        ↓
+environment/material corrections emissivity, atmosphere, reflections
+        ↓
+image_Temp[v,u]
+        ↓
+°C
+
+A thermal camera measure infrared radiation, not temperature 
+The amount of radiation reaching the detector depends not only on the objects temperature, but also on things such as its emissivity,
+reflected radiation from its surrounding, atmospheric attentuation, and potentially external optics. 
+That's why code says:
+TRefl = 293.15
+TAtm = 293.15
+Humidity = 0.55
+Dist = 2
+ExtOpticsTransmission = 1
+ExtOpticsTemp = 311.4
+emissivity = 0.3 
+
+these aren't things that were being continuosly varied frame-by-frame. They were parameters used to establish radiometric conversion 
+This calculates parameters using camera initialization, and then repeatedly uses them on each new raw frame
+The emissivity calculations are not the streaming mechanism. They're part of the radiometric temperature conversion being applied to each streamed frame
+
+
+streaming logic: 
+node_acquisition_mode.SetIntValue(acquisition_mode_continuous) this puts A700 into continuos acquisition 
+while runflag.val: keeps asking for the next frame 
+Therefore, the strucutre is: 
+Frame 0 arrives --> convert raw C --> save frame
+Frame 1 arrive --> convert raw C --> save frame 
+
+-----------------------------
+Old script saves the image result 
+Comment says A700 framw = 480x640
+
+T = Tmin + U/65535 * (Tmax - Tmin)
+
+
+
+
+

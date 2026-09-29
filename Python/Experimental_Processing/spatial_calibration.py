@@ -7,7 +7,7 @@ import sys
 
 from image_extractor import ImagePointExtractor
 
-sys.path.append(r"C:\Users\Kayleigh\GraphThermalModel\Python\GraphCode")
+sys.path.append(r"C:\\Users\\Kayleigh\\GraphThermalModel\\Python\\GraphCode")
 
 '''
 Homography code determines (x, y) <--> (u, v)
@@ -27,7 +27,7 @@ class SpatialCalibration():
         self.plate_points_xy = None 
 
         #camera coordinates 
-        self.plates_points_uv = None 
+        self.plate_points_uv = None 
 
         # Transformation matrices
         self.H_xy_to_uv = None
@@ -39,6 +39,22 @@ class SpatialCalibration():
 
         # Center used during torch calibration [u, v]
         self.torch_center_uv = None
+
+        # Physical size represented by one rectified image pixel
+        self.pixel_size_x_m = None
+        self.pixel_size_y_m = None
+
+        # Inverse spatial resolution
+        self.pixels_per_meter_x = None
+        self.pixels_per_meter_y = None
+
+        # Rectified image dimensions
+        self.rectified_width_px = None
+        self.rectified_height_px = None
+
+        # Original camera -> rectified image
+        self.H_uv_to_rectified = None
+
 
     #-------------------------------------
     # Image loading 
@@ -66,7 +82,8 @@ class SpatialCalibration():
             [geometry.substrate_xmax, geometry.substrate_ymax],
             [geometry.substrate_xmin, geometry.substrate_ymax]], dtype=np.float64)
 
-        print("\nSelect the four physical substrate corners in this order: ")
+        print("\nStart bottom left corner and go counter-clockwise")
+        print("Select the four physical substrate corners in this order: ")
         print("1 = (xmin, ymin) = (-x, -y)")
         print("2 = (xmax, ymin) = (+x, -y)")
         print("3 = (xmax, ymax) = (+x, +y)")
@@ -107,266 +124,242 @@ class SpatialCalibration():
     #------------------------------------
     #  Physical [x,y] -> camera [u,v]
 
-    def physical_to_pixel(self, x, y):
+    def create_rectified_grid(self):
 
-        if self.H_xy_to_uv is None:
-            raise RuntimeError("Plate calibration has not been performed.")
+        if self.plate_points_xy is None:
+            raise RuntimeError("Plate calibration must be performed first.")
 
-        point_xy_h = np.array([x, y, 1.0], dtype=float)
-        point_uv_h = self.H_xy_to_uv @ point_xy_h
-        point_uv_h /= point_uv_h[2]
+        #Physical substrate dimension 
+        xmin = np.min(self.plate_points_xy[:, 0])
+        xmax = np.max(self.plate_points_xy[:, 0])
 
-        return point_uv_h[:2]
+        ymin = np.min(self.plate_points_xy[:, 1])
+        ymax = np.max(self.plate_points_xy[:, 1])
+
+        substrate_length = xmax - xmin
+        substrate_width = ymax - ymin
+
+        #Camera Pixel dimensions of substrate 
+        p1 = self.plate_points_uv[0]
+        p2 = self.plate_points_uv[1]
+        p3 = self.plate_points_uv[2]
+        p4 = self.plate_points_uv[3]
+
+        # Long substrate edges
+        bottom_width_px = np.linalg.norm(p2 - p1)
+        top_width_px = np.linalg.norm(p3 - p4)
+
+        # Short substrate edges
+        right_height_px = np.linalg.norm(p3 - p2)
+        left_height_px = np.linalg.norm(p4 - p1)
+
+        # Average opposite edges
+        self.rectified_width_px = int(
+            round((bottom_width_px + top_width_px) / 2)
+        )
+
+        self.rectified_height_px = int(
+            round((right_height_px + left_height_px) / 2)
+        )
+
+
+        # PHYSICAL PIXEL SIZE
+        self.pixel_size_x_m = (substrate_length / self.rectified_width_px)
+        self.pixel_size_y_m = (substrate_width / self.rectified_height_px)
+        self.pixels_per_meter_x = (1.0 / self.pixel_size_x_m)
+        self.pixels_per_meter_y = (1.0 / self.pixel_size_y_m)
+
+
+        # RECTIFIED IMAGE CORNERS
+        rectified_points_uv = np.array(
+            [[0, 0], 
+             [self.rectified_width_px - 1, 0],
+             [self.rectified_width_px - 1, self.rectified_height_px - 1],
+             [0, self.rectified_height_px - 1]
+            ], dtype=np.float32)
+
+
+        # CAMERA → RECTIFIED HOMOGRAPHY
+        self.H_uv_to_rectified = (
+            cv2.getPerspectiveTransform(
+                self.plate_points_uv.astype(np.float32),
+                rectified_points_uv)
+                )
+
+
+        # PRINT RESULTS
+        print("\n----------------------------------")
+        print("Rectified substrate grid")
+        print("----------------------------------")
+
+        print(f"Width: {self.rectified_width_px} pixels ")
+        print(f"Height: {self.rectified_height_px} pixels ")
+        print(f"x pixel size: {self.pixel_size_x_m * 1000:.4f} mm/pixel" )
+        print(f"y pixel size: {self.pixel_size_y_m * 1000:.4f} mm/pixel " )
+        print(f"x resolution: {self.pixels_per_meter_x:.2f} pixels/m")
+        print(f"y resolution: {self.pixels_per_meter_y:.2f} pixels/m")
+
+        print("\nH_uv_to_rectified:")
+        print(self.H_uv_to_rectified)
+
+        return self.H_uv_to_rectified
+    
+
+    #------------------------------------
+    def rectified_pixel_to_physical(self, u, v, rotated=False):
+
+        if (self.pixel_size_x_m is None
+            or self.pixel_size_y_m is None ):
+
+            raise RuntimeError("Rectified grid has not been created." )
+
+        if rotated:
+            u = self.rectified_width_px - 1 - u
+            v = self.rectified_height_px - 1 - v
+        
+        xmin = np.min(self.plate_points_xy[:, 0])
+        ymin = np.min(self.plate_points_xy[:, 1])
+
+        # Physical coordinate of pixel center
+        x = xmin + (u + 0.5)* self.pixel_size_x_m
+        y = ymin+ (v + 0.5)* self.pixel_size_y_m
+        
+        return np.array([x, y], dtype=float)
+
+  
 
     #--------------------------------
-    # Camera [u,v] -> physical [x,y] 
-    def pixel_to_physical(self, u, v):
-
-        if self.H_uv_to_xy is None:
-            raise RuntimeError("Plate calibration has not been performed.")
-
-        point_uv_h = np.array([u, v, 1.0], dtype = float)
-        point_xy_h = self.H_uv_to_xy @ point_uv_h
-        point_xy_h /= point_xy_h[2]
-        
-        return point_xy_h[:2]
-
-
-    #---------------------------------------
-    #Define a polygon around the torch/nozzle
-
-    def calibrate_torch(self, torch_image, center_xy = None):
-
-        image = self.load_image(torch_image)
-
-        #Select torch outline
-        print("\nSelect points around the torch/nozzle.")
-        print("Use enough points to describe the occluded region, then press Enter.")   
-        torch_points_uv = (
-            self.point_extractor.select_points(
-                image, window_name="Select Torch Boundary")
-                ).astype(float)
-
-
-        if len(torch_points_uv) < 3:
-            raise ValueError("At least three points are required to define a torch polygon ")
-
-        # Determine torch center
-        if center_xy is None:
-            print("\nSelect the approximate torch center.")
-
-            center_points = (
-                self.point_extractor.select_points(
-                    image, window_name="Select Torch Center", max_points = 1)
-                    )
-
-            if len(center_points) != 1:
-                raise ValueError("Exactly one torch center must be selected ")
-            center_uv = center_points[0].astype(float)
-
-        else:
-            if self.H_xy_to_uv is None:
-                raise RuntimeError("Plate calibration must be performed before using a physical torch center.")
-
-            x, y = center_xy
-            center_uv = self.physical_to_pixel(x, y)
-
-        self.torch_center_uv = center_uv
-
-        
-        # Store mask relative to torch center
-        self.torch_mask_relative_uv = torch_points_uv - center_uv
-    
-        if self.show_debug:
-            self.show_torch_calibration(image, torch_points_uv, center_uv)
-
-        return self.torch_mask_relative_uv
-
-        
-    # ========================================================
-    # TORCH MASK OPERATIONS
-    # ========================================================
-
-    #------- Translate the torch mask to new camera position -------
-    def move_torch_mask(self, center_uv):
-
-        if (self.torch_mask_relative_uv is None):
-
-            raise RuntimeError("Torch has not been calibrated.")
-
-        center_uv = np.asarray(center_uv, dtype = float)
-        polygon_uv = (self.torch_mask_relative_uv + center_uv)
-
-        return polygon_uv
-
-
-    #------- Generate binary torch mask ---------
-    def create_torch_mask(self, image_shape,center_uv):
-
-        polygon_uv = (self.move_torch_mask(center_uv))
-        mask = np.zeros(image_shape[:2], dtype = np.uint8)
-
-        cv2.fillPoly(mask,
-            [np.round(polygon_uv).astype(np.int32)], 1)
-
-        return mask
-
-
-    # --------- Save and Load Calibration -----------
-    def save_calibration(self,filepath):
+    def save_calibration(self, filepath):
 
         filepath = Path(filepath)
-        filepath.parent.mkdir(parents = True, exist_ok = True)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
 
         np.savez_compressed(
             filepath,
-            plate_points_xy = self.plate_points_xy,
+            plate_points_xy = self.plate_points_xy,  # Selected calibration points
             plate_points_uv = self.plate_points_uv,
-            H_xy_to_uv = self.H_xy_to_uv,
-            H_uv_to_xy = self.H_uv_to_xy,
-            torch_center_uv = self.torch_center_uv,
-            torch_mask_relative_uv = self.torch_mask_relative_uv)
+            H_xy_to_uv= self.H_xy_to_uv,   # Physical <-> original camera
+            H_uv_to_xy= self.H_uv_to_xy,
+            H_uv_to_rectified= self.H_uv_to_rectified,    # Original camera -> rectified
+            pixel_size_x_m= self.pixel_size_x_m,    # Rectified grid information
+            pixel_size_y_m=self.pixel_size_y_m,
+            pixels_per_meter_x=self.pixels_per_meter_x,
+            pixels_per_meter_y= self.pixels_per_meter_y,
+            rectified_width_px= self.rectified_width_px,
+            rectified_height_px= self.rectified_height_px
+            )
 
-        print(f"Calibration saved to:\n" f"{filepath}")
+        print(f"\nCalibration saved to: {filepath}" )
 
 
-    # --------------------------------------------------------
-
+    #--------------------------------------
     def load_calibration(self, filepath):
 
-        data = np.load(filepath, allow_pickle = True)
-
+        data = np.load(filepath)
         self.plate_points_xy = data["plate_points_xy"]
         self.plate_points_uv = data["plate_points_uv"]
         self.H_xy_to_uv = data["H_xy_to_uv"]
         self.H_uv_to_xy = data["H_uv_to_xy"]
-        self.torch_center_uv = data["torch_center_uv"]
-        self.torch_mask_relative_uv = data["torch_mask_relative_uv"]
-        
+        self.H_uv_to_rectified = data["H_uv_to_rectified"]
 
+        self.pixel_size_y_m = float(data["pixel_size_y_m"])
+        self.pixels_per_meter_x = float(data["pixels_per_meter_x"])
+        self.pixels_per_meter_y = float(data["pixels_per_meter_y"] )
+
+        # Rectified image dimensions
+        self.rectified_width_px = int( data["rectified_width_px"])
+        self.rectified_height_px = int(data["rectified_height_px"])
+        print(f"\nCalibration loaded from: {filepath}")
+         
+        '''self.torch_center_uv = data["torch_center_uv"]
+        self.torch_mask_relative_uv = data["torch_mask_relative_uv"]'''
 
     # --------------------------------------------------------
 
     def show_plate_calibration(self, image):
 
-        plt.figure(figsize = (8, 6))
+        plt.figure(figsize=(10, 7))
 
         if image.ndim == 2:
             plt.imshow(image, cmap="gray")
 
         else:
-            plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            plt.imshow( cv2.cvtColor(image, cv2.COLOR_BGR2RGB) )
 
+        points = self.plate_points_uv
 
-        for i, (u, v) in enumerate(self.plate_points_uv, start = 1):
+        # Plot selected corners
+        for i, (u, v) in enumerate(points, start=1):
 
             plt.scatter(u, v)
-            plt.annotate(str(i), (u, v))
+            plt.annotate( str(i), (u, v), fontsize=12)
 
-        plt.xlabel("u [pixels]")
-        plt.ylabel("v [pixels]")
-        plt.title("Plate Spatial Calibration")
+
+        # Close polygon
+        closed_points = np.vstack([points, points[0]] )
+        plt.plot(closed_points[:, 0], closed_points[:, 1])
+        plt.xlabel( "u [pixels]")
+        plt.ylabel( "v [pixels]")
+        plt.title( "Selected Substrate Calibration")
         plt.show()
-
-
-    # --------------------------------------------------------
-
-    def show_torch_calibration(self, image, torch_points_uv, center_uv):
-
-        display_image = image.copy()
-        polygon = np.round(torch_points_uv).astype(np.int32)
-        cv2.polylines(display_image, [polygon], isClosed = True, color = 255, thickness = 2)
-
-        center_u = int(round(center_uv[0]))
-        center_v = int(round(center_uv[1]))
-
-        cv2.circle(display_image,
-            (center_u, center_v), radius = 5, color = 255, thickness = -1)
-
-        cv2.namedWindow("Torch Calibration", cv2.WINDOW_NORMAL)
-        cv2.imshow("Torch Calibration", display_image)
-        cv2.waitKey(0)
-        cv2.destroyWindow("Torch Calibration")
 
 
 
 if __name__ == "__main__":
 
-    print("Testing thermal camera calibration...")
-    calibration = (ThermalCameraCalibration(show_debug=True))
-
-    '''x_test = 0.010
-    y_test = 0.002
-
-    u, v = (calibration.physical_to_pixel(x_test, y_test))
-    x_back, y_back = (calibration.pixel_to_physical(u, v))
-
-    print("\nCoordinate round-trip test:")
-    print(f"Original xy: "
-        f"({x_test:.6f}, "
-        f"{y_test:.6f})")
-
-    print(f"Camera uv: "
-        f"({u:.3f}, "
-        f"{v:.3f})")
-
-    print(f"Recovered xy: "
-        f"({x_back:.6f}, "
-        f"{y_back:.6f})")
-
-    error = np.linalg.norm(np.array([x_test, y_test]) - np.array([x_back, y_back]))
-    print(f"Round-trip error: " f"{error:.3e} m")
-
-    calibration.torch_mask_relative_uv = (
-    np.array([
-        [-10, -20],
-        [ 10, -20],
-        [ 10,  20],
-        [-10,  20]
-        ], dtype=float)
+    #Files
+    calibration_image = Path(
+        r"C:\\Users\\Kayleigh\\GraphThermalModel\\Python\\ThermalData\\Substrate_Calibration.tiff"
     )
 
-    new_center_uv = np.array([300, 200])
-    polygon_uv = (calibration.move_torch_mask(new_center_uv))
-
-    print("\nMoved torch polygon:")
-    print(polygon_uv)
-
-    mask = (calibration.create_torch_mask(image_shape=(480,640), 
-                                          center_uv=new_center_uv))
-
-    print("Mask shape:", mask.shape)
-    print("Masked pixels:", np.sum(mask))
-
-    assert ( mask.shape == (480,640))
-
-    test_file = (
-    Path("test_camera_calibration.npz")
+    calibration_file = Path(
+        r"C:\\Users\\Kayleigh\\GraphThermalModel\\Python\\ThermalData\\spatial_calibration.npz"
     )
 
-    calibration.save_calibration(
-        test_file
+    import os
+    import sys
+    
+    # Get the parent "Python" folder
+    python_folder = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..")
     )
 
-    loaded = (
-        ThermalCameraCalibration()
-    )
+    # Add it to Python's import search path
+    if python_folder not in sys.path:
+        sys.path.insert(0, python_folder)
 
-    loaded.load_calibration(
-        test_file
-    )
+    from GraphCode.config import BUILD
 
-    assert np.allclose(
-        calibration.torch_mask_relative_uv,
-        loaded.torch_mask_relative_uv
-    )
 
-    assert np.allclose(
-        calibration.H_xy_to_uv,
-        loaded.H_xy_to_uv
-    )
-        
+    # KNOWN SUBSTRATE GEOMETRY
+    class CalibrationGeometry:
 
-    # Add a temporary image path here
-    # when testing interactively.'''
-    print("Calibration class initialized successfully.")
+        substrate_xmin = 0.0
+        substrate_xmax = BUILD["substrate_length"]
+
+        substrate_ymin = 0.0
+        substrate_ymax = BUILD["substrate_width"]
+
+    geometry = CalibrationGeometry()
+
+    # INITIALIZE
+    calibration = SpatialCalibration(show_debug=True)
+
+    # LOAD IMAGE
+    image = calibration.load_image(calibration_image)
+    print("\nCalibration image:")
+    print( f"Shape = {image.shape}" )
+    print(f"dtype = {image.dtype}" )
+    
+
+    # STEP 1: Select four substrate corners
+    calibration.calibrate_plate(
+        plate_image=image,
+        geometry=geometry)
+
+    # STEP 2: Build rectified substrate grid
+    calibration.create_rectified_grid()
+
+    # STEP 3: Save everything
+    calibration.save_calibration( calibration_file)
+    print( "\nSpatial calibration complete.")

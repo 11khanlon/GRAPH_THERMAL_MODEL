@@ -1,0 +1,26 @@
+1. Define same segmentation as the model 
+blocks_per_layer = BUILD["blocks_per_layer"]
+block_length = BUILD["length"] / blocks_per_layer
+time_per_block = block_length / WAAM["scan_speed"]
+LROI = Lblock 
+WROI = BLOCK["width"]
+Thermal ROI is Lblock x Wblock
+time_per_block = block_length / WAAM["scan_speed"]. 
+the time step, count, can be found in C:\\...Processes\\Pass_1\\A700_Pass1.csv.  
+A700 should establish time axis. The csv should tell us what count corresponds to what timestamp. 
+Then we need to identify the experimental frame corresponding to the deposition start. tFLIR = ti - tstart 
+
+Need to extract images based on timestep/segmentation. I cannot remember, did i get rid of the iterediate images already? the camera samples at 30hz
+we constrain the model timestep to the flir [physical data] this way. put the extracted images of pass1 and 2 into a new folder. 
+
+2. Timestep validation delay 
+maybe dont examine the temperature conduction at the current timestep. heat the block move on. this is t0 which is 0. the torch is blocking the meltpool at t0 anyway. then start taking observations at that block, this is t0 + t1.
+then move to the next block. this is t0 + t1 + t2 see how the model compares there vs the image. 
+the other block though has t1 + t2 though [didn't experience t0]. we need to then start tracking. 
+
+3. Create temperature tracking 
+for the tracking, we take points accross the x and y direction of the bead. extract image temperature data 
+example: one point in the center, 2 addtional points in both x and y
+
+this will compare temperature gradients (change in tmeperature) predictions of points to simulated temperature. 
+as the process progresses, keep adding squares to segment out the process to follow along. we need to make a table to follow along everything.

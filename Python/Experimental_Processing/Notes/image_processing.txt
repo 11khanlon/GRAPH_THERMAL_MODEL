@@ -66,10 +66,6 @@ v_max = int(BEAD_Y_MAX_M / PIXEL_SIZE_M)
 bead_image = transformed[v_min:v_max, u_min:u_max]
 
 
-
-
-
-
 --------------------------------------
 Raw thermal data 
 Substrate_Calibration.tiff
@@ -85,3 +81,28 @@ rotate 180 degrees
 then create substrate and bead images 
 crop bead ROI 
 then you get bead images 
+
+
+-----------------------------------
+8-bit vs 16-bit 
+
+16 bit does not mean more pixels 
+
+.tiff file 16 bit:
+Shape = (480, 640)
+dtype = uint16
+
+lets say this is 8-bit:
+It would still contain Shape = (480, 640)
+
+The difference in the teo remains in how many values each pixel can store 
+For 8-bit, a pixel can store 256 values 
+16-bit can store 2^16 values or 65,536 values 
+
+
+--------------------------
+not done yet:
+180 degree rotation 
+physical bead ROI 
+mapping the connection of graph to pixel 
+temperature_rectified[v, u]
