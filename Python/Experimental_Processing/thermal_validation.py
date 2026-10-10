@@ -27,11 +27,52 @@ class ThermalValidation:
     def load_a700_timing(self, csv_path):
 
         timing = pd.read_csv(csv_path)
-        print(timing.columns)
+        print("\nA700 CSV columns:")
+        print( timing.columns)
 
+     
+        # CONVERT TIMESTAMP
         timing["Timestamp"] = pd.to_datetime(timing["Timestamp"])
-        timing["elapsed_time"] = (timing["Timestamp"] - timing["Timestamp"].iloc[0]).dt.total_seconds()
 
+
+      
+        # FIND FIRST DEPOSITION FRAME
+        # IsDepositing may be read as bool, integer, or string. Convert it robustly to a boolean mask.
+
+        deposition_mask = (
+            timing["IsDepositing"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            .isin(["true", "1", "yes"])
+        )
+
+        deposition_rows = timing[deposition_mask]
+
+        if deposition_rows.empty:
+            raise ValueError("No deposition frames were found in the A700 timing CSV. ")
+
+
+        # First FLIR frame where deposition begins
+        deposition_start_index = (deposition_rows.index[0])
+        deposition_start_time = ( timing.loc[deposition_start_index, "Timestamp"])
+        deposition_start_count = int(
+            timing.loc[deposition_start_index, "Count"]
+        )
+
+
+        # DEFINE t = 0 AT DEPOSITION START
+        timing["elapsed_time"] = (timing["Timestamp"] - deposition_start_time).dt.total_seconds()
+
+
+        # PRINT SYNCHRONIZATION INFORMATION
+        print("\nDeposition start:")
+        print(f"Count = {deposition_start_count} ")
+        print(f"Timestamp = {deposition_start_time}")
+        print(f"Stage = {timing.loc[deposition_start_index, 'Stage']} ")
+        print(f"Position = {timing.loc[deposition_start_index, 'Position_m']:.6f} m")
+
+      
         return timing
 
 
@@ -339,9 +380,9 @@ if __name__ == "__main__":
     print(validation_times)
 
     #Comparison Records 
-    comparison_records = []
+    '''comparison_records = []
 
-    '''comparison_records will eventually be populated with:
+    comparison_records will eventually be populated with:
     
     comparison = validation.compare_block(
          pass_number=pass_number,
@@ -352,7 +393,7 @@ if __name__ == "__main__":
         experimental_points=experimental_points,
         simulation_points=simulation_points)
     
-     comparison_records.append(comparison) '''
+     comparison_records.append(comparison) 
 
 validation_table = (validation.create_validation_table(comparison_records))
 
@@ -360,3 +401,4 @@ validation_table = (validation.create_validation_table(comparison_records))
 if not validation_table.empty:
 
         validation.save_validation_table( validation_table, VALIDATION_TABLE )
+        '''

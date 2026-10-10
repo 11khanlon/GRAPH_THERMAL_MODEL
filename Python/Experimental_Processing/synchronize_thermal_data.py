@@ -40,6 +40,7 @@ POST_DWELL_BUFFER_S = 5.0
 NUMBER_OF_PASSES = 2
 SCAN_SPEED_M_S = 0.762 / 60       # m/s
 BEAD_LENGTH_M = 0.128             # m
+x_start = 12.4/1000   #m
 
 # Load data
 fronius = pd.read_csv(FRONIUS_FILE)
@@ -252,7 +253,7 @@ def add_pass_coordinates(data, deposition_start, deposition_end, pass_number):
     if pass_number == 1:
 
         # Pass 1: 0 m --> 0.128 m
-        position = SCAN_SPEED_M_S * t
+        position = (SCAN_SPEED_M_S * t) + x_start
 
         data.loc[ depositing,  "Position_m"] = np.clip(position, 0.0, BEAD_LENGTH_M)
 

@@ -26,6 +26,9 @@ WAAM = {
     # Robot travel speed
     "scan_speed": 0.762 / 60,     # m/s
 
+    #Wire feed speed
+    "WFS": 3.3/60,    #m/s
+
     # Deposition geometry
     "layer_height": 2.5e-3,       # m 
 
@@ -73,7 +76,7 @@ BUILD = {
     "substrate_blocks_y": 1,
     "substrate_blocks_z": 1, 
 
-    "blocks_per_layer": 10
+    "blocks_per_layer": 20
     
 }
 
