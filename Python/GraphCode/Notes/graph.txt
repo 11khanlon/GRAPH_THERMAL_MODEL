@@ -1,5 +1,6 @@
 remaining questions:
 the function def coordinates() is created and called twice: once in nodes another in graph.py
+KDTree
 
 
 -------------------------------------------

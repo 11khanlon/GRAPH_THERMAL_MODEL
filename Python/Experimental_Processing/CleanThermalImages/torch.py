@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys 
 
-from image_extractor import ImagePointExtractor
+from Python.Experimental_Processing.CleanThermalImages.image_extractor import ImagePointExtractor
 
 
 # ========================================================

@@ -7,8 +7,8 @@ import sys
 import os
 
 
-from spatial_calibration import SpatialCalibration
-from temperature_conversion import TemperatureConverter
+from Python.Experimental_Processing.CleanThermalImages.spatial_calibration import SpatialCalibration
+from Python.Experimental_Processing.CleanThermalImages.temperature_conversion import TemperatureConverter
 
 python_folder = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")

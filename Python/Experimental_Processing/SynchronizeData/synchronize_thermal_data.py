@@ -19,12 +19,15 @@ Raw files are NOT modified - Processed copies are saved separately
 from pathlib import Path
 import numpy as np
 import pandas as pd
+from config_sync import thermal_metadata
 
 
 # Paths
 BASE_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = BASE_DIR.parent.parent
 
-THERMAL_DATA_DIR = BASE_DIR.parent / "ThermalData"
+THERMAL_DATA_DIR = PROJECT_DIR / thermal_metadata["material_directory"]
+
 FRONIUS_FILE = THERMAL_DATA_DIR / "Fronius.csv"
 TC_FILE = THERMAL_DATA_DIR / "Thermocouples.csv"
 A700_FILE = THERMAL_DATA_DIR / "FroniusA700.csv"
@@ -34,13 +37,11 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # Processing settings
-PRE_BUFFER_S = 1
-DWELL_S = 30.0
-POST_DWELL_BUFFER_S = 5.0
-NUMBER_OF_PASSES = 2
-SCAN_SPEED_M_S = 0.762 / 60       # m/s
-BEAD_LENGTH_M = 0.128             # m
-x_start = 12.4/1000   #m
+PRE_BUFFER_S = thermal_metadata["PRE_BUFFER_S"]
+NUMBER_OF_PASSES = thermal_metadata["NUMBER_OF_PASSES"]
+SCAN_SPEED_M_S = thermal_metadata["SCAN_SPEED_M_S"]
+BEAD_LENGTH_M = thermal_metadata["BEAD_LENGTH_M"]
+x_start = thermal_metadata["x_start"]
 
 # Load data
 fronius = pd.read_csv(FRONIUS_FILE)
@@ -132,11 +133,10 @@ print("\n========== FRONIUS PASSES ==========")
 print(f"Detected deposition starts:{len(start_times)} ")
 print(f"Detected deposition ends: {len(end_times)} ")
 
-if len(start_times) < NUMBER_OF_PASSES:
-    raise ValueError("Fewer than two deposition starts were detected") 
-
-if len(end_times) < NUMBER_OF_PASSES:
-    raise ValueError("Fewer than two deposition ends were detected")
+raise ValueError(
+    f"Requested {NUMBER_OF_PASSES} passes, "
+    f"but detected only {len(start_times)} deposition starts."
+)
       
 
 # ============================================================
@@ -212,22 +212,19 @@ def nearest_camera_frame(camera_data, target_time):
 
 def assign_stage(timestamps, deposition_start, deposition_end, dwell_end):
 
-        conditions = [timestamps < deposition_start,
-            (
-                (timestamps >= deposition_start)
-                & (timestamps <= deposition_end)
-            ),
+        conditions = [
+            timestamps < deposition_start,
 
-            (
-                (timestamps > deposition_end)
-                & (timestamps <= dwell_end)
-            ),
+            (timestamps >= deposition_start)
+            & (timestamps < deposition_end),
 
-            timestamps > dwell_end]
+            (timestamps >= deposition_end)
+            & (timestamps < dwell_end)
+        ]
 
-        choices = ["Pre-Deposition", "Deposition", "Dwell", "Post-Dwell"]
+        choices = ["Pre-Deposition", "Deposition", "Dwell"]
 
-        return np.select(conditions, choices, default="Unknown")
+        return np.select(conditions, choices, default="Boundary")
 
 
 def add_pass_coordinates(data, deposition_start, deposition_end, pass_number):
@@ -280,9 +277,25 @@ for pass_index in range(NUMBER_OF_PASSES):
     deposition_start = start_times.iloc[pass_index]
     deposition_end =  end_times.iloc[pass_index]
     deposition_duration = (deposition_end - deposition_start).total_seconds()
-    dwell_end = (deposition_end + pd.Timedelta(seconds=DWELL_S))
-    window_start = ( deposition_start - pd.Timedelta(seconds=PRE_BUFFER_S))
-    window_end = (dwell_end + pd.Timedelta(seconds=POST_DWELL_BUFFER_S))
+
+
+    if pass_index + 1 < len(start_times):
+
+        # The next actual deposition start ends the dwell
+        dwell_end = start_times.iloc[pass_index + 1]
+
+        DWELL_S = (dwell_end - deposition_end).total_seconds()
+
+    else:
+
+        # No subsequent deposition start was recorded
+        dwell_end = deposition_end
+        DWELL_S = 0.0
+
+
+    window_start = deposition_start - pd.Timedelta(seconds=PRE_BUFFER_S)
+
+    window_end = dwell_end
 
   
     # Output directory for this pass
@@ -427,6 +440,11 @@ for pass_index in range(NUMBER_OF_PASSES):
           "DepositionDuration_s":  deposition_duration,
           "DwellDuration_s": DWELL_S,
           "DwellEnd": dwell_end,
+          "NextDepositionStart": (
+                start_times.iloc[pass_index + 1]
+                if pass_index + 1 < len(start_times)
+                else pd.NaT
+            ),
           "WindowStart": window_start,
           "WindowEnd": window_end,
           "A700_DepositionStart_Count": int(camera_start["Count"]),

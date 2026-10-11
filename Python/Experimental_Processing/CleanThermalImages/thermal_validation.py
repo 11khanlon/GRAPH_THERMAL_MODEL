@@ -315,7 +315,7 @@ if __name__ == "__main__":
     import os
     import sys
     from pathlib import Path
-    from spatial_calibration import SpatialCalibration
+    from Python.Experimental_Processing.CleanThermalImages.spatial_calibration import SpatialCalibration
 
 
     #----- Paths -----

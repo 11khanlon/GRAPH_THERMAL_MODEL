@@ -52,7 +52,7 @@ class TemperatureConverter:
 if __name__ == "__main__":
    
     # FILES
-    from spatial_calibration import SpatialCalibration 
+    from Python.Experimental_Processing.CleanThermalImages.spatial_calibration import SpatialCalibration 
 
     image_path = Path(
         r"C:\Users\Kayleigh\Downloads\Thermal_Images_Pass1\00001064_21.46_521.78.tiff"

@@ -372,7 +372,7 @@ if __name__ == "__main__":
     import os
     import sys
     from pathlib import Path
-    from spatial_calibration import SpatialCalibration
+    from Python.Experimental_Processing.CleanThermalImages.spatial_calibration import SpatialCalibration
     # Get the parent "Python" folder
     python_folder = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..")
@@ -383,8 +383,8 @@ if __name__ == "__main__":
         sys.path.insert(0, python_folder)
 
     from GraphCode.config import BUILD, WAAM, BLOCK
-    from spatial_calibration import SpatialCalibration
-    from thermal_validation import ThermalValidation
+    from Python.Experimental_Processing.CleanThermalImages.spatial_calibration import SpatialCalibration
+    from Python.Experimental_Processing.CleanThermalImages.thermal_validation import ThermalValidation
     from GraphCode.geometry import Geometry
     
     #Import Geometry

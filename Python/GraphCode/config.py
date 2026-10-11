@@ -9,10 +9,11 @@ Configuration file for the Graph Theory DED thermal model
 #----MATERIAL PROPERTIES------
 
 MATERIAL = {
-    "name": "SteelA36",
-    "density": 7.85e3,                  # rho, kg/m^3
+    "name": "AluminumLM5(5182)",
+    "material_directory": "Al5183_Info",
+    "density": 2650,                  # rho, kg/m^3
     "ambient_temperature": 25,    #  ambient temperature,C
-    "liquidus_temperature": 1500      # liquidus temperature, C
+    "liquidus_temperature": 633      # liquidus temperature, C
 }
 
 #--------- WAAM PARAMETERS ---------------
@@ -20,14 +21,14 @@ WAAM = {
         
     #ARC Heat input 
     "thermal_efficiency": 0.8,   # dimensionless
-    "current": 129.0,             # A
-    "voltage": 15.6,              # V
+    "current": 155,             # A
+    "voltage": 16.7,              # V
 
     # Robot travel speed
-    "scan_speed": 0.762 / 60,     # m/s
+    "scan_speed": 0.584 / 60,     # m/s
 
     #Wire feed speed
-    "WFS": 3.3/60,    #m/s
+    "WFS": 8.89/60,    #m/s
 
     # Deposition geometry
     "layer_height": 2.5e-3,       # m 
@@ -76,7 +77,10 @@ BUILD = {
     "substrate_blocks_y": 1,
     "substrate_blocks_z": 1, 
 
-    "blocks_per_layer": 20
+    "blocks_per_layer": 20,
+
+    "bead_length": 0.127,  #m
+    "x_start": 12.4/1000   #m
     
 }
 
