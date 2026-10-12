@@ -15,6 +15,9 @@ How to map greyscale?
 
 
 
+need to make image to model comparison script
+also bead extractor script
+
 
 -----------------------------------------
 you have an original image with a set amount of pixels.  

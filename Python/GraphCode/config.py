@@ -16,6 +16,13 @@ MATERIAL = {
     "liquidus_temperature": 633      # liquidus temperature, C
 }
 
+
+IMAGE_PROCESSING = {
+     "PRE_BUFFER_S": 1,  # seconds
+     "NUMBER_OF_PASSES": 2   #this is just the number of desired passes you want to analyze
+     #Make sure to rename the actual filepaths for thermal_image_processor and use the count to select desired images 
+}
+
 #--------- WAAM PARAMETERS ---------------
 WAAM = {
         

@@ -4,46 +4,51 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import sys 
+from tqdm import tqdm
 import os
 
 
-from Python.Experimental_Processing.CleanThermalImages.spatial_calibration import SpatialCalibration
-from Python.Experimental_Processing.CleanThermalImages.temperature_conversion import TemperatureConverter
+from spatial_calibration import SpatialCalibration
+from temperature_conversion import TemperatureConverter
 
-python_folder = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")
-)
-
-# Add it to Python's import search path
-if python_folder not in sys.path:
-    sys.path.insert(0, python_folder)
-
-from GraphCode.config import BUILD
-
-
-
-# PATHS
+#1. Obtain GraphCode Python directory
 BASE_DIR = Path(__file__).resolve().parent
-THERMAL_DATA_DIR = (BASE_DIR.parent / "ThermalData")
+PYTHON_DIR = BASE_DIR.parent.parent
+sys.path.insert(0, str(PYTHON_DIR))
+from GraphCode.config import BUILD, MATERIAL, WAAM
 
-CALIBRATION_IMAGE = (
-    THERMAL_DATA_DIR
-    / "Substrate_Calibration.tiff")
 
-CALIBRATION_FILE = (
-    THERMAL_DATA_DIR
-    / "spatial_calibration.npz")
+
+#Obtain Al5183 Directory 
+PROJECT_DIR = BASE_DIR.parent.parent.parent
+THERMAL_DATA_DIR = PROJECT_DIR / MATERIAL["material_directory"] / "ThermalData"
+CALIBRATION_IMAGE = THERMAL_DATA_DIR / "Substrate_Calibration.tiff"
+CALIBRATION_FILE = THERMAL_DATA_DIR / "spatial_calibration.npz"
 
 DOWNLOADS_DIR = Path(r"C:\Users\Kayleigh\Downloads")
 
 PASS_DIRS = {
-    1: Path( r"C:\Users\Kayleigh\Downloads\Thermal_Images_Pass1"),
-    2: Path(r"C:\Users\Kayleigh\Downloads\Thermal_Images_Pass2")
+    1: Path( r"C:\Users\Kayleigh\Downloads\Thermal_Images_Pass1_" + MATERIAL['name']),
+    2: Path(r"C:\Users\Kayleigh\Downloads\Thermal_Images_Pass2_" + MATERIAL['name'])
 }
 
-OUTPUT_DIR = (
-    DOWNLOADS_DIR
-    / "Thermal_Processed")
+OUTPUT_DIR = DOWNLOADS_DIR / f"Thermal_Processed_{MATERIAL['name']}"
+
+
+#Check if directories exist
+print("GraphCode config:", PYTHON_DIR / "GraphCode" / "config.py")
+print("Config exists:", (PYTHON_DIR / "GraphCode" / "config.py").is_file())
+
+print("Thermal data directory:", THERMAL_DATA_DIR)
+print("Thermal data exists:", THERMAL_DATA_DIR.is_dir())
+
+print("Calibration image exists:", CALIBRATION_IMAGE.is_file())
+print("Calibration file exists:", CALIBRATION_FILE.is_file())
+
+for pass_number, directory in PASS_DIRS.items():
+    print(f"Pass {pass_number} images exist:", directory.is_dir())
+
+print("Output directory:", OUTPUT_DIR)
 
 
 # ============================================================
@@ -108,7 +113,7 @@ for pass_number, input_dir in PASS_DIRS.items():
     print(f"Image output: {image_output_dir}")
 
 
-    for image_path in image_files:
+    for image_path in tqdm(image_files, desc=f"Processing Pass {pass_number}", unit="image"):
 
         # 1. LOAD ORIGINAL UINT16 TIFF
         image_16bit = cv2.imread(str(image_path), cv2.IMREAD_UNCHANGED)

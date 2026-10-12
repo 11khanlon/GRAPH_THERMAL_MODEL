@@ -5,9 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys 
 
-from Python.Experimental_Processing.CleanThermalImages.image_extractor import ImagePointExtractor
+from image_extractor import ImagePointExtractor
 
-sys.path.append(r"C:\\Users\\Kayleigh\\GraphThermalModel\\Python\\GraphCode")
 
 '''
 Homography code determines (x, y) <--> (u, v)
@@ -256,19 +255,23 @@ class SpatialCalibration():
     def load_calibration(self, filepath):
 
         data = np.load(filepath)
+
         self.plate_points_xy = data["plate_points_xy"]
         self.plate_points_uv = data["plate_points_uv"]
+
         self.H_xy_to_uv = data["H_xy_to_uv"]
         self.H_uv_to_xy = data["H_uv_to_xy"]
         self.H_uv_to_rectified = data["H_uv_to_rectified"]
 
+        self.pixel_size_x_m = float(data["pixel_size_x_m"])
         self.pixel_size_y_m = float(data["pixel_size_y_m"])
-        self.pixels_per_meter_x = float(data["pixels_per_meter_x"])
-        self.pixels_per_meter_y = float(data["pixels_per_meter_y"] )
 
-        # Rectified image dimensions
-        self.rectified_width_px = int( data["rectified_width_px"])
+        self.pixels_per_meter_x = float(data["pixels_per_meter_x"])
+        self.pixels_per_meter_y = float(data["pixels_per_meter_y"])
+
+        self.rectified_width_px = int(data["rectified_width_px"])
         self.rectified_height_px = int(data["rectified_height_px"])
+
         print(f"\nCalibration loaded from: {filepath}")
          
         '''self.torch_center_uv = data["torch_center_uv"]
@@ -307,28 +310,18 @@ class SpatialCalibration():
 
 if __name__ == "__main__":
 
-    #Files
-    calibration_image = Path(
-        r"C:\\Users\\Kayleigh\\GraphThermalModel\\Python\\ThermalData\\Substrate_Calibration.tiff"
-    )
-
-    calibration_file = Path(
-        r"C:\\Users\\Kayleigh\\GraphThermalModel\\Python\\ThermalData\\spatial_calibration.npz"
-    )
 
     import os
     import sys
     
-    # Get the parent "Python" folder
-    python_folder = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..")
-    )
+    #1. Obtain GraphCode Python directory
+    BASE_DIR = Path(__file__).resolve().parent
+    PYTHON_DIR = BASE_DIR.parent.parent
+    sys.path.insert(0, str(PYTHON_DIR))
+    from GraphCode.config import BUILD, MATERIAL, WAAM
 
-    # Add it to Python's import search path
-    if python_folder not in sys.path:
-        sys.path.insert(0, python_folder)
-
-    from GraphCode.config import BUILD
+    calibration_image = Path(r"C:\\Users\\Kayleigh\\GraphThermalModel\\" + MATERIAL["material_directory"] + "\\ThermalData\\Substrate_Calibration.tiff")
+    calibration_file = Path(r"C:\\Users\\Kayleigh\\GraphThermalModel\\" + MATERIAL["material_directory"] + "\\ThermalData\\spatial_calibration.npz")
 
 
     # KNOWN SUBSTRATE GEOMETRY
@@ -361,5 +354,5 @@ if __name__ == "__main__":
     calibration.create_rectified_grid()
 
     # STEP 3: Save everything
-    calibration.save_calibration( calibration_file)
+    calibration.save_calibration(calibration_file)
     print( "\nSpatial calibration complete.")

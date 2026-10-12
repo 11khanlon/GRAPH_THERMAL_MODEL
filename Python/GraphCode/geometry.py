@@ -75,7 +75,10 @@ class Block:
 # -----------------------------------------
 class Geometry:
 
-    def __init__(self, stl_file):
+    def __init__(self, stl_file, substrate_material, wire_material):
+
+        self.substrate_material = substrate_material
+        self.wire_material = wire_material
 
         # -----------------------------------------
         #Check if Trimesh import works 
@@ -175,7 +178,19 @@ class Geometry:
         self.substrate_bottom = 0.0
         self.substrate_top = self.substrate_height
 
-        
+
+    def generate_substrate_nodes(self, substrate_coords):
+
+        for xyz in substrate_coords:
+            self.coords.append(xyz)
+            self.material_ids.append(0)  # Al6061
+
+    def generate_bead_nodes(self, bead_coords):
+
+        for xyz in bead_coords:
+            self.coords.append(xyz)
+            self.material_ids.append(1)  # Al5183
+            
     # -----------------------------------------
     def build_substrate(self):
 

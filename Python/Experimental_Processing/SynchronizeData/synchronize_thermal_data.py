@@ -24,9 +24,9 @@ from config_sync import thermal_metadata
 
 # Paths
 BASE_DIR = Path(__file__).resolve().parent
-PROJECT_DIR = BASE_DIR.parent.parent
+PROJECT_DIR = BASE_DIR.parent.parent.parent
 
-THERMAL_DATA_DIR = PROJECT_DIR / thermal_metadata["material_directory"]
+THERMAL_DATA_DIR = PROJECT_DIR / thermal_metadata["material_directory"] / "ThermalData"
 
 FRONIUS_FILE = THERMAL_DATA_DIR / "Fronius.csv"
 TC_FILE = THERMAL_DATA_DIR / "Thermocouples.csv"
@@ -133,10 +133,17 @@ print("\n========== FRONIUS PASSES ==========")
 print(f"Detected deposition starts:{len(start_times)} ")
 print(f"Detected deposition ends: {len(end_times)} ")
 
-raise ValueError(
-    f"Requested {NUMBER_OF_PASSES} passes, "
-    f"but detected only {len(start_times)} deposition starts."
-)
+if len(start_times) < NUMBER_OF_PASSES:
+    raise ValueError(
+        f"Requested {NUMBER_OF_PASSES} passes, "
+        f"but detected only {len(start_times)} deposition starts."
+    )
+
+if len(end_times) < NUMBER_OF_PASSES:
+    raise ValueError(
+        f"Requested {NUMBER_OF_PASSES} passes, "
+        f"but detected only {len(end_times)} deposition ends."
+    )
       
 
 # ============================================================

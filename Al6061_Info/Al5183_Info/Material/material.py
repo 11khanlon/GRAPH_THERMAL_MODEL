@@ -4,7 +4,7 @@
 import numpy as np
 from config import MATERIAL
 
-class LM5Material:
+class Al6061Material:
 
     def __init__(self):
 
@@ -73,7 +73,7 @@ class LM5Material:
 #--------------------------------------------
 if __name__ == "__main__":
 
-    material = LM5Material()
+    material = Al6061Material()
 
     material.summary()
 
