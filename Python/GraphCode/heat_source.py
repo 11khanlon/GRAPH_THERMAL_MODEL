@@ -166,17 +166,33 @@ if __name__ == "__main__":
     from geometry import Geometry
     from nodes import NodeGenerator
     from config import  MATERIAL, BUILD, WAAM
-    from material import A36Material
- 
-
+    from material import Al5183Material, Al6061Material
+        
     stl_file = BUILD["stl_file"]
-    geom = Geometry(stl_file)
+    substrate_material = Al6061Material()
+    wire_material = Al5183Material()
+    geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
+
     geom.build_blocks()
     generator = NodeGenerator(geom)
     generator.generate()
     nodes = generator.nodes
 
-    material_model = A36Material()
+
+    block = next(
+        block
+        for block in geom.blocks
+        if not block.is_substrate
+    )
+
+    material_model = block.material
+
+    heat = ArcHeatSource(
+        material_model=material_model,
+        reference_temperature=MATERIAL["ambient_temperature"],
+        liquidus_temperature=MATERIAL["liquidus_temperature"],
+        waam=WAAM
+    )
 
     heat = ArcHeatSource(
         material_model = material_model,

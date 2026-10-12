@@ -244,3 +244,55 @@ Use for debugging later
         print(f"Laplacian reconstruction error: {error:.3e}")
 
         return error
+
+
+ def save_graph(self, directory):
+
+        directory = Path(directory)
+        directory.mkdir(parents=True, exist_ok=True)
+
+        save_npz(directory / "laplacian.npz", self.L)
+
+        if self.A is not None:
+            save_npz(directory / "adjacency.npz", self.A)
+
+        if self.H is not None:
+            save_npz(directory / "degree.npz", self.H)
+
+        if self.eigenvalues is not None:
+            np.save(directory / "eigenvalues.npy", self.eigenvalues)
+
+        if self.eigenvectors is not None:
+            np.save(directory / "eigenvectors.npy", self.eigenvectors)
+
+        print(f"Graph saved to: {directory}")
+
+
+    def load_graph(self, directory):
+
+        directory = Path(directory)
+
+        self.L = load_npz(directory / "laplacian.npz")
+
+        if (directory / "adjacency.npz").exists():
+            self.A = load_npz(directory / "adjacency.npz")
+
+        if (directory / "degree.npz").exists():
+            self.H = load_npz(directory / "degree.npz")
+
+        eigenvalue_file = directory / "eigenvalues.npy"
+        eigenvector_file = directory / "eigenvectors.npy"
+
+        self.eigenvalues = (
+            np.load(eigenvalue_file)
+            if eigenvalue_file.exists()
+            else None
+        )
+
+        self.eigenvectors = (
+            np.load(eigenvector_file)
+            if eigenvector_file.exists()
+            else None
+        )
+
+        print(f"Graph loaded from: {directory}")

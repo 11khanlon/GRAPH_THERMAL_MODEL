@@ -5,7 +5,7 @@ import numpy as np
 from conduction import ConductionSolver
 from convection import ConvectionSolver
 from heat_source import ArcHeatSource
-from material import A36Material
+from material import Al5183Material, Al6061Material
 from datetime import datetime
 import time 
 from pathlib import Path
@@ -693,8 +693,9 @@ if __name__ == "__main__":
     from thermocouples import ThermalProbe, middle_block_of_layer, check_probe_location
 
     stl_file = BUILD["stl_file"]
-
-    geometry = Geometry(stl_file)
+    substrate_material = Al6061Material()
+    wire_material = Al5183Material()
+    geometry = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
 
     geometry.build_blocks()
 

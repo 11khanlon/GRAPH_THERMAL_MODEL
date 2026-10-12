@@ -83,31 +83,23 @@ if __name__ == "__main__":
     from nodes import NodeGenerator
     from graph import ThermalGraph
     from config import GRAPH, MATERIAL, BLOCK, BUILD, WAAM
-    from material import A36Material
+    from material import Al5183Material, Al6061Material
 
-    stl = BUILD["stl_file"]
-
-    geom = Geometry(stl)
+    stl_file = BUILD["stl_file"]
+    substrate_material = Al6061Material()
+    wire_material = Al5183Material()
+    geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
 
     geom.build_blocks()
-
     generator = NodeGenerator(geom)
-
     generator.generate()
-
     graph = ThermalGraph(generator.nodes)
-
     graph.build()
-
     graph.degree_matrix()
-
     graph.laplacian()
-
     graph.eigensystem()
-
     solver = ConductionSolver(graph, gain = GRAPH["gain"])
 
-    material = A36Material()
 
     T0 = np.full(graph.N, MATERIAL["ambient_temperature"])
 
@@ -132,7 +124,7 @@ if __name__ == "__main__":
 
     T_average = np.mean(T0[block_node_ids])
 
-    alpha = material.diffusivity(T_average)
+    alpha = block.material.diffusivity(T_average)
 
     print(f"Current block average temperature : " f"{T_average:.2f} °C")
     print(f"Thermal diffusivity: " f"{alpha:.3e} m²/s")
@@ -204,4 +196,25 @@ if __name__ == "__main__":
             BLOCK["time_per_block"]
         )
     )
+
+
+    alpha_nodes = np.array([
+        node.material.diffusivity(T0[node.id])
+        for node in graph.nodes
+    ])
+
+    print("\n--- Material Diffusivity Verification ---")
+
+    for material_name in ["Al6061", "Al5183"]:
+
+        ids = np.array([
+            node.id
+            for node in generator.nodes
+            if node.material.name == material_name
+        ])
+
+        print(f"{material_name}:")
+        print(f"  Average alpha: {np.mean(alpha_nodes[ids]):.3e} m²/s")
+        print(f"  Minimum alpha: {np.min(alpha_nodes[ids]):.3e} m²/s")
+        print(f"  Maximum alpha: {np.max(alpha_nodes[ids]):.3e} m²/s")
 

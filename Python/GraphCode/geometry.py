@@ -32,13 +32,7 @@ class Block:
     • deposited material
     """
 
-    def __init__(
-        self,
-        block_id,
-        layer,
-        start,
-        end,
-        is_substrate=False):
+    def __init__(self, block_id, layer, start, end, is_substrate = False, material = None):
 
         self.id = block_id
         self.layer = layer
@@ -49,6 +43,8 @@ class Block:
 
         self.is_substrate = is_substrate
         self.active = is_substrate
+
+        self.material = material
 
         self.nodes = []
         self.node_indices = []
@@ -86,9 +82,7 @@ class Geometry:
         print("Loading STL...")
 
         if not os.path.exists(stl_file):
-            raise FileNotFoundError(
-                f"STL file not found:\n{stl_file}"
-            )
+            raise FileNotFoundError(f"STL file not found:\n{stl_file}")
 
         start = time.perf_counter()
 
@@ -96,9 +90,7 @@ class Geometry:
             self.mesh = trimesh.load_mesh(stl_file)
 
         except Exception as e:
-            raise RuntimeError(
-                f"Unable to load STL:\n{e}"
-            )
+            raise RuntimeError(f"Unable to load STL:\n{e}")
 
         elapsed = time.perf_counter() - start
 
@@ -179,18 +171,7 @@ class Geometry:
         self.substrate_top = self.substrate_height
 
 
-    def generate_substrate_nodes(self, substrate_coords):
-
-        for xyz in substrate_coords:
-            self.coords.append(xyz)
-            self.material_ids.append(0)  # Al6061
-
-    def generate_bead_nodes(self, bead_coords):
-
-        for xyz in bead_coords:
-            self.coords.append(xyz)
-            self.material_ids.append(1)  # Al5183
-            
+    
     # -----------------------------------------
     def build_substrate(self):
 
@@ -236,7 +217,8 @@ class Geometry:
                             k - nz,
                             start,
                             end,
-                            is_substrate=True
+                            is_substrate=True,
+                            material=self.substrate_material
                         )
                     )
 
@@ -280,7 +262,8 @@ class Geometry:
                         layer,
                         start,
                         end,
-                        is_substrate=False
+                        is_substrate=False,
+                        material=self.wire_material
                     )
                 )
 
@@ -423,11 +406,15 @@ if __name__ == "__main__":
         
     from Visualization.geometry_visualization import plot_geometry, check_geometry_locations
     from face import update_exposed_faces, print_exposed_faces, print_exposure_statistics
+    from material import Al5183Material, Al6061Material
 
     stl_file = BUILD["stl_file"]
-    
-    geom = Geometry(stl_file)
 
+    wire_material = Al5183Material()
+    substrate_material = Al6061Material()
+
+    geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
+    
     geom.build_blocks()
 
     print(geom.blocks[0])

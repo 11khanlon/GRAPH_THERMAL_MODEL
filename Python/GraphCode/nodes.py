@@ -34,6 +34,9 @@ class Node:
         self.block_id = block_id
         self.block = block
 
+        # Material inherited from parent block
+        self.material = block.material
+
         #determine if substrate 
         self.is_substrate = is_substrate
 
@@ -60,6 +63,7 @@ class Node:
             f"Node("
             f"id={self.id}, "
             f"block={self.block_id}, "
+            f"material={self.material.name},"
             f"active={self.active})"
         )
 
@@ -422,13 +426,22 @@ if __name__ == "__main__":
         sys.path.insert(0, python_folder)
 
     from geometry import Geometry
+    from material import Al5183Material, Al6061Material
     from Visualization.node_visualization import plot_geometry_with_nodes
     from face import update_exposed_faces
     from config import BLOCK
 
+
     stl_file = BUILD["stl_file"]
-    
-    geom = Geometry(stl_file)
+
+    substrate_material = Al6061Material()
+    wire_material = Al5183Material()
+
+    geom = Geometry(
+        stl_file,
+        substrate_material=substrate_material,
+        wire_material=wire_material
+    )
 
     geom.build_blocks()
 
@@ -448,3 +461,29 @@ if __name__ == "__main__":
     plot_geometry_with_nodes(geom, generator)
 
     print_surface_statistics(nodes)
+
+
+    print("\n------ MATERIAL VALIDATION ------")
+
+    for material_name in ["Al6061", "Al5183"]:
+
+        count = sum(
+            node.material.name == material_name
+            for node in generator.nodes
+        )
+
+        print(f"{material_name} nodes: {count}")
+
+    assert all(
+        node.material.name == "Al6061"
+        for node in generator.nodes
+        if node.is_substrate
+    )
+
+    assert all(
+        node.material.name == "Al5183"
+        for node in generator.nodes
+        if not node.is_substrate
+    )
+
+    print("Material assignments verified.")

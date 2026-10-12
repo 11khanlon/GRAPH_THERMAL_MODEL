@@ -19,7 +19,9 @@ from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 from scipy.sparse import lil_matrix, csr_matrix, diags
 from scipy.sparse.csgraph import connected_components
+from scipy.sparse import save_npz, load_npz
 import time 
+
 
 
 from config import GRAPH
@@ -75,13 +77,10 @@ class ThermalGraph:
         return sensor_node, distances[nearest_index]
 
     #-----------------------------------------------------
+    #Construct graph using neighborhood radius ε --> Paper Eq. (11)
 
     def build(self):
 
-        """
-        Construct graph using neighborhood radius ε
-        Paper Eq. (11)
-        """
         t0 = time.perf_counter() 
 
         coords = self.coordinates()
@@ -175,20 +174,17 @@ class ThermalGraph:
         return self.L
 
     # --------------------------------------------------------
+    #Compute Lφ = φΛ --> Used later for the spectral heat equation
 
     def eigensystem(self):
-
-        """
-        Compute Lφ = φΛ
-        Used later for the spectral heat equation
-        """
+        
         t0 = time.perf_counter()
 
         if self.L is None:
-
             self.laplacian()
 
         print("Computing eigenvectors...")
+        print("This could take a while.")
 
         L_dense = self.L.toarray()
 
@@ -204,7 +200,10 @@ class ThermalGraph:
         print("\nEigen decomposition complete.")
 
         return eigenvalues, eigenvectors
-    
+
+
+
+
     
     # --------------------------------------------------------
 
@@ -299,26 +298,22 @@ if __name__ == "__main__":
     from geometry import Geometry
     from nodes import NodeGenerator
     from config import BUILD
+    from geometry import Geometry
+    from material import Al5183Material, Al6061Material
     
 
     stl_file = BUILD["stl_file"]
-    
-    geom = Geometry(stl_file)
+    substrate_material = Al6061Material()
+    wire_material = Al5183Material()
+    geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
 
     geom.build_blocks()
-
     generator = NodeGenerator(geom)
-
+    np.random.seed(42)
     generator.generate()
-    
     graph = ThermalGraph(generator.nodes)
-
     graph.build()
-
     graph.degree_matrix()
-
     graph.laplacian()
-
     graph.eigensystem()
-
     graph.summary()

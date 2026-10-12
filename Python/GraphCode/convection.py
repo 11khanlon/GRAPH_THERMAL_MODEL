@@ -104,16 +104,18 @@ if __name__ == "__main__":
     from geometry import Geometry
     from nodes import NodeGenerator
     from config import MATERIAL, CONVECTION, BLOCK, BUILD, WAAM
-    from material import A36Material
+    from material import Al5183Material, Al6061Material, AluminumMaterial
     from face import update_exposed_faces
 
     surface_band_thickness = BLOCK["surface_band_thickness"]
 
     surface_thickness = BLOCK["surface_thickness"] 
 
+    substrate_material = Al6061Material()
+    wire_material = Al5183Material()
+
     stl_file = BUILD["stl_file"]
-        
-    geom = Geometry(stl_file)
+    geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
 
     geom.build_blocks()
 
@@ -152,8 +154,16 @@ if __name__ == "__main__":
         density = MATERIAL["density"],
         block_length = block_length)
 
-    material = A36Material() 
-    cp = material.specific_heat(temperature)
+  
+    cp = np.array([
+        node.material.specific_heat(temperature[node.id])
+        for node in nodes
+    ])
+
+    rho = np.array([
+        node.material.rho
+        for node in nodes
+    ])
 
     cooled_forced = solver.block_cooling(
         temperature=temperature,
