@@ -42,6 +42,7 @@ class AluminumMaterial:
     def layer_diffusivity(self, temperatures):
 
         Tavg = np.mean(temperatures)
+
         return self.diffusivity_linear_si(Tavg)
     
 
@@ -57,7 +58,7 @@ class AluminumMaterial:
         print(f"alpha(25°C) = {self.diffusivity(25):.3e} m²/s")
         
 
-class Al5183Material(AluminumMaterial):
+class Al5183Material:
 
     def __init__(self):
 
@@ -71,7 +72,8 @@ class Al5183Material(AluminumMaterial):
         )  
 
     
-class Al6061Material(AluminumMaterial):
+
+class Al6061Material:
 
     def __init__(self):
 
@@ -94,3 +96,7 @@ if __name__ == "__main__":
     wire.summary()
     print()
     substrate.summary()
+
+    
+
+    

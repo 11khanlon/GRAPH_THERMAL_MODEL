@@ -161,7 +161,7 @@ CONVECTION = {
 
 DWELL = {
     "dwell_time_step": 1,    #seconds
-    "dwell": 30
+    "dwell": 17.20
 }
 
 

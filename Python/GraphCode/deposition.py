@@ -9,8 +9,8 @@ from material import Al5183Material, Al6061Material
 from datetime import datetime
 import time 
 from pathlib import Path
-
 from face import update_exposed_faces
+from deposition_tracker import DepositionTracker
 
 
 #------------------------
@@ -47,16 +47,15 @@ class DepositionSimulation:
         self.graph_settings = graph_settings
 
         #------ Temperature dependent material model ---------
-        self.material_model = A36Material()
-        self.current_alpha = (self.material_model.diffusivity(self.material_settings["ambient_temperature"]))
+        self.substrate_material = geometry.substrate_material
+        self.wire_material = geometry.wire_material
+
 
         #-------- Surface band definition -----------
         self.surface_thickness = block_info["surface_thickness"]
 
         #------- Initial temperature state ------------
-        self.temperature = np.full(len(self.nodes),
-                                   material["ambient_temperature"],
-                                   dtype = float)
+        self.temperature = np.full(len(self.nodes), material["ambient_temperature"], dtype = float)
 
         #----------- Block and Build Info -----------
         self.blocks_per_layer = build_info["blocks_per_layer"]
@@ -68,47 +67,30 @@ class DepositionSimulation:
         self.dwell_dt = dwell_info["dwell_time_step"]           # Paper uses 1-second dwell integration
         self.time = 0.0                              #simulation time 
 
-        #--------- Initial state as history -------------
-        self.history = [self.temperature.copy()]
-        self.history_time = [self.time]
-
         #------- Solvers ---------- 
         self.conduction = ConductionSolver(graph,
             gain = graph_settings["gain"])
 
+        rho = np.array([node.material.rho for node in self.nodes], dtype=float)
+
         self.cooling = ConvectionSolver(
-            density = material["density"],
+            density = rho,
             block_length = self.block_length)
 
         self.heat_source = ArcHeatSource(
-        material_model = self.material_model,
-        reference_temperature = self.material_settings["ambient_temperature"],
-        liquidus_temperature = self.material_settings["liquidus_temperature"],
-        waam = self.waam)
-
-        #------------ Thermocouple History -----------------
-        self.probes = probes if probes is not None else []
-
-        self.probe_history = {
-            probe.name: []
-            for probe in self.probes}
-
-        self.probe_history_time = []
-        self.probe_history_stage = []
-        self.probe_history_block = []
+            material_model=self.wire_material,
+            reference_temperature=self.material_settings["ambient_temperature"],
+            liquidus_temperature=self.material_settings["liquidus_temperature"],
+            waam=self.waam)
 
         #----------- Simulation metadata ------------
         self.wall_start = None
         self.wall_end = None
         self.computation_time = None
-        self.active_history = [self.active_mask().copy()]
-        self.active_block_history = [None]
-        self.stage_history = ["initial"]
-        self.laser_position_history = [
-            np.array([np.nan, np.nan, np.nan])
-        ]
+        self.tracker = DepositionTracker(nodes = self.nodes, initial_temperature = self.temperature, probes = probes)
 
-    # -----------------------------------------------------
+
+    #------------- Helper Functions -----------
     #activate nodes belonging to the newly deposited block 
     def activate_block(self, block):
 
@@ -117,7 +99,6 @@ class DepositionSimulation:
         for node in block.nodes:
             node.active = True
 
-    #-----------------------------------------
     def update_surface_masks(self):
 
         self.forced_surface_mask = np.array(
@@ -128,42 +109,20 @@ class DepositionSimulation:
             [node.free_surface for node in self.nodes],
             dtype=bool)
 
-        print(f"Forced surface nodes: " 
-              f"{np.sum(self.forced_surface_mask)}")
+        print(f"Forced surface nodes: {np.sum(self.forced_surface_mask)} ")
+        print(f"Free surface nodes: {np.sum(self.free_surface_mask)}")
 
-        print(f"Free surface nodes: "
-            f"{np.sum(self.free_surface_mask)}")
 
-    
-    #-------------------------------------------
     def deposition_temperature_history(self):
 
         deposition_indices = np.array([
             node.id
             for node in self.nodes
             if not node.is_substrate
-        ])
+        ], dtype=int)
 
-        return (self.history[:, deposition_indices])
-
-    def substrate_temperature_history(self):
-
-        substrate_indices = np.array([
-            node.id
-            for node in self.nodes
-            if node.is_substrate])
-
-        return (self.history[:, substrate_indices])
-
-    #-----------------------------------------
-    def block_temperature_history(self, block):
-
-        indices = np.array([
-            node.id
-            for node in block.nodes
-        ])
-
-        return np.mean(self.history[:, indices], axis=1)
+        return np.asarray(self.history)[:, deposition_indices]
+   
 
     #------------------------------------
     def layer_indices(self, layer):
@@ -177,7 +136,7 @@ class DepositionSimulation:
                 and node.block.layer == layer
             )
         ])
-    
+
     #---------------------------------------
     def diffusivity_from_layer(self, layer):
 
@@ -195,102 +154,12 @@ class DepositionSimulation:
     #--------------------------------------------------
     def current_diffusivity(self):
 
-        active = self.active_mask()
+        alpha = np.array([
+            node.material.diffusivity(self.temperature[i])
+            for i, node in enumerate(self.nodes)
+        ], dtype=float)
 
-        T_active = self.temperature[active]
-
-        if T_active.size == 0:
-            return self.material_model.diffusivity(
-                self.material_settings["ambient_temperature"])
-
-        T_average = np.mean(T_active)
-
-        return self.material_model.diffusivity(T_average)
-
-    #------------------------------------------
-    def print_temperature_status(self, label, block=None):
-
-        active = self.active_mask()
-        inactive = ~active
-
-        print(f"\n--- {label} ---")
-
-        if block is not None:
-            print(
-                f"Block {block.id}, "
-                f"Layer {block.layer}"
-            )
-
-        print(
-            f"Simulation time : "
-            f"{self.time:.3f} s"
-        )
-
-        print(
-            f"Global Tmin/Tmax: "
-            f"{self.temperature.min():.2f} / "
-            f"{self.temperature.max():.2f} °C"
-        )
-
-        print(
-            f"Active nodes    : "
-            f"{np.sum(active)}"
-        )
-
-        print(
-            f"Active Tmax     : "
-            f"{self.temperature[active].max():.2f} °C"
-        )
-
-        if np.any(inactive):
-
-            print(
-                f"Inactive Tmax   : "
-                f"{self.temperature[inactive].max():.2f} °C"
-            )
-    
-    #-----------------------------------------
-    def record_state(
-        self,
-        stage,
-        block=None,
-        laser_position=None):
-
-        # Full temperature state
-        self.history.append(self.temperature.copy())
-
-        # Simulation time
-        self.history_time.append(self.time)
-
-        # Which nodes physically exist
-        self.active_history.append(
-            self.active_mask().copy()
-        )
-
-        # Which deposition block is currently being processed
-        if block is None:
-
-            self.active_block_history.append(None)
-
-        else:
-
-            self.active_block_history.append(block.id)
-
-        # State label
-        self.stage_history.append(stage)
-
-        # Laser position
-        if laser_position is None:
-
-            self.laser_position_history.append(
-                np.array([np.nan, np.nan, np.nan])
-            )
-
-        else:
-
-            self.laser_position_history.append(
-                np.asarray(laser_position, dtype=float).copy()
-            )
+        return alpha
 
     #--------------------------------------------
     def active_mask(self):
@@ -298,7 +167,7 @@ class DepositionSimulation:
         return np.array(
             [node.active for node in self.nodes],
             dtype=bool)
-    
+
     #--------------------------------------------------
     def inactive_node_statistics(self):
 
@@ -313,9 +182,7 @@ class DepositionSimulation:
         ambient = self.material_settings["ambient_temperature"]
 
         print("Max inactive T:", Tinactive.max())
-
-        print("Inactive nodes > ambient + 10 C:",
-            np.sum(Tinactive > ambient + 10.0))
+        print("Inactive nodes > ambient + 10 C:", np.sum(Tinactive > ambient + 10.0))
 
     #------------------------------------------------
     def hottest_inactive_node(self):
@@ -327,105 +194,79 @@ class DepositionSimulation:
             return
 
         inactive_indices = np.where(inactive)[0]
-
-        local_index = np.argmax(
-            self.temperature[inactive]
-        )
-
+        local_index = np.argmax(self.temperature[inactive])
         node_index = inactive_indices[ local_index]
         node = self.nodes[node_index]
 
-        print(
-            f"Hottest inactive node: "
-            f"{node.id}"
-        )
+        print(f"Hottest inactive node: {node.id} ")
+        print(f"Temperature: {self.temperature[node_index]:.2f} °C ")
+        print(f"Layer: {node.block.layer} ")
+        print(f"Position: {node.position} ")
 
-        print(
-            f"Temperature: "
-            f"{self.temperature[node_index]:.2f} °C"
-        )
-
-        print(
-            f"Layer: "
-            f"{node.block.layer}"
-        )
-
-        print(
-            f"Position: "
-            f"{node.position}"
-        )
-
+       
     #----------------------------------------
-    def print_current_block_temperature(
-        self,
-        block,
-        label
-    ):
+    def print_current_block_temperature(self, block, label):
 
         indices = np.array([
             node.id
-            for node in block.nodes
-        ])
+            for node in block.nodes])
 
-        Tblock = self.temperature[
-            indices
-        ]
+        Tblock = self.temperature[indices]
 
         print(
             f"{label} | "
             f"Block {block.id}: "
             f"Tmin={Tblock.min():.2f} °C, "
-            f"Tmax={Tblock.max():.2f} °C"
-        )
+            f"Tmax={Tblock.max():.2f} °C")
 
-    def record_probe_state(self, stage, block=None):
 
-        for probe in self.probes:
+    def check_temperature_validity(temperature, ambient_temperature):
 
-            T_probe = (
-                probe.interpolate_temperature(
-                    nodes=self.nodes,
-                    temperature=self.temperature,
-                    k=8,
-                    power=2,
-                    active_only=True
-                )
-            )
+        if not np.all(np.isfinite(temperature)):
+            raise ValueError("Temperature contains NaN or infinity.")
 
-            self.probe_history[
-                probe.name
-            ].append(
-                T_probe
-            )
+        if np.any(temperature < ambient_temperature - 1e-6):
+            print("WARNING: Some nodes are below ambient temperature.")
 
-            print(
-                f"{stage} | "
-                f"{probe.name} | "
-                f"T={T_probe:.2f} °C"
-            )
+        print(f"Temperature range: {temperature.min():.2f} to  {temperature.max():.2f} °C")
+         
 
-        self.probe_history_time.append(
-            self.time
-        )
+    def check_inactive_heating(nodes, temperature, ambient_temperature, tolerance=1.0):
 
-        self.probe_history_stage.append(
-            stage
-        )
+        inactive = np.array([
+            not node.active
+            for node in nodes])
 
-        if block is None:
+        if not np.any(inactive):
+            return
 
-            self.probe_history_block.append(
-                None
-            )
+        inactive_temperatures = temperature[inactive]
+        heated = np.sum(inactive_temperatures > ambient_temperature + tolerance)
 
-        else:
+        print(f"Inactive nodes above ambient: {heated}")
 
-            self.probe_history_block.append(
-                block.id
-            )
-  
+        if heated > 0:
+            print("WARNING: Heat may be reaching inactive nodes.")
+
+
+    def block_cooling_rate(block, previous_temperature, current_temperature, dt):
+
+        if dt <= 0:
+            raise ValueError("dt must be positive.")
+
+        indices = np.array([
+            node.id
+            for node in block.nodes])
+
+        T_old = np.mean(previous_temperature[indices])
+        T_new = np.mean(current_temperature[indices])
+
+        cooling_rate = (T_new - T_old) / dt
+        print(f"Block {block.id} temperature rate: {cooling_rate:.2f} °C/s ")
+
+        return cooling_rate
+    
     # -----------------------------------------------
-
     def simulate_block(self, block):
 
         print("Temperature range:", self.temperature.min(), self.temperature.max())
@@ -439,13 +280,11 @@ class DepositionSimulation:
         self.node_generator.update_surface_types()                        # Classify nodes as forced/free
         self.update_surface_masks()                                        # Rebuild masks
 
-        # Step 1 -> Laser heating
-        self.temperature = self.heat_source.apply(
-            self.nodes,
-            block,
-            self.temperature)
+        # Step 1: Arc/HeatSource heating
+        delta_T_arc = self.heat_source.apply(nodes=self.nodes, block=block, temperature=self.temperature)
+        self.temperature += delta_T_arc
 
-        self.print_temperature_status("After HeatSource", block)
+
         self.print_current_block_temperature(block, "After HeatSource")
 
         imax = np.argmax(self.temperature)
@@ -457,10 +296,20 @@ class DepositionSimulation:
             f"block={hot_node.block_id}, "
             f"layer={hot_node.block.layer}, "
             f"T={self.temperature[imax]:.2f} °C, "
-            f"position={hot_node.position}"
-        )
+            f"position={hot_node.position}")
 
-        self.record_probe_state(stage="after_heatsource", block=block)
+        self.tracker.record_probe_state(
+            temperature=self.temperature,
+            time=self.time,
+            stage="after_heatsource",
+            block=block)
+
+
+        self.tracker.print_temperature_status(
+            temperature=self.temperature,
+            time=self.time,
+            label="After HeatSource",
+            block=block)
 
   
         # Step 2 -> Conduction
@@ -470,26 +319,30 @@ class DepositionSimulation:
             self.conduction.block_conduction(
             self.temperature,
             alpha,
-            block_time = self.block_time
-                )
+            block_time = self.block_time)
             )
         
-        self.record_probe_state(stage="after_conduction", block=block)
-        self.print_temperature_status("After conduction", block)
+        self.tracker.record_probe_state(
+            temperature=self.temperature,
+            time=self.time,
+            stage="after_conduction",
+            block=block)
+        
+        self.tracker.print_temperature_status(
+            temperature=self.temperature,
+            time=self.time,
+            label="After conduction",
+            block=block)
 
         # Step 3 --> Convection
-        cp = self.material_model.specific_heat(self.temperature)
+        cp = np.array([
+            node.material.specific_heat(self.temperature[node.id])
+            for node in self.nodes])
 
-        overlap = (
-            self.forced_surface_mask
-            & self.free_surface_mask
-        )
+        overlap = (self.forced_surface_mask & self.free_surface_mask)
 
         if np.any(overlap):
-            print(
-                "WARNING: forced/free overlap:",
-                np.sum(overlap)
-            )
+            print("WARNING: forced/free overlap:", np.sum(overlap))
 
 
         # Forced convection + equivalent radiation
@@ -502,7 +355,9 @@ class DepositionSimulation:
             block_time = self.block_time
         )
 
-        cp = self.material_model.specific_heat(self.temperature)
+        cp = np.array([
+            node.material.specific_heat(self.temperature[i])
+            for i, node in enumerate(self.nodes)], dtype=float)
 
         # Free convection
         self.temperature = self.cooling.block_cooling(
@@ -514,73 +369,115 @@ class DepositionSimulation:
             block_time=self.block_time
         )
 
-        self.record_probe_state(stage="Probe after convection", block=block)
-        self.print_temperature_status("After convection", block)
+        self.tracker.record_probe_state(
+            temperature=self.temperature,
+            time=self.time + self.block_time,
+            stage="after_convection",
+            block=block
+        )
+
+        self.tracker.print_temperature_status(
+            temperature=self.temperature,
+            time=self.time + self.block_time,
+            label="After convection",
+            block=block
+        )
 
         self.time += self.block_time
 
-        self.record_state(
-        stage="after_block",
-        block=block,
-        laser_position=block.center)
+        self.tracker.record_state(
+            temperature=self.temperature,
+            time=self.time,
+            stage="after_block",
+            block=block,
+            laser_position=block.center
+        )
+
+        self.tracker.record_deposition_frame(
+            temperature=self.temperature,
+            time=self.time,
+            block=block,
+            stage="after_block"
+        )
      
 
     # ----------------------------------
     def simulate_dwell(self):
 
-        steps = int(np.ceil(self.dwell_time / self.dwell_dt))
+        if self.dwell_dt <= 0:
+            raise ValueError("Dwell timestep must be positive.")
 
-        for _ in range(steps):
+        remaining = self.dwell_time
 
+        while remaining > 1e-12:
+
+            dt = min(self.dwell_dt, remaining)
+
+            # Step 1: Conduction
             alpha = self.current_diffusivity()
 
-            self.temperature = (
-                self.conduction.dwell_conduction(
-                    temperature=self.temperature,
-                    alpha=alpha,
-                    dt = self.dwell_dt
-                )
+            self.temperature = self.conduction.step(
+                temperature=self.temperature,
+                dt=self.block_time,
+                active_mask=self.active_mask(),
+                volumes=self.node_volumes,
+                edge_areas=self.edge_areas
             )
 
-            cp = self.material_model.specific_heat(self.temperature)
+            # Step 2: Forced convection
+            cp = np.array([
+                node.material.specific_heat(self.temperature[i])
+                for i, node in enumerate(self.nodes)
+            ], dtype=float)
 
-            self.temperature = (
-                self.cooling.dwell_cooling(
-                    temperature=self.temperature,
-                    surface_mask=self.forced_surface_mask,
-                    h=self.convection["forced"],
-                    cp=cp,
-                    ambient_temperature=self.material_settings["ambient_temperature"],
-                    dt=self.dwell_dt
-                )
+            self.temperature = self.cooling.dwell_cooling(
+                temperature=self.temperature,
+                surface_mask=self.forced_surface_mask,
+                h=self.convection["forced"],
+                cp=cp,
+                ambient_temperature=self.material_settings["ambient_temperature"],
+                dt=dt
             )
 
-            cp = self.material_model.specific_heat(self.temperature)
+            # Step 3: Free convection
+            cp = np.array([
+                node.material.specific_heat(self.temperature[i])
+                for i, node in enumerate(self.nodes)
+            ], dtype=float)
 
-            self.temperature = (
-                self.cooling.dwell_cooling(
-                    temperature=self.temperature,
-                    surface_mask=self.free_surface_mask,
-                    h=self.convection["free"],
-                    cp=cp,
-                    ambient_temperature=self.material_settings["ambient_temperature"],
-                    dt = self.dwell_dt
-                )
+            self.temperature = self.cooling.dwell_cooling(
+                temperature=self.temperature,
+                surface_mask=self.free_surface_mask,
+                h=self.convection["free"],
+                cp=cp,
+                ambient_temperature=self.material_settings["ambient_temperature"],
+                dt=dt
             )
 
-            self.time += self.dwell_dt
+            # Advance simulation time
+            self.time += dt
+            remaining -= dt
 
-            self.record_state(
+            # Record simulation state
+            self.tracker.record_state(
+                temperature=self.temperature,
+                time=self.time,
                 stage="dwell",
                 block=None,
-                laser_position=None)
+                laser_position=None
+            )
 
-            self.record_probe_state(stage="dwell", block=None)
-    
+            # Record thermocouples
+            self.tracker.record_probe_state(
+                temperature=self.temperature,
+                time=self.time,
+                stage="dwell",
+                block=None)
+            
     # --------------------------------------
     def run(self):
 
-        self.record_probe_state(stage="initial")
+        self.tracker.record_probe_state( temperature=self.temperature, time=self.time, stage="initial" )
         self.wall_start = datetime.now()
         compute_start = time.perf_counter()
 
@@ -649,197 +546,12 @@ class DepositionSimulation:
         print(f"\nComputer calculation time: "
             f"{self.computation_time:.2f} s")
 
-        self.history = np.asarray(self.history)
+        self.tracker.finalize()
 
-        self.history_time = np.asarray(self.history_time)
-
-        self.active_history = np.asarray(
-            self.active_history,
-            dtype=bool)
-
-        self.active_block_history = np.asarray(
-            self.active_block_history,
-            dtype=object)
-
-        self.stage_history = np.asarray(
-            self.stage_history,
-            dtype=str)
-
-        self.laser_position_history = np.asarray(
-            self.laser_position_history,
-            dtype=float)
-
-        return self.history
+        return self.tracker.history
 
 
     # --------------------------------------
     def maximum_temperature(self):
         
         return np.max(self.temperature)
-
-
-
-
-# ------------------------------------
-
-if __name__ == "__main__":
-
-    import matplotlib.pyplot as plt
-
-    from geometry import Geometry
-    from nodes import NodeGenerator
-    from graph import ThermalGraph
-    from config import (MATERIAL,GRAPH, CONVECTION, BLOCK, DWELL, BUILD, SENSORS, WAAM)
-    from thermocouples import ThermalProbe, middle_block_of_layer, check_probe_location
-
-    stl_file = BUILD["stl_file"]
-    substrate_material = Al6061Material()
-    wire_material = Al5183Material()
-    geometry = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
-
-    geometry.build_blocks()
-
-    generator = NodeGenerator(geometry)
-
-    generator.generate()
-
-
-    #Extract information for real thermocouples 
-    thermocouples = []
-
-    for name, sensor in SENSORS.items():
-
-        position = np.array([sensor["x"], sensor["y"], geometry.substrate_top + sensor["z"]])
-
-        probe = ThermalProbe(
-            name=name,
-            position=position,
-            region=sensor["region"]
-        )
-
-        check_probe_location(probe, geometry)
-        probe.summary()
-        thermocouples.append(probe)
-
-    #artificial meltpool thermocouple - used for debugging
-    middle_block = middle_block_of_layer(geometry, layer=0)
-
-    meltpool_probe = ThermalProbe(
-        name="meltpool_probe",
-        position=middle_block.center,
-        region="deposition",
-        layer=0)
-
-    check_probe_location(meltpool_probe, geometry)
-
-    meltpool_probe.summary()
-
-    all_probes = thermocouples + [meltpool_probe]
-
-    #Build graph
-    graph = ThermalGraph(generator.nodes)
-    node_positions = np.array([node.position for node in generator.nodes])
-    substrate_mask = np.array([node.is_substrate for node in generator.nodes], dtype=bool)
-    node_block_ids = np.array([node.block_id for node in generator.nodes], dtype=int)
-    graph.build()
-    graph.degree_matrix()
-    graph.laplacian()
-    graph.eigensystem()
-
-    # Choose experimental case here
-    selected_dwell = DWELL["dwell"]
-
-    simulation = DepositionSimulation(
-        geometry=geometry,
-        node_generator=generator,
-        graph=graph,
-        material=MATERIAL,
-        convection=CONVECTION,
-        graph_settings=GRAPH,
-        dwell_info = DWELL, 
-        dwell_time = selected_dwell,
-        block_info = BLOCK,
-         build_info=BUILD,
-        probes = all_probes, 
-        waam = WAAM)
-
-    history = simulation.run()
-
-    tc_names = ["TC_0", "TC_1", "TC_2", "TC_3"]
-    tc_temperature = np.column_stack([
-        np.asarray(simulation.probe_history[name], dtype=float)
-        for name in tc_names])
-
-    probe_time = np.asarray(simulation.probe_history_time, dtype=float)
-    meltpool_temperature = np.asarray(simulation.probe_history["meltpool_probe"], dtype=float)
-    maximum_tc_temp = np.nanmax(tc_temperature, axis=0)
-    minimum_tc_temp = np.nanmin(tc_temperature, axis=0)
-    final_tc_temp = tc_temperature[-1, :]
-    
-    
-
-    meltpool_temperature = np.asarray(simulation.probe_history["meltpool_probe"], dtype=float)
-    probe_time = np.asarray(simulation.probe_history_time, dtype=float)
-
-    print("\n------ SIMULATION SUMMARY ------")
-    print("Maximum global temperature:", simulation.maximum_temperature())
-    print("Stored states:", history.shape[0])
-    print("Final simulated time:", simulation.history_time[-1], "s")
-
-    print("\n------ THERMOCOUPLE SUMMARY ------")
-    for i, name in enumerate(tc_names):
-        print(f"\n{name}")
-        print(f"  Maximum: " f"{maximum_tc_temp[i]:.2f} °C")
-        print(f"  Minimum: " f"{minimum_tc_temp[i]:.2f} °C")
-        print(f"  Final: " f"{final_tc_temp[i]:.2f} °C")
-
-
-    # Save raw history
-    np.savez_compressed(
-    "thermal_history.npz",
-
-    # Full graph history
-    temperature=simulation.history,
-    time=simulation.history_time,
-    active_history=simulation.active_history,
-    stage_history=simulation.stage_history,
-    source_position_history=simulation.laser_position_history,
-
-    # Geometry
-    node_positions=node_positions,
-    substrate_mask=substrate_mask,
-    node_block_ids=node_block_ids,
-
-    # Thermocouples
-    probe_time=np.asarray(simulation.probe_history_time),
-    probe_stage=np.asarray(simulation.probe_history_stage),
-    probe_block=np.asarray(simulation.probe_history_block, dtype=object),
-
-    tc_names=np.asarray(tc_names),
-    tc_temperature=tc_temperature,
-
-    tc_positions=np.asarray([
-        probe.position
-        for probe in thermocouples
-        ])
-    )
-
-    #----------------------------------
-    #Make result saving directory 
-    RESULT_DIR = (
-        Path(__file__).resolve().parent
-        / "Validation"
-        / "Results"
-        / "Simulation"
-    )
-
-    RESULT_DIR.mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    result_file = (
-        RESULT_DIR
-        / "thermal_simulation.npz")
-
-    
