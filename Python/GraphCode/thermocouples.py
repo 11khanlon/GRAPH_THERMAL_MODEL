@@ -254,86 +254,42 @@ def check_probe_location(probe, geometry):
 
     x, y, z = probe.position
 
+    # Substrate bounds
+    inside_substrate = (
+        geometry.substrate_xmin <= x <= geometry.substrate_xmax
+        and geometry.substrate_ymin <= y <= geometry.substrate_ymax
+        and geometry.substrate_bottom <= z <= geometry.substrate_top
+    )
+
+    # Deposition footprint
     deposition_blocks = [
         block
         for block in geometry.blocks
         if not block.is_substrate
     ]
 
-    dep_xmin = min(
-        block.start[0]
-        for block in deposition_blocks
-    )
+    dep_xmin = min(block.start[0] for block in deposition_blocks)
+    dep_xmax = max(block.end[0] for block in deposition_blocks)
+    dep_ymin = min(block.start[1] for block in deposition_blocks)
+    dep_ymax = max(block.end[1] for block in deposition_blocks)
 
-    dep_xmax = max(
-        block.end[0]
-        for block in deposition_blocks
-    )
-
-    dep_ymin = min(
-        block.start[1]
-        for block in deposition_blocks
-    )
-
-    dep_ymax = max(
-        block.end[1]
-        for block in deposition_blocks
-    )
-
-    print(
-        "\n------ PROBE LOCATION CHECK ------"
-    )
-
-    print(
-        "Probe [mm]:",
-        probe.position * 1000
-    )
-
-    print(
-        "Deposition X [mm]:",
-        dep_xmin * 1000,
-        "to",
-        dep_xmax * 1000
-    )
-
-    print(
-        "Deposition Y [mm]:",
-        dep_ymin * 1000,
-        "to",
-        dep_ymax * 1000
-    )
-
-    under_wall_x = (
+    under_wall = (
         dep_xmin <= x <= dep_xmax
+        and dep_ymin <= y <= dep_ymax
     )
 
-    under_wall_y = (
-        dep_ymin <= y <= dep_ymax
-    )
-
-    print(
-        "Inside deposition X footprint:",
-        under_wall_x
-    )
-
-    print(
-        "Inside deposition Y footprint:",
-        under_wall_y
-    )
-
+    print(f"\n------ PROBE LOCATION: {probe.name} ------")
+    print("Position [mm]:", probe.position * 1000)
+    print("Region:", probe.region)
+    print("Inside substrate:", inside_substrate)
+    print("Within wall XY footprint:", under_wall)
     print(
         "Depth below substrate top [mm]:",
-        (geometry.substrate_top - z)
-        * 1000
+        (geometry.substrate_top - z) * 1000
     )
-
     print("----------------------------------")
 
-    return (
-        under_wall_x
-        and under_wall_y
-    )
-
+    return inside_substrate if probe.region == "substrate" else under_wall
    
 
 # ============================================================
@@ -543,12 +499,17 @@ if __name__ == "__main__":
 
     from geometry import Geometry
     from nodes import NodeGenerator
+    from material import Al5183Material, Al6061Material, AluminumMaterial
 
     from config import BUILD, SENSORS, SENSORS
 
     stl_file = BUILD["stl_file"]
 
-    geometry = Geometry(stl_file)
+
+    substrate_material = Al6061Material()
+    wire_material = Al5183Material()
+
+    geometry = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
     geometry.build_blocks()
     generator = NodeGenerator(geometry)
     generator.generate()
@@ -558,8 +519,8 @@ if __name__ == "__main__":
     #Thermocouple A test 
 
     test_position = np.array([
-        30.1e-3,
-        -4.0e-3,
+        0,
+        50e-3,
         geometry.substrate_top - 0.1e-3
     ])
 
@@ -612,4 +573,33 @@ if __name__ == "__main__":
         show_nodes=True
     )
 
+    # Initialize test temperatures
+    T_test = np.full(
+        len(nodes),
+        25.0
+    )
+
+    # Test interpolation
+    T_TC = probe.interpolate_temperature(
+        nodes=nodes,
+        temperature=T_test,
+        k=8,
+        active_only=True
+    )
+
+    print("Thermocouple temperature:", T_TC)
+
+
+    print(
+        "Total substrate nodes:",
+        sum(node.is_substrate for node in nodes)
+    )
+
+    print(
+        "Active substrate nodes:",
+        sum(
+            node.is_substrate and node.active
+            for node in nodes
+        )
+    )
 

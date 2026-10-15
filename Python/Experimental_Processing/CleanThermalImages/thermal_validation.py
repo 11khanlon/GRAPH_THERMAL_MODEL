@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import sys
 
 class ThermalValidation:
 
@@ -10,8 +11,7 @@ class ThermalValidation:
         blocks_per_layer,
         bead_length,
         block_width,
-        scan_speed
-        ):
+        scan_speed):
 
         self.calibration = calibration
         self.blocks_per_layer = blocks_per_layer
@@ -30,11 +30,8 @@ class ThermalValidation:
         print("\nA700 CSV columns:")
         print( timing.columns)
 
-     
         # CONVERT TIMESTAMP
         timing["Timestamp"] = pd.to_datetime(timing["Timestamp"])
-
-
       
         # FIND FIRST DEPOSITION FRAME
         # IsDepositing may be read as bool, integer, or string. Convert it robustly to a boolean mask.
@@ -55,10 +52,8 @@ class ThermalValidation:
 
         # First FLIR frame where deposition begins
         deposition_start_index = (deposition_rows.index[0])
-        deposition_start_time = ( timing.loc[deposition_start_index, "Timestamp"])
-        deposition_start_count = int(
-            timing.loc[deposition_start_index, "Count"]
-        )
+        deposition_start_time = (timing.loc[deposition_start_index, "Timestamp"])
+        deposition_start_count = int(timing.loc[deposition_start_index, "Count"])
 
 
         # DEFINE t = 0 AT DEPOSITION START
@@ -130,8 +125,7 @@ class ThermalValidation:
             tracked.append(
                 {"block": block_number,
                  "cooling_steps": cooling_steps,
-                 "cooling_time": cooling_time
-                }
+                 "cooling_time": cooling_time}
             )
 
         return tracked
@@ -313,41 +307,53 @@ class ThermalValidation:
 if __name__ == "__main__":
 
     import os
+    from spatial_calibration import SpatialCalibration
     import sys
     from pathlib import Path
-    from Python.Experimental_Processing.CleanThermalImages.spatial_calibration import SpatialCalibration
 
+
+    from pathlib import Path
+    import sys
+
+    # ----- Project directories -----
+
+
+    BASE_DIR = Path(__file__).resolve().parent
+
+    PROJECT_DIR = BASE_DIR.parent.parent.parent
+    PYTHON_DIR = BASE_DIR.parent.parent
+    GRAPH_CODE_DIR = PYTHON_DIR / "GraphCode"
+
+    sys.path.insert(0, str(PYTHON_DIR))
+    sys.path.insert(0, str(GRAPH_CODE_DIR))
+
+    from GraphCode.config import BUILD, BLOCK, MATERIAL, WAAM, IMAGE_PROCESSING
+    from GraphCode.geometry import Geometry
 
     #----- Paths -----
-    BASE_DIR = Path(__file__).resolve().parent
-    THERMAL_DATA_DIR = BASE_DIR.parent / "ThermalData"
+    THERMAL_DATA_DIR = PROJECT_DIR / "A36Steel_Info" / "ThermalData"
     CALIBRATION_FILE = THERMAL_DATA_DIR / "spatial_calibration.npz"
+
     DOWNLOADS_DIR = Path(r"C:\Users\Kayleigh\Downloads")
     VALIDATION_DIR = DOWNLOADS_DIR / "Thermal_Validation"
     VALIDATION_TABLE = VALIDATION_DIR / "Tables" / "validation_results.csv"
     
 
     #----- Import File Path ------
-    calibration_file = Path(
-        r"C:\\Users\\Kayleigh\\GraphThermalModel\\Python\\ThermalData\\spatial_calibration.npz"
-    )
+    calibration_file = Path( r"C:\\Users\\Kayleigh\\GraphThermalModel\\A36Steel_Info\\ThermalData\\spatial_calibration.npz")
 
-    
-    # Get the parent "Python" folder
-    python_folder = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..")
-    )
 
-    # Add it to Python's import search path
-    if python_folder not in sys.path:
-        sys.path.insert(0, python_folder)
 
-    from GraphCode.config import BUILD, WAAM, BLOCK
+    # ----- Import paths -----
+    sys.path.insert(0, str(PYTHON_DIR))
+
+    from GraphCode.config import BUILD, MATERIAL, WAAM, IMAGE_PROCESSING,BLOCK
     from GraphCode.geometry import Geometry
+    from GraphCode.material import WireMaterial, SubstrateMaterial
 
-
+    substrate_material, wire_material = SubstrateMaterial, WireMaterial
     stl_file = BUILD["stl_file"]
-    geom = Geometry(stl_file)
+    geom = Geometry(stl_file, wire_material, substrate_material)
     geom.build_blocks()
 
     calibration = SpatialCalibration()

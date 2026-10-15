@@ -462,6 +462,14 @@ for pass_index in range(NUMBER_OF_PASSES):
         }]
     )
 
+    pass_info_path = pass_dir / f"Pass{pass_number}_Info.csv"
+    pass_info.to_csv(pass_info_path, index=False)
+
+    print(f"\n========== PASS {pass_number} SAVED FILES ==========")
+    print(f"Fronius:       {(pass_dir / f'Fronius_Pass{pass_number}.csv').resolve()}")
+    print(f"Thermocouples: {(pass_dir / f'Thermocouples_Pass{pass_number}.csv').resolve()}")
+    print(f"A700:          {(pass_dir / f'A700_Pass{pass_number}.csv').resolve()}")
+    print(f"Pass metadata: {pass_info_path.resolve()}")
 
     pass_info.to_csv(pass_dir / f"Pass{pass_number}_Info.csv", index=False)
 

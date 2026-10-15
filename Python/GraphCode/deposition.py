@@ -5,7 +5,7 @@ import numpy as np
 from conduction import ConductionSolver
 from convection import ConvectionSolver
 from heat_source import ArcHeatSource
-from material import Al5183Material, Al6061Material
+from material import WireMaterial, SubstrateMaterial
 from datetime import datetime
 import time 
 from pathlib import Path
@@ -152,15 +152,29 @@ class DepositionSimulation:
         return self.material_model.layer_diffusivity(T_layer)
 
     #--------------------------------------------------
-    def current_diffusivity(self):
+    def current_diffusivity(self):   #fix nonlinear issue. also, if greater than 1500, might not read it. 
 
-        alpha = np.array([
-            node.material.diffusivity(self.temperature[i])
+        # Average temperature of each material
+        T_substrate = np.mean([
+            self.temperature[i]
             for i, node in enumerate(self.nodes)
-        ], dtype=float)
-
-        return alpha
-
+            if node.is_substrate and node.active
+        ])
+    
+        T_wire = np.mean([
+            self.temperature[i]
+            for i, node in enumerate(self.nodes)
+            if not node.is_substrate and node.active
+        ])
+    
+        # Temperature-dependent diffusivity
+        alpha_substrate = self.substrate_material.diffusivity(T_substrate)
+        alpha_wire = self.wire_material.diffusivity(T_wire)
+    
+        # Equal average of both materials
+        alpha_effective = (alpha_substrate + alpha_wire) / 2
+    
+        return alpha_effective
     #--------------------------------------------
     def active_mask(self):
 
@@ -416,12 +430,10 @@ class DepositionSimulation:
             # Step 1: Conduction
             alpha = self.current_diffusivity()
 
-            self.temperature = self.conduction.step(
+            self.temperature = self.conduction.dwell_conduction(
                 temperature=self.temperature,
-                dt=self.block_time,
-                active_mask=self.active_mask(),
-                volumes=self.node_volumes,
-                edge_areas=self.edge_areas
+                alpha=alpha,
+                dt=dt
             )
 
             # Step 2: Forced convection
@@ -519,6 +531,12 @@ class DepositionSimulation:
                 )
 
             self.simulate_block(block)
+            print(
+                f"Deposited block {block.id}, "
+                f"layer={block.layer}, "
+                f"time={self.time:.2f} s, "
+                f"Tmax={np.max(self.temperature):.2f} °C"
+            )
 
 
         # Final cooling period

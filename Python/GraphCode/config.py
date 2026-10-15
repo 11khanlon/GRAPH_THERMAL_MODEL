@@ -5,15 +5,18 @@ Configuration file for the Graph Theory DED thermal model
 
 """
 
+from pathlib import Path
+import pandas as pd
+
 
 #----MATERIAL PROPERTIES------
 
 MATERIAL = {
-    "name": "AluminumLM5(5182)",
-    "material_directory": "Al5183_Info",
-    "density": 2650,                  # rho, kg/m^3
+    "name": "SteelA36",
+    "material_directory": "A36Steel_Info",
+    "density": 7.85e3,                  # rho, kg/m^3
     "ambient_temperature": 25,    #  ambient temperature,C
-    "liquidus_temperature": 633      # liquidus temperature, C
+    "liquidus_temperature": 1500      # liquidus temperature, C
 }
 
 
@@ -28,14 +31,14 @@ WAAM = {
         
     #ARC Heat input 
     "thermal_efficiency": 0.8,   # dimensionless
-    "current": 155,             # A
-    "voltage": 16.7,              # V
+    "current": 129.0,             # A
+    "voltage": 15.6,              # V
 
     # Robot travel speed
-    "scan_speed": 0.584 / 60,     # m/s
+    "scan_speed": 0.762 / 60,     # m/s
 
     #Wire feed speed
-    "WFS": 8.89/60,    #m/s
+    "WFS": 3.3/60,    #m/s
 
     # Deposition geometry
     "layer_height": 2.5e-3,       # m 
@@ -84,10 +87,10 @@ BUILD = {
     "substrate_blocks_y": 1,
     "substrate_blocks_z": 1, 
 
-    "blocks_per_layer": 20,
-
+    "blocks_per_layer": 10,   #simulation blocks. 10 blocks per layer
+    
     "bead_length": 0.127,  #m
-    "x_start": 12.4/1000   #m
+    "x_start": 12.7/1000   #m
     
 }
 
@@ -108,9 +111,11 @@ BLOCK = {
 #------- GRAPH PARAMETERS --------
 
 GRAPH = {
-    "epsilon": 4.5e-3,  # neighborhood radius ε, m
-    "gain": 8E6,     # gain factor g, m^-2
-    "node_density": 0.01  # node density, nodes/mm^3
+
+    "seed": 42,
+    "epsilon": 3e-3,  # neighborhood radius ε, m
+    "gain": 12E9,     # gain factor g, m^-2
+    "node_density": 0.25  # node density, nodes/mm^3
 }
 
 
@@ -158,18 +163,34 @@ CONVECTION = {
 
 
 #------- DWELL TIME ---------
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
+PASS_INFO_FILE = (
+    PROJECT_DIR
+    / "A36Steel_Info"
+    / "ThermalData"
+    / "Processed"
+    / "Pass_1"
+    / "Pass1_Info.csv"
+)
+
+# Read experimental dwell duration
+pass_info = pd.read_csv(PASS_INFO_FILE)
+
+dwell_duration = float(pass_info.loc[0, "DwellDuration_s"])
 
 DWELL = {
-    "dwell_time_step": 1,    #seconds
-    "dwell": 17.20
+    "dwell_time_step": 1.0,   # seconds
+    "dwell": dwell_duration   # experimental dwell duration (seconds)
 }
+
+print(f"Experimental dwell duration: {DWELL['dwell']:.3f} s")
 
 
 if __name__ == "__main__":
 
     import numpy as np
 
-    Bi_free = CONVECTION["free"]*BLOCK["length"] / LASER["thermal_conductivity"]
+    '''Bi_free = CONVECTION["free"]*BLOCK["length"] / LASER["thermal_conductivity"]
     Bi_forced = CONVECTION["forced"]*BLOCK["length"] / LASER["thermal_conductivity"]
 
     if Bi_free < 0.1:
@@ -185,4 +206,4 @@ if __name__ == "__main__":
 
     Ld = 2 * np.sqrt(LASER["thermal_diffusivity"] * BLOCK["time_per_block"])
 
-    print(f"Needed substrate depth in mm :", number_of_blocks* Ld * 1000)
+    print(f"Needed substrate depth in mm :", number_of_blocks* Ld * 1000)'''

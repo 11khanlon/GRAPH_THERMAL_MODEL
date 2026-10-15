@@ -148,12 +148,13 @@ class NodeGenerator:
             n_nodes = max(1,int(np.round(expected_nodes)))
 
 
+            rng = np.random.default_rng(seed=42)
             # Uniform random node placement
             for _ in range(n_nodes):
 
-                x = np.random.uniform(x0, x1)
-                y = np.random.uniform(y0, y1)
-                z = np.random.uniform(z0, z1)
+                x = rng.uniform(x0, x1)
+                y = rng.uniform(y0, y1)
+                z = rng.uniform(z0, z1)
 
                 node = Node(
                     node_id=node_id,
@@ -362,52 +363,47 @@ class NodeGenerator:
         print(f"Average Density : {np.mean(densities):.3f}")
 
 
-# -----------------------------------------------------
-def print_surface_statistics(nodes):
-    """
-    Print statistics for currently exposed nodes.
-    """
+    # -----------------------------------------------------
+    def print_surface_statistics(self):
+        """
+        Print statistics for currently exposed nodes.
+        """
 
-    surface_nodes = [
-        node
-        for node in nodes
-        if node.exposed_faces
-    ]
+        surface_nodes = [
+            node
+            for node in self.nodes
+            if node.exposed_faces
+        ]
 
-    print("\n------ SURFACE NODE STATISTICS ------")
+        print("\n------ SURFACE NODE STATISTICS ------")
 
-    print(f"Total nodes      : {len(nodes)}")
+        print(f"Total nodes: {len(self.nodes)}")
 
-    print(f"Surface nodes    : {len(surface_nodes)}")
+        print(f"Surface nodes: {len(surface_nodes)}")
 
-    if len(nodes) > 0:
+        if len(self.nodes) > 0:
 
-        percentage = (100 * len(surface_nodes) / len(nodes))
+            percentage = (100 * len(surface_nodes) / len(self.nodes))
 
-        print(f"Surface fraction : {percentage:.2f}%")
+            print(f"Surface fraction : {percentage:.2f}%")
 
-    face_counts = {
-        "top": 0,
-        "bottom": 0,
-        "left": 0,
-        "right": 0,
-        "front": 0,
-        "back": 0
-    }
+        face_counts = {
+            "top": 0,
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "front": 0,
+            "back": 0
+        }
 
-    for node in surface_nodes:
+        for node in surface_nodes:
+            for face in node.exposed_faces:
+                face_counts[face] += 1
 
-        for face in node.exposed_faces:
+        for face, count in face_counts.items():
+            print( f"{face:>7}: {count}")
 
-            face_counts[face] += 1
-
-    for face, count in face_counts.items():
-
-        print(
-            f"{face:>7}: {count}"
-        )
-
-    print("-------------------------------------")
+        print("-------------------------------------")
         
 
 # --------- Testing ----------
@@ -426,7 +422,7 @@ if __name__ == "__main__":
         sys.path.insert(0, python_folder)
 
     from geometry import Geometry
-    from material import Al5183Material, Al6061Material
+    from material import WireMaterial, SubstrateMaterial
     from Visualization.node_visualization import plot_geometry_with_nodes
     from face import update_exposed_faces
     from config import BLOCK
@@ -434,14 +430,10 @@ if __name__ == "__main__":
 
     stl_file = BUILD["stl_file"]
 
-    substrate_material = Al6061Material()
-    wire_material = Al5183Material()
+    wire_material = WireMaterial()
+    substrate_material = SubstrateMaterial()
 
-    geom = Geometry(
-        stl_file,
-        substrate_material=substrate_material,
-        wire_material=wire_material
-    )
+    geom = Geometry( stl_file, substrate_material=substrate_material, wire_material=wire_material)
 
     geom.build_blocks()
 
@@ -460,30 +452,26 @@ if __name__ == "__main__":
 
     plot_geometry_with_nodes(geom, generator)
 
-    print_surface_statistics(nodes)
-
+    generator.print_surface_statistics()
 
     print("\n------ MATERIAL VALIDATION ------")
 
-    for material_name in ["Al6061", "Al5183"]:
+    for material_name in [MATERIAL["name"], MATERIAL["name"]]:
 
-        count = sum(
-            node.material.name == material_name
-            for node in generator.nodes
-        )
+        count = sum( node.material.name == material_name
+            for node in generator.nodes)
 
         print(f"{material_name} nodes: {count}")
 
     assert all(
-        node.material.name == "Al6061"
+        node.material.name == MATERIAL["name"]
         for node in generator.nodes
         if node.is_substrate
     )
 
     assert all(
-        node.material.name == "Al5183"
+        node.material.name == MATERIAL["name"]
         for node in generator.nodes
-        if not node.is_substrate
-    )
+        if not node.is_substrate)
 
     print("Material assignments verified.")

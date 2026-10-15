@@ -1,827 +1,227 @@
-"""
-Visualization tools for the transient DED thermal simulation.
+"""Animate saved WAAM/DED thermal history with 3D and top-down views.
 
-Contains:
-    - laser visualization
-    - thermal-history animation
+Run from Python/Visualization/ after main.py saves thermal_history.npz.
+No direct dependency on DepositionTracker is needed.
 """
-
+from pathlib import Path
+import sys
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
-
-from matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation, PillowWriter
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
-from geometry_visualization import draw_block
-
-
-#---------------------
-def draw_block_outline(
-    ax,
-    block,
-    linewidth=1.0
-):
-
-    x0, y0, z0 = block.start
-    x1, y1, z1 = block.end
-
-    vertices = np.array([
-
-        [x0, y0, z0],
-        [x1, y0, z0],
-        [x1, y1, z0],
-        [x0, y1, z0],
-
-        [x0, y0, z1],
-        [x1, y0, z1],
-        [x1, y1, z1],
-        [x0, y1, z1]
-
-    ])
-
-    edges = [
-
-        (0, 1),
-        (1, 2),
-        (2, 3),
-        (3, 0),
-
-        (4, 5),
-        (5, 6),
-        (6, 7),
-        (7, 4),
-
-        (0, 4),
-        (1, 5),
-        (2, 6),
-        (3, 7)
-    ]
-
-    for i, j in edges:
-
-        ax.plot(
-            [vertices[i, 0], vertices[j, 0]],
-            [vertices[i, 1], vertices[j, 1]],
-            [vertices[i, 2], vertices[j, 2]],
-            color="black",
-            linewidth=linewidth
-        )
-
-# -----------------------------
-# Draw a laser object  
-def draw_laser(
-    ax,
-    position,
-    radius=0.4e-3,
-    height=8e-3):
-    
-    position = np.asarray(position, dtype=float)
-
-    # No laser during dwell / inactive periods
-    if np.any(np.isnan(position)):
-        return
-
-    x0, y0, z0 = position
-
-    theta = np.linspace(0, 2 * np.pi, 30)
-    z = np.linspace(z0, z0 + height,20)
-    theta_grid, z_grid = np.meshgrid(theta, z)
-
-
-    X = (x0 + radius * np.cos(theta_grid))
-    Y = (y0 + radius * np.sin(theta_grid))
-    Z = z_grid
-
-    ax.plot_surface(X, Y, Z, color="red", alpha=0.65, linewidth = 0 )
-
-#--------------------------
-#Draw substrate surface 
-
-def draw_substrate_surface(
-    ax,
-    geometry,
-    alpha=1.0,
-    z_offset= .8
-):
-
-    xmin = geometry.substrate_xmin
-    xmax = geometry.substrate_xmax
-
-    ymin = geometry.substrate_ymin
-    ymax = geometry.substrate_ymax
-
-    z = (
-        geometry.substrate_top
-        - z_offset
-    )
-
-    vertices = np.array([
-        [xmin, ymin, z],
-        [xmax, ymin, z],
-        [xmax, ymax, z],
-        [xmin, ymax, z]
-    ])
-
-    surface = Poly3DCollection(
-        [vertices],
-        facecolors="white",
-        edgecolors="black",
-        linewidths=1.5,
-        alpha=alpha
-    )
-
-    surface.set_zorder(-10)
-
-    ax.add_collection3d(
-        surface
-    )
-
-
-#--------------------------
-#Thermal history animation 
-
-def animate_thermal_history(
-    geometry,
-    node_positions,
-    temperature_history,
-    time_history,
-    active_history,
-    laser_position_history,
-    ambient_temperature = 25.0,
-    maximum_temperature = 2200.0,
-    interval = 150):
-
-
-    # Convert input histories to arrays
-    temperature_history = np.asarray(temperature_history)
-    time_history = np.asarray(time_history)
-    active_history = np.asarray(active_history,dtype=bool)
-    laser_position_history = np.asarray(laser_position_history, dtype=float)
-
-
-    substrate_mask = np.asarray(
-        substrate_mask,
-        dtype=bool
-    )
-
-    node_block_ids = np.asarray(
-        node_block_ids,
-        dtype=int
-    )
-
-    # Validation
-    n_frames = len(time_history)
-
-    if temperature_history.shape[0] != n_frames:
-
-        raise ValueError(
-            "temperature_history and time_history "
-            "must contain the same number of states.")
-
-
-    if active_history.shape[0] != n_frames:
-
-        raise ValueError(
-            "active_history and time_history "
-            "must contain the same number of states.")
-
-
-    if laser_position_history.shape[0] != n_frames:
-
-        raise ValueError(
-            "laser_position_history and time_history "
-            "must contain the same number of states.")
-
-    if len(substrate_mask) != n_nodes:
-
-        raise ValueError(
-            "substrate_mask length does not match "
-            "the number of nodes."
-        )
-
-
-    if len(node_block_ids) != n_nodes:
-
-        raise ValueError(
-            "node_block_ids length does not match "
-            "the number of nodes."
-        )
-
-
-    # Saved node positions
-    node_positions = np.asarray(node_positions, dtype=float)
-
-    if node_positions.ndim != 2 or node_positions.shape[1] != 3:
-
-        raise ValueError(
-            "node_positions must have shape (n_nodes, 3).")
-
-    n_nodes = node_positions.shape[0]
-
-    if temperature_history.shape[1] != n_nodes:
-
-        raise ValueError(
-            "temperature_history node dimension does "
-            "not match node_positions.")
-
-
-    if active_history.shape[1] != n_nodes:
-
-        raise ValueError(
-            "active_history node dimension does "
-            "not match node_positions.")
-
-
-    # Node coordinates
-    positions = node_positions
-
-    # Plot the figure 
-    fig = plt.figure(figsize=(12, 8))
-    ax = fig.add_subplot(111, projection="3d")
-
-    # Temperature scale
+from matplotlib.patches import Rectangle
+
+
+VIS_DIR = Path(__file__).resolve().parent
+PYTHON_DIR = VIS_DIR.parent
+GRAPH_CODE_DIR = PYTHON_DIR / "GraphCode"
+for directory in (PYTHON_DIR, GRAPH_CODE_DIR):
+    if directory.is_dir() and str(directory) not in sys.path:
+        sys.path.insert(0, str(directory))
+
+from GraphCode.material import WireMaterial, SubstrateMaterial
+
+# Optional: drawing can use geometry blocks if the model is importable.
+try:
+    from GraphCode.geometry import Geometry
+    from GraphCode.config import BUILD
+except ImportError as exc:
+    Geometry = None
+    BUILD = None
+    warnings.warn(f"Geometry unavailable; plotting from saved nodes only: {exc}")
+
+
+def _read(data, names, required=False):
+    for name in names:
+        if name in data:
+            return np.asarray(data[name])
+    if required:
+        raise KeyError(f"Missing saved array {names}. Available keys: {data.files}")
+    return None
+
+
+def load_history(path):
+    """Read arrays saved by main.py; never regenerate random nodes."""
+    with np.load(path, allow_pickle=False) as data:
+        print("Saved NPZ keys:", data.files)
+        T = _read(data, ("temperature", "temperature_history", "history"), True).astype(float)
+        times = _read(data, ("time", "time_history", "history_time"), True).astype(float)
+        xyz = _read(data, ("node_positions", "positions"), True).astype(float)
+        active = _read(data, ("active_history", "activation_history"))
+        substrate = _read(data, ("substrate_mask", "is_substrate"))
+        block_ids = _read(data, ("node_block_ids", "block_ids"))
+        source = _read(data, ("laser_position_history", "heat_source_position_history", "source_position_history", "arc_position_history"))
+
+    if xyz.ndim != 2 or xyz.shape[1] != 3:
+        raise ValueError("node_positions must be (N, 3)")
+    if T.shape != (len(times), len(xyz)):
+        raise ValueError(f"Temperature shape {T.shape} must be ({len(times)}, {len(xyz)})")
+    if active is None:
+        warnings.warn("No active_history saved: all nodes will be shown, including potentially future deposition nodes.")
+        active = np.ones_like(T, dtype=bool)
+    active = np.asarray(active, dtype=bool)
+    if active.shape != T.shape:
+        raise ValueError("active_history must have the same shape as temperature")
+    if substrate is not None:
+        substrate = np.asarray(substrate, dtype=bool).reshape(-1)
+        if len(substrate) != len(xyz):
+            raise ValueError("substrate_mask length must match node count")
+    if block_ids is not None and len(block_ids) != len(xyz):
+        raise ValueError("node_block_ids length must match node count")
+    if source is None:
+        source = np.full((len(times), 3), np.nan)
+        warnings.warn("No heat-source positions saved: arc marker will be hidden")
+    source = np.asarray(source, dtype=float)
+    if source.shape != (len(times), 3):
+        raise ValueError("heat-source position history must be (number_of_frames, 3)")
+    return times, T, xyz, active, substrate, block_ids, source
+
+
+def _draw_block_edges(ax, block):
+    lo = np.asarray(block.start, dtype=float)
+    hi = np.asarray(block.end, dtype=float)
+    corners = np.array([[lo[0],lo[1],lo[2]], [hi[0],lo[1],lo[2]],
+                        [hi[0],hi[1],lo[2]], [lo[0],hi[1],lo[2]],
+                        [lo[0],lo[1],hi[2]], [hi[0],lo[1],hi[2]],
+                        [hi[0],hi[1],hi[2]], [lo[0],hi[1],hi[2]]])
+    for i, j in ((0,1),(1,2),(2,3),(3,0),(4,5),(5,6),(6,7),(7,4),
+                 (0,4),(1,5),(2,6),(3,7)):
+        ax.plot(*corners[[i,j]].T, color="0.35", linewidth=.45, alpha=.55)
+
+
+def animate_thermal_history(geometry, node_positions, temperature_history,
+                            time_history, active_history, laser_position_history,
+                            substrate_mask=None, node_block_ids=None,
+                            ambient_temperature=25.0, maximum_temperature=None,
+                            interval=150, deposition_only=False, frame_stride=1):
+    """Return (figure, animation) with synchronized 3D and XY top-down panels."""
+    xyz = np.asarray(node_positions, float)
+    T = np.asarray(temperature_history, float)
+    times = np.asarray(time_history, float)
+    active = np.asarray(active_history, bool)
+    source = np.asarray(laser_position_history, float)
+    n_frames, n_nodes = T.shape
+    if xyz.shape != (n_nodes, 3) or len(times) != n_frames or active.shape != T.shape or source.shape != (n_frames,3):
+        raise ValueError("Inconsistent node/history/source array dimensions")
+    if substrate_mask is None:
+        if deposition_only:
+            raise ValueError("deposition_only requires substrate_mask saved in NPZ")
+        substrate = np.zeros(n_nodes, bool)
+    else:
+        substrate = np.asarray(substrate_mask, bool)
+        if substrate.shape != (n_nodes,):
+            raise ValueError("substrate_mask must be (N,)")
+    block_ids = None if node_block_ids is None else np.asarray(node_block_ids)
+    if block_ids is not None and block_ids.shape != (n_nodes,):
+        raise ValueError("node_block_ids must be (N,)")
+    if maximum_temperature is None:
+        maximum_temperature = float(np.nanmax(T[active])) if np.any(active) else ambient_temperature + 1
+    if maximum_temperature <= ambient_temperature:
+        maximum_temperature = ambient_temperature + 1
     norm = Normalize(vmin=ambient_temperature, vmax=maximum_temperature)
     cmap = plt.get_cmap("turbo")
+    fig = plt.figure(figsize=(15, 6.5), constrained_layout=True)
+    ax3d = fig.add_subplot(121, projection="3d")
+    axtop = fig.add_subplot(122)
+    sm = ScalarMappable(norm=norm, cmap=cmap)
+    sm.set_array([])
+    fig.colorbar(sm, ax=[ax3d, axtop], shrink=.8, pad=.02, label="Temperature (°C)")
+    limits = [(float(xyz[:, k].min()), float(xyz[:, k].max())) for k in range(3)]
+    if geometry is not None:
+        limits[0] = (geometry.substrate_xmin, geometry.substrate_xmax)
+        limits[1] = (geometry.substrate_ymin, geometry.substrate_ymax)
+        limits[2] = (geometry.substrate_bottom, geometry.zmax)
+    ranges = [max(b-a, 1e-5) for a,b in limits]
+    dep_blocks = [] if geometry is None else [b for b in geometry.blocks if not b.is_substrate]
+    lookup = {int(b.id): b for b in dep_blocks} if dep_blocks else {}
 
-    # Color bar
-    scalar_map = ScalarMappable(norm=norm, cmap=cmap)
-    scalar_map.set_array([])
-    colorbar = fig.colorbar(scalar_map, ax=ax, pad=0.10, shrink=0.75)
-    colorbar.set_label("Temperature (°C)")
-
-
-    # FRAME UPDATE
     def update(frame):
+        ax3d.cla()
+        axtop.cla()
+        visible = active[frame] & (~substrate if deposition_only else np.ones(n_nodes, bool))
+        # Always show active substrate in the full 3D view; top view uses same nodes.
+        if geometry is not None:
+            axtop.add_patch(Rectangle((limits[0][0], limits[1][0]),
+                         ranges[0], ranges[1], facecolor="0.93", edgecolor="0.4", zorder=0))
+            if deposition_only:
+                if block_ids is not None:
+                    active_ids = np.unique(block_ids[visible])
+                    for bid in active_ids:
+                        block = lookup.get(int(bid))
+                        if block is not None:
+                            _draw_block_edges(ax3d, block)
+                            x0,y0,_ = block.start
+                            x1,y1,_ = block.end
+                            axtop.add_patch(Rectangle((x0,y0),x1-x0,y1-y0,
+                                              fill=False,edgecolor="0.35",linewidth=.6))
+                else:
+                    for block in dep_blocks:
+                        x0,y0,_ = block.start
+                        x1,y1,_ = block.end
+                        axtop.add_patch(Rectangle((x0,y0),x1-x0,y1-y0,
+                                          fill=False,edgecolor="0.75",linewidth=.5))
+        if np.any(visible):
+            ax3d.scatter(xyz[visible,0], xyz[visible,1], xyz[visible,2],
+                         c=T[frame,visible], cmap=cmap, norm=norm,
+                         s=25 if deposition_only else 9, depthshade=False)
+            axtop.scatter(xyz[visible,0], xyz[visible,1],
+                          c=T[frame,visible], cmap=cmap, norm=norm,
+                          s=25 if deposition_only else 9, linewidths=0)
+        if np.all(np.isfinite(source[frame])):
+            x,y,z = source[frame]
+            ax3d.scatter([x],[y],[z],color="red",marker="*",s=120,depthshade=False)
+            axtop.scatter([x],[y],color="red",marker="*",s=125,edgecolors="black",linewidths=.4,zorder=5)
+        ax3d.set(xlim=limits[0],ylim=limits[1],zlim=limits[2],
+                 xlabel="X (m)",ylabel="Y (m)",zlabel="Z (m)",
+                 title=f"3D thermal field | t = {times[frame]:.2f} s")
+        ax3d.set_box_aspect(ranges)
+        ax3d.view_init(elev=23, azim=-65)
+        axtop.set(xlim=limits[0],ylim=limits[1],xlabel="X (m)",ylabel="Y (m)",
+                  title="Top-down view (XY)")
+        axtop.set_aspect("equal", adjustable="box")
+        axtop.grid(alpha=.15)
+        return ()
+
+    animation = FuncAnimation(fig, update, frames=range(0,n_frames,max(1,frame_stride)),
+                              interval=interval, repeat=False)
+    return fig, animation
+
+
+def animate_deposition_view(geometry, node_positions, temperature_history,
+                           time_history, active_history, laser_position_history,
+                           substrate_mask, node_block_ids, **kwargs):
+    return animate_thermal_history(
+        geometry, node_positions, temperature_history, time_history,
+        active_history, laser_position_history, substrate_mask, node_block_ids,
+        deposition_only=True, **kwargs)
 
-        ax.clear()
-
-        # Current simulation state
-        active_mask = (active_history[frame])
-        T = (temperature_history[frame])
-
-        # Substrate geometry
-        for block in geometry.blocks:
-
-            if block.is_substrate:
-
-                draw_block(
-                    ax,
-                    block,
-                    color="linen",
-                    alpha=0.15,
-                    edge=False)
-                
-        # Thermal graph nodes
-        ax.scatter(positions[active_mask, 0],
-            positions[active_mask, 1],
-            positions[active_mask, 2],
-            c = T[active_mask],
-            cmap=cmap,
-            norm=norm,
-            s=8
-            )
-        
-
-        # Laser
-        laser_position = (laser_position_history[frame])
-        draw_laser(ax, laser_position)
-
-
-        # Labels
-        ax.set_title("DED Thermal Simulation\n" f"t = {time_history[frame]:.3f} s")
-        ax.set_xlabel("X (m)")
-        ax.set_ylabel("Y (m)")
-        ax.set_zlabel("Z (m)")
-
-        # Geometry limits
-        ax.set_xlim(geometry.substrate_xmin, geometry.substrate_xmax)
-        ax.set_ylim(geometry.substrate_ymin, geometry.substrate_ymax)
-        ax.set_zlim(geometry.substrate_bottom, geometry.zmax)
-
-        ax.set_box_aspect(
-            (geometry.substrate_length,
-             geometry.substrate_width,
-             geometry.substrate_height + geometry.height
-            )
-        )
-
-
-        return ax,
-
-
-    # Animation
-    animation = FuncAnimation(fig, update, frames=n_frames, interval=interval, repeat=False)
-
-    return (fig, animation)
-
-
-#--------------------------
-# Animation with no substrate 
-
-def animate_deposition_view(
-    geometry,
-    node_positions,
-    temperature_history,
-    time_history,
-    active_history,
-    laser_position_history,
-    substrate_mask,
-    node_block_ids,
-    ambient_temperature=25.0,
-    maximum_temperature=2200.0,
-    interval=150
-):
-
-    # Convert input histories to arrays
-    temperature_history = np.asarray(temperature_history)
-    time_history = np.asarray(time_history)
-    active_history = np.asarray(active_history,dtype=bool)
-    laser_position_history = np.asarray(laser_position_history, dtype=float)
-    node_positions = np.asarray(node_positions, dtype=float)
-    substrate_mask = np.asarray(substrate_mask, dtype=bool)
-    node_block_ids = np.asarray(node_block_ids, dtype=int)
-
-
-    # Validation
-    n_frames = len(time_history)
-    n_nodes = (node_positions.shape[0])
-
-    if temperature_history.shape[0] != n_frames:
-
-        raise ValueError(
-            "temperature_history and time_history "
-            "must contain the same number of states.")
-
-
-    if active_history.shape[0] != n_frames:
-
-        raise ValueError(
-            "active_history and time_history "
-            "must contain the same number of states.")
-
-
-    if laser_position_history.shape[0] != n_frames:
-
-        raise ValueError(
-            "laser_position_history and time_history "
-            "must contain the same number of states.")
-
-    if temperature_history.shape != (
-            n_frames,
-            n_nodes
-        ):
-
-            raise ValueError(
-                "temperature_history shape mismatch."
-            )
-
-
-    if active_history.shape != (
-        n_frames,
-        n_nodes
-    ):
-
-        raise ValueError(
-            "active_history shape mismatch."
-        )
-
-
-    if len(substrate_mask) != n_nodes:
-
-        raise ValueError(
-            "substrate_mask shape mismatch."
-        )
-
-
-    if len(node_block_ids) != n_nodes:
-
-        raise ValueError(
-            "node_block_ids shape mismatch."
-        )
-
-
-    # Saved node positions
-    node_positions = np.asarray(node_positions, dtype=float)
-
-    if node_positions.ndim != 2 or node_positions.shape[1] != 3:
-
-        raise ValueError(
-            "node_positions must have shape (n_nodes, 3).")
-
-    n_nodes = node_positions.shape[0]
-
-    if temperature_history.shape[1] != n_nodes:
-
-        raise ValueError(
-            "temperature_history node dimension does "
-            "not match node_positions.")
-
-
-    if active_history.shape[1] != n_nodes:
-
-        raise ValueError(
-            "active_history node dimension does "
-            "not match node_positions.")
-
-    #deposition_blocks = 
-    deposition_blocks = [
-    block
-    for block in geometry.blocks
-    if not block.is_substrate]
-
-    dep_xmin = min(
-        block.start[0]
-        for block in deposition_blocks
-    )
-
-    dep_xmax = max(
-        block.end[0]
-        for block in deposition_blocks
-    )
-
-    dep_ymin = min(
-        block.start[1]
-        for block in deposition_blocks
-    )
-
-    dep_ymax = max(
-        block.end[1]
-        for block in deposition_blocks
-    )
-
-    # Node coordinates
-
-    deposition_mask = ~substrate_mask
-
-    block_lookup = {
-            block.id: block
-            for block in geometry.blocks
-        }
-
-    # Plot the figure 
-    fig = plt.figure(figsize=(12, 8))
-    ax = fig.add_subplot(111, projection="3d")
-
-    # Temperature scale
-    norm = Normalize(vmin=ambient_temperature, vmax=maximum_temperature)
-    cmap = plt.get_cmap("turbo")
-
-    # Color bar
-    scalar_map = ScalarMappable(norm=norm, cmap=cmap)
-    scalar_map.set_array([])
-    colorbar = fig.colorbar(scalar_map, ax=ax, pad=0.10, shrink=0.75)
-    colorbar.set_label("Temperature (°C)")
-
-
-    # FRAME UPDATE
-    def update(frame):
-
-        ax.clear()
-
-        # Current simulation state
-        active_mask = (active_history[frame])
-        T = (temperature_history[frame])
-
-        # Substrate geometry
-        draw_substrate_surface(
-            ax,
-            geometry,
-            alpha=1.0
-        )
-
-        # Thermal graph nodes
-
-        visible_mask = (
-            active_history[frame]
-            & deposition_mask
-        )
-
-       
-
-        active_block_ids = np.unique(
-            node_block_ids[
-                visible_mask
-            ]
-        )
-
-        for block_id in active_block_ids:
-
-            block = block_lookup[
-                int(block_id)
-            ]
-
-            draw_block_outline(
-                ax,
-                block,
-                linewidth=1.0
-            )
-
-        # Thermal graph nodes
-        scatter = ax.scatter(
-            node_positions[visible_mask, 0],
-            node_positions[visible_mask, 1],
-            node_positions[visible_mask, 2],
-
-            c=T[visible_mask],
-
-            cmap=cmap,
-            norm=norm,
-
-            s=40,
-
-            depthshade=False
-        )
-
-        scatter.set_zorder(10)
-
-    
-        # Laser
-        laser_position = (laser_position_history[frame])
-        draw_laser(ax, laser_position)
-
-
-        # Labels
-        ax.set_title("DED Thermal Simulation\n" f"t = {time_history[frame]:.3f} s")
-        ax.set_xlabel("X (m)")
-        ax.set_ylabel("Y (m)")
-        ax.set_zlabel("Z (m)")
-
-        # Geometry limits
-        padding = 2.0e-3
-
-        ax.set_xlim(geometry.substrate_xmin, geometry.substrate_xmax)
-        ax.set_ylim(geometry.substrate_ymin, geometry.substrate_ymax)
-
-       
-
-        ax.set_zlim(
-            geometry.substrate_top - 0.25e-3,
-            geometry.zmax + 0.5e-3
-        )
-
-        ax.set_box_aspect(
-            (
-                geometry.substrate_length,
-                geometry.substrate_width,
-                geometry.substrate_height
-                + geometry.height
-            )
-        )
-
-
-        return ax,
-
-
-    # Animation
-    animation = FuncAnimation(
-        fig,
-        update,
-        frames=n_frames,
-        interval=interval,
-        repeat=False
-    )
-
-    
-
-    return (fig, animation)
-    
-    
-
-
-
-# ============================================================
-# TEST / LOAD SAVED SIMULATION
-# ============================================================
 
 if __name__ == "__main__":
-
-    import sys
-    from pathlib import Path
-
-    # --------------------------------------------------------
-    # Project paths
-    # --------------------------------------------------------
-
-    VISUALIZATION_DIR = (
-        Path(__file__).resolve().parent
-    )
-
-    PYTHON_DIR = (
-        VISUALIZATION_DIR.parent
-    )
-
-    if str(PYTHON_DIR) not in sys.path:
-
-        sys.path.insert(
-            0,
-            str(PYTHON_DIR)
-        )
-
-    from GraphCode.geometry import Geometry
-    from GraphCode.config import BUILD, LASER
-    
-    # --------------------------------------------------------
-    # Locate thermal-history file
-    # --------------------------------------------------------
-
-    
-
-    history_file = (
-        PYTHON_DIR
-        / "thermal_history.npz"
-    )
-
-    print(
-        "\nLooking for thermal history:"
-    )
-
-    print(
-        history_file
-    )
-
+    # Adjust this location if main.py saves to a different directory.
+    history_file = PYTHON_DIR / "thermal_history.npz"
     if not history_file.exists():
-
-        raise FileNotFoundError(
-            f"\nthermal_history.npz was not found at:\n"
-            f"{history_file}\n"
-        )
-
-
-    # --------------------------------------------------------
-    # Load saved data
-    # --------------------------------------------------------
-
-    data = np.load(
-        history_file,
-        allow_pickle=True
-    )
-
-    print(
-        "\n------ SAVED NPZ CONTENTS ------"
-    )
-
-    print(
-        data.files
-    )
-
-
-    # --------------------------------------------------------
-    # Required histories
-    # --------------------------------------------------------
-
-    temperature_history = np.asarray(
-        data["temperature"],
-        dtype=float
-    )
-
-    time_history = np.asarray(
-        data["time"],
-        dtype=float
-    )
-
-    active_history = np.asarray(
-        data["active_history"],
-        dtype=bool
-    )
-
-    laser_position_history = np.asarray(
-        data["laser_position_history"],
-        dtype=float
-    )
-
-    node_positions = np.asarray(
-        data["node_positions"],
-        dtype=float
-    )
-
-    substrate_mask = np.asarray(
-        data["substrate_mask"],
-        dtype=bool
-    )
-
-    node_block_ids = np.asarray(
-    data["node_block_ids"],
-    dtype=int
-    )
-
-
-    print(
-        "\nTemperature history shape:",
-        temperature_history.shape
-    )
-
-    print(
-        "Time history shape:",
-        time_history.shape
-    )
-
-    print(
-        "Active history shape:",
-        active_history.shape
-    )
-
-    print(
-        "Laser position history shape:",
-        laser_position_history.shape
-    )
-
-    print(
-        "Node positions shape:",
-        node_positions.shape
-    )
-
-
-    # --------------------------------------------------------
-    # Recreate geometry / nodes
-    #
-    # IMPORTANT:
-    # See note below about randomized nodes.
-    # --------------------------------------------------------
-
-    geometry = Geometry(
-        BUILD["stl_file"]
-    )
-
-    geometry.build_blocks()
-
-   
-
-    node_positions = np.asarray(
-            data["node_positions"],
-            dtype=float
-        )
-
-
-    # --------------------------------------------------------
-    # Create animation
-    # --------------------------------------------------------
-
-    '''fig, animation = (
-        animate_thermal_history(
-
-            geometry=geometry,
-
-            node_positions=node_positions,
-
-            temperature_history=
-                temperature_history,
-
-            time_history=
-                time_history,
-
-            active_history=
-                active_history,
-
-            laser_position_history=
-                laser_position_history,
-
-            ambient_temperature=25.0,
-
-            maximum_temperature=2200.0
-        )
-    )'''
-
-    fig, animation = animate_deposition_view(
-
-    geometry=geometry,
-
-    node_positions=node_positions,
-
-    temperature_history=
-        temperature_history,
-
-    time_history=
-        time_history,
-
-    active_history=
-        active_history,
-
-    laser_position_history=
-        laser_position_history,
-
-    substrate_mask=
-        substrate_mask,
-
-    node_block_ids=
-        node_block_ids)
-
-
-    OUTPUT_DIR = PYTHON_DIR
-    gif_file = (
-    OUTPUT_DIR
-            / "ded_thermal_animation.gif"
-        )
-
-    animation.save(
-        gif_file,
-        writer="pillow",
-        fps=5,
-        dpi=150
-    )
-
-    # Keep animation referenced until window closes
+        raise FileNotFoundError(f"History not found: {history_file}. Update history_file to its actual location.")
+    times, T, xyz, active, substrate, block_ids, source = load_history(history_file)
+    geometry = None
+    if Geometry is not None and BUILD is not None:
+        try:
+            geometry = Geometry(
+                    BUILD["stl_file"],
+                    substrate_material=SubstrateMaterial(),
+                    wire_material=WireMaterial()
+                )
+            geometry.build_blocks()
+        except Exception as exc:
+            warnings.warn(f"Could not recreate geometry; using node bounds: {exc}")
+    # Set True to show only deposition nodes; requires saved substrate_mask.
+    DEPOSITION_ONLY = substrate is not None
+    fig, animation = animate_thermal_history(
+        geometry, xyz, T, times, active, source,
+        substrate_mask=substrate, node_block_ids=block_ids,
+        deposition_only=DEPOSITION_ONLY, frame_stride=1)
+    gif_file = PYTHON_DIR / "ded_thermal_animation.gif"
+    animation.save(gif_file, writer=PillowWriter(fps=5), dpi=100)
+    print(f"Saved animation: {gif_file}")
     plt.show()
-
-    

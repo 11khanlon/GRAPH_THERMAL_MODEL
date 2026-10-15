@@ -258,3 +258,149 @@ class DepositionTracker:
         ])
 
         return np.mean(self.history[:, indices], axis=1)
+
+
+    #-----------------------------------------
+    def create_block_tracking_points(self, block, fraction=0.25):
+
+        start = np.asarray(block.start, dtype=float)
+        end = np.asarray(block.end, dtype=float)
+
+        center = (start + end) / 2
+
+        dx = (end[0] - start[0]) * fraction
+        dy = (end[1] - start[1]) * fraction
+
+        z = end[2]
+
+        return {
+            "center": np.array([center[0], center[1], z]),
+            "x_minus": np.array([center[0] - dx, center[1], z]),
+            "x_plus": np.array([center[0] + dx, center[1], z]),
+            "y_minus": np.array([center[0], center[1] - dy, z]),
+            "y_plus": np.array([center[0], center[1] + dy, z])
+        }
+
+    #---------------------------------------------
+    def interpolate_tracking_temperature(self, point, temperature, active_mask, k=8, power=2):
+
+        positions = np.asarray(
+            [node.position for node in self.nodes],
+            dtype=float)
+
+        deposited_mask = np.array(
+            [not node.is_substrate for node in self.nodes],
+            dtype=bool)
+
+        valid_indices = np.flatnonzero(active_mask & deposited_mask )
+
+        if len(valid_indices) == 0:
+            return np.nan
+
+        distances = np.linalg.norm( positions[valid_indices] - point, axis=1 )
+
+        nearest = np.argsort(distances)[:k]
+
+        d = distances[nearest]
+        node_indices = valid_indices[nearest]
+
+        if np.any(d < 1e-12):
+            return float(temperature[node_indices[np.argmin(d)]])
+
+        weights = 1.0 / d**power
+        weights /= weights.sum()
+
+        return float(np.sum(weights * temperature[node_indices]))
+
+    #-----------------------------------------
+    def tracking_point_history(self, block, time_per_block):
+
+        points = self.create_block_tracking_points(block)
+
+        times = np.asarray(self.history_time)
+        temperatures = np.asarray(self.history)
+        active_history = np.asarray(self.active_history)
+
+        indices = np.array(
+            [node.id for node in block.nodes],
+            dtype=int)
+
+        if len(indices) == 0:
+            raise ValueError(f"Block {block.id} has no nodes.")
+
+        # Find the first frame where the block is fully active
+        block_active = np.all( active_history[:, indices], axis=1 )
+
+        activation_frames = np.flatnonzero(block_active)
+
+        if len(activation_frames) == 0:
+            return None
+
+        activation_time = times[activation_frames[0]]
+
+        # Wait one block interval before beginning observations
+        tracking_start = activation_time + time_per_block
+
+        valid_frames = np.flatnonzero((times >= tracking_start) & block_active )
+
+        results = {
+            "block_id": block.id,
+            "layer": block.layer,
+            "activation_time": activation_time,
+            "time": times[valid_frames],
+            "cooling_time": times[valid_frames] - activation_time }
+
+        for name, point in points.items():
+
+            results[name] = np.array([
+                self.interpolate_tracking_temperature(
+                    point=point,
+                    temperature=temperatures[i],
+                    active_mask=active_history[i]
+                )
+                for i in valid_frames ])
+
+        return results
+
+
+    def find_nearest_simulation_frame(self, simulation_times, target_time):
+
+        simulation_times = np.asarray(simulation_times, dtype=float)
+
+        index = np.argmin(
+            np.abs(simulation_times - target_time)
+        )
+
+        return {
+            "frame_index": int(index),
+            "time": float(simulation_times[index]),
+            "time_error": float(
+                simulation_times[index] - target_time
+            )
+        }
+
+
+
+    def create_validation_schedule(self):
+
+        records = []
+
+        for validation_step in range(1, self.blocks_per_layer + 1):
+
+            target_time = validation_step * self.time_per_block
+
+            tracked_blocks = self.get_tracked_blocks(
+                validation_step
+            )
+
+            for tracked in tracked_blocks:
+
+                records.append({
+                    "validation_step": validation_step,
+                    "target_time_s": target_time,
+                    "current_block": validation_step,
+                    "tracked_block": tracked["block"],
+                    "cooling_time_s": tracked["cooling_time"]
+                })
+
+        return pd.DataFrame(records)

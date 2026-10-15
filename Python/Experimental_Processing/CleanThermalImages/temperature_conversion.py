@@ -29,10 +29,7 @@ class TemperatureConverter:
 
     # Convert saved uint16 intensity back to °C
     
-    def intensity_to_temperature(self, 
-                                 image_16bit, 
-                                 Tmin=None, 
-                                 Tmax=None):
+    def intensity_to_temperature(self, image_16bit, Tmin=None, Tmax=None):
 
         if Tmin is None:
             Tmin = self.Tmin
@@ -54,13 +51,9 @@ if __name__ == "__main__":
     # FILES
     from Python.Experimental_Processing.CleanThermalImages.spatial_calibration import SpatialCalibration 
 
-    image_path = Path(
-        r"C:\Users\Kayleigh\Downloads\Thermal_Images_Pass1\00001064_21.46_521.78.tiff"
-    )
+    image_path = Path(r"C:\Users\Kayleigh\Downloads\Thermal_Images_Pass1\00001064_21.46_521.78.tiff")
 
-    calibration_path = Path(
-        r"C:\Users\Kayleigh\GraphThermalModel\Python\ThermalData\spatial_calibration.npz"
-    )
+    calibration_path = Path( r"C:\Users\Kayleigh\GraphThermalModel\Python\ThermalData\spatial_calibration.npz")
 
     import os
     import sys

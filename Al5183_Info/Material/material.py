@@ -58,7 +58,7 @@ class AluminumMaterial:
         print(f"alpha(25°C) = {self.diffusivity(25):.3e} m²/s")
         
 
-class Al5183Material:
+class Al5183Material(AluminumMaterial):
 
     def __init__(self):
 
@@ -73,7 +73,7 @@ class Al5183Material:
 
     
 
-class Al6061Material:
+class Al6061Material(AluminumMaterial):
 
     def __init__(self):
 
@@ -97,17 +97,6 @@ if __name__ == "__main__":
     print()
     substrate.summary()
 
-    material.summary()
+    
 
-    temperatures = np.linspace(25, 1600, 10)
-
-    print()
-
-    print("Temperature-dependent properties")
-
-    for T in temperatures:
-
-        print(f"{T:7.1f} °C | "
-            f"k = {material.conductivity(T):6.2f} | "
-            f"Cp = {material.specific_heat(T):7.1f} | "
-            f"alpha = {material.diffusivity(T):.3e}") 
+    

@@ -406,12 +406,12 @@ if __name__ == "__main__":
         
     from Visualization.geometry_visualization import plot_geometry, check_geometry_locations
     from face import update_exposed_faces, print_exposed_faces, print_exposure_statistics
-    from material import Al5183Material, Al6061Material
+    from material import WireMaterial, SubstrateMaterial
 
     stl_file = BUILD["stl_file"]
 
-    wire_material = Al5183Material()
-    substrate_material = Al6061Material()
+    wire_material = WireMaterial()
+    substrate_material = SubstrateMaterial()
 
     geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
     

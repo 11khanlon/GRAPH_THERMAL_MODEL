@@ -10,9 +10,17 @@ Configuration file for the Graph Theory DED thermal model
 
 MATERIAL = {
     "name": "AluminumLM5(5182)",
+    "material_directory": "Al5183_Info",
     "density": 2650,                  # rho, kg/m^3
     "ambient_temperature": 25,    #  ambient temperature,C
     "liquidus_temperature": 633      # liquidus temperature, C
+}
+
+
+IMAGE_PROCESSING = {
+     "PRE_BUFFER_S": 1,  # seconds
+     "NUMBER_OF_PASSES": 2   #this is just the number of desired passes you want to analyze
+     #Make sure to rename the actual filepaths for thermal_image_processor and use the count to select desired images 
 }
 
 #--------- WAAM PARAMETERS ---------------
@@ -76,7 +84,10 @@ BUILD = {
     "substrate_blocks_y": 1,
     "substrate_blocks_z": 1, 
 
-    "blocks_per_layer": 20
+    "blocks_per_layer": 10,
+
+    "bead_length": 0.127,  #m
+    "x_start": 12.4/1000   #m
     
 }
 
@@ -97,9 +108,10 @@ BLOCK = {
 #------- GRAPH PARAMETERS --------
 
 GRAPH = {
-    "epsilon": 5e-3,  # neighborhood radius ε, m
-    "gain": 1.3E4,     # gain factor g, m^-2
-    "node_density": 0.01  # node density, nodes/mm^3
+    "seed": 42,
+    "epsilon": 4e-3,  # neighborhood radius ε, m
+    "gain": 10e6,     # gain factor g, m^-2
+    "node_density": 0.01 # node density, nodes/mm^3
 }
 
 
@@ -150,7 +162,7 @@ CONVECTION = {
 
 DWELL = {
     "dwell_time_step": 1,    #seconds
-    "dwell": 30
+    "dwell": 17.20
 }
 
 

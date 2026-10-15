@@ -3,41 +3,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# ============================================================
+
 # USER INPUT
-# ============================================================
-
-XML_FILE = "Python/Calibration/A36_datasheet.xml"
+XML_FILE = "A36_datasheet.xml"
 
 
-# ============================================================
-# HELPER FUNCTION
-# ============================================================
 
+# ---------- Helper Functions --------------
+
+#Convert comma-separated XML data into a NumPy float array.
 def string_to_array(text):
-    """
-    Convert comma-separated XML data into a NumPy float array.
-    """
-    return np.array(
-        [float(value.strip()) for value in text.split(",")],
-        dtype=float
-    )
+
+    return np.array([float(value.strip()) for value in text.split(",")], dtype = float)
 
 
+#Extract a temperature-dependent material property from the ANSYS / Granta EngineeringData XML structure.
 def extract_temperature_property(root, property_name, parameter_name):
-    """
-    Extract a temperature-dependent material property from the
-    ANSYS / Granta EngineeringData XML structure.
-
-    Returns
-    -------
-    temperature : np.ndarray
-        Temperature [K]
-
-    values : np.ndarray
-        Material property values
-    """
-
+  
     # Search through all PropertyData elements
     for property_data in root.iter("PropertyData"):
 
@@ -80,52 +62,22 @@ def extract_temperature_property(root, property_name, parameter_name):
     )
 
 
-# ============================================================
-# READ XML FILE
-# ============================================================
 
+#Read XML File
 tree = ET.parse(XML_FILE)
 root = tree.getroot()
-
-
-# ============================================================
-# MATERIAL NAME
-# ============================================================
-
-material_name = root.findtext(
-    ".//Material/BulkDetails/Name",
-    default="Material"
-)
-
+material_name = root.findtext( ".//Material/BulkDetails/Name", default="Material")
 print(f"\nMaterial: {material_name}")
 
 
-# ============================================================
-# EXTRACT THERMAL CONDUCTIVITY
-# ============================================================
-
-T_k, k = extract_temperature_property(
-    root,
-    property_name="Thermal Conductivity",
-    parameter_name="Thermal Conductivity"
-)
+#Exact Thermal Conductivity 
+T_k, k = extract_temperature_property( root, property_name="Thermal Conductivity", parameter_name="Thermal Conductivity")
+T_cp, cp = extract_temperature_property(root, property_name="Specific Heat", parameter_name="Specific Heat")
 
 
-# ============================================================
-# EXTRACT SPECIFIC HEAT
-# ============================================================
+#Print Data
 
-T_cp, cp = extract_temperature_property(
-    root,
-    property_name="Specific Heat",
-    parameter_name="Specific Heat"
-)
-
-
-# ============================================================
-# PRINT DATA
-# ============================================================
-
+print("--------------------------------------------")
 print("\nThermal Conductivity")
 print("--------------------------------------------")
 print("Temperature [K]     k [W/(m*K)]")
@@ -134,6 +86,7 @@ for T, value in zip(T_k, k):
     print(f"{T:10.2f}          {value:10.3f}")
 
 
+print("--------------------------------------------")
 print("\nSpecific Heat")
 print("--------------------------------------------")
 print("Temperature [K]     Cp [J/(kg*K)]")
@@ -141,11 +94,7 @@ print("Temperature [K]     Cp [J/(kg*K)]")
 for T, value in zip(T_cp, cp):
     print(f"{T:10.2f}          {value:10.3f}")
 
-
-# ============================================================
-# PLOT THERMAL CONDUCTIVITY
-# ============================================================
-
+#Plot
 plt.figure(figsize=(8, 6))
 
 plt.plot(
@@ -172,18 +121,11 @@ plt.show()
 
 plt.figure(figsize=(8, 6))
 
-plt.plot(
-    T_cp,
-    cp,
-    marker="o",
-    linewidth=2
-)
+plt.plot(T_cp, cp, marker="o", linewidth=2)
 
 plt.xlabel("Temperature [K]")
 plt.ylabel("Specific Heat Capacity, $c_p$ [J/(kg·K)]")
-plt.title(
-    f"Specific Heat Capacity vs Temperature\n{material_name}"
-)
+plt.title(f"Specific Heat Capacity vs Temperature\n{material_name}")
 
 plt.grid(True)
 plt.tight_layout()

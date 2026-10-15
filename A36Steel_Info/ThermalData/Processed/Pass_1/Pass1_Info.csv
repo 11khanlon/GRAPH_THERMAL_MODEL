@@ -1,2 +1,2 @@
-Pass,DepositionStart,DepositionEnd,DepositionDuration_s,DwellDuration_s,DwellEnd,WindowStart,WindowEnd,A700_DepositionStart_Count,A700_DepositionEnd_Count,A700_DwellEnd_Count,A700_WindowStart_Count,A700_WindowEnd_Count
-1,2025-10-09 12:53:33.363255,2025-10-09 12:53:43.181433,9.818178,30.0,2025-10-09 12:54:13.181433,2025-10-09 12:53:32.363255,2025-10-09 12:54:18.181433,1022,1317,2218,992,2368
+Pass,DepositionStart,DepositionEnd,DepositionDuration_s,DwellDuration_s,DwellEnd,NextDepositionStart,WindowStart,WindowEnd,A700_DepositionStart_Count,A700_DepositionEnd_Count,A700_DwellEnd_Count,A700_WindowStart_Count,A700_WindowEnd_Count
+1,2025-10-09 12:53:33.363255,2025-10-09 12:53:43.181433,9.818178,38.780117,2025-10-09 12:54:21.961550,2025-10-09 12:54:21.961550,2025-10-09 12:53:32.363255,2025-10-09 12:54:21.961550,1022,1317,2482,992,2482

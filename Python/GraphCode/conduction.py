@@ -74,106 +74,7 @@ class ConductionSolver:
                          dt)
 
     
-class HeterogeneousConductionSolver:
 
-    def __init__(self, graph, gain=1.0):
-
-        self.graph = graph
-        self.nodes = graph.nodes
-        self.gain = gain
-
-    def step(self, temperature, dt, active_mask, volumes, edge_areas):
-
-        temperature = np.asarray(temperature, dtype=float)
-        active_mask = np.asarray(active_mask, dtype=bool)
-        volumes = np.asarray(volumes, dtype=float)
-
-        # 1. Temperature-dependent material properties
-        rho = np.array([
-            node.material.rho
-            for node in self.nodes
-        ], dtype=float)
-
-        cp = np.array([
-            node.material.specific_heat(temperature[i])
-            for i, node in enumerate(self.nodes)
-        ], dtype=float)
-
-        k = np.array([
-            node.material.conductivity(temperature[i])
-            for i, node in enumerate(self.nodes)
-        ], dtype=float)
-
-        # 2. Active nodes only
-        active_ids = np.flatnonzero(active_mask)
-        local_index = np.full(len(self.nodes), -1, dtype=int)
-        local_index[active_ids] = np.arange(len(active_ids))
-
-        # 3. Thermal capacitance
-        C = rho[active_ids] * cp[active_ids] * volumes[active_ids]
-
-        # 4. Construct conductance-weighted Laplacian
-        adjacency = self.graph.adjacency.tocoo()
-
-        rows = []
-        cols = []
-        values = []
-
-        for i, j in zip(adjacency.row, adjacency.col):
-
-            # Process each undirected edge once
-            if i >= j:
-                continue
-
-            # No conduction through nonexistent material
-            if not (active_mask[i] and active_mask[j]):
-                continue
-
-            distance = np.linalg.norm(
-                np.asarray(self.nodes[i].position) -
-                np.asarray(self.nodes[j].position)
-            )
-
-            if distance <= 0:
-                raise ValueError("Connected nodes have zero separation.")
-
-            area = edge_areas(i, j)
-
-            conductance = (
-                self.gain
-                * area / distance
-                * (2 * k[i] * k[j] / (k[i] + k[j]))
-            )
-
-            a = local_index[i]
-            b = local_index[j]
-
-            rows.extend([a, a, b, b])
-            cols.extend([a, b, a, b])
-            values.extend([
-                conductance, -conductance,
-                -conductance, conductance
-            ])
-
-        n = len(active_ids)
-
-        L_G = coo_matrix(
-            (values, (rows, cols)),
-            shape=(n, n)
-        ).tocsr()
-
-        # 5. dT/dt = -C^-1 L_G T
-        A = -diags(1.0 / C) @ L_G
-
-        # 6. Advance temperatures
-        updated = temperature.copy()
-
-        updated[active_ids] = expm_multiply(
-            A * dt,
-            temperature[active_ids]
-        )
-
-        return updated
 
 
 # ------------------------------------------------------------
@@ -184,11 +85,11 @@ if __name__ == "__main__":
     from nodes import NodeGenerator
     from graph import ThermalGraph
     from config import GRAPH, MATERIAL, BLOCK, BUILD, WAAM
-    from material import Al5183Material, Al6061Material
+    from material import WireMaterial, SubstrateMaterial
 
     stl_file = BUILD["stl_file"]
-    substrate_material = Al6061Material()
-    wire_material = Al5183Material()
+    wire_material = WireMaterial()
+    substrate_material = SubstrateMaterial()
     geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
 
     geom.build_blocks()
@@ -306,7 +207,7 @@ if __name__ == "__main__":
 
     print("\n--- Material Diffusivity Verification ---")
 
-    for material_name in ["Al6061", "Al5183"]:
+    for material_name in [MATERIAL["name"], MATERIAL["name"]]:
 
         ids = np.array([
             node.id

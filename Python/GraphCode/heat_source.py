@@ -166,11 +166,11 @@ if __name__ == "__main__":
     from geometry import Geometry
     from nodes import NodeGenerator
     from config import  MATERIAL, BUILD, WAAM
-    from material import Al5183Material, Al6061Material
+    from material import WireMaterial, SubstrateMaterial
         
     stl_file = BUILD["stl_file"]
-    substrate_material = Al6061Material()
-    wire_material = Al5183Material()
+    wire_material = WireMaterial()
+    substrate_material = SubstrateMaterial()
     geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
 
     geom.build_blocks()
