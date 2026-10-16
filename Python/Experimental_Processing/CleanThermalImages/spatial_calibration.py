@@ -306,6 +306,44 @@ class SpatialCalibration():
         plt.title( "Selected Substrate Calibration")
         plt.show()
 
+    def physical_to_rectified_pixel(self, x, y, rotated=False):
+
+        if (
+            self.pixel_size_x_m is None
+            or self.pixel_size_y_m is None
+        ):
+            raise RuntimeError(
+                "Rectified grid has not been created."
+            )
+
+        xmin = np.min(self.plate_points_xy[:, 0])
+        ymin = np.min(self.plate_points_xy[:, 1])
+
+        # Physical coordinates -> unrotated pixel coordinates
+        u = (x - xmin) / self.pixel_size_x_m - 0.5
+        v = (y - ymin) / self.pixel_size_y_m - 0.5
+
+        # Apply the same 180-degree rotation convention
+        if rotated:
+            u = self.rectified_width_px - 1 - u
+            v = self.rectified_height_px - 1 - v
+
+        u = int(round(u))
+        v = int(round(v))
+
+        # Ensure the requested point is inside the image
+        if not (0 <= u < self.rectified_width_px):
+            raise ValueError(
+                f"X coordinate {x:.6f} m maps outside image: u={u}"
+            )
+
+        if not (0 <= v < self.rectified_height_px):
+            raise ValueError(
+                f"Y coordinate {y:.6f} m maps outside image: v={v}"
+            )
+
+        return u, v
+
 
 
 if __name__ == "__main__":

@@ -67,53 +67,58 @@ class ThermalValidationGraphs:
     def plot_x_profile(
         self,
         experimental_points,
-        simulation_points,
         pass_number,
         block_number,
         cooling_time,
         validation_step,
-        output_path=None):
+        output_path=None
+    ):
 
         names = ["x_minus", "center", "x_plus"]
-        x_exp = np.array([experimental_points[name]["x"] 
-                          for name in names])
 
-        T_exp = np.array([experimental_points[name]["temperature"]
-                          for name in names])
-        x_sim = np.array([
-            simulation_points[name]["x"]
-            for name in names])
+        x_exp = np.array([
+            experimental_points[name]["x"]
+            for name in names
+        ])
 
-
-        T_sim = np.array([
-            simulation_points[name]["temperature"]
-            for name in names])
+        T_exp = np.array([
+            experimental_points[name]["temperature"]
+            for name in names
+        ])
 
         fig, ax = plt.subplots(figsize=(7, 5))
-        ax.plot( x_exp * 1000, T_exp, marker="o", label="FLIR")
-        ax.plot(x_sim * 1000, T_sim, marker="s", label="Graph Model")
-        ax.set_xlabel("x [mm]")
-        ax.set_ylabel("Temperature [°C]")
-        ax.set_title(f"Block {block_number} | Cooling Time = {cooling_time:.3f} s")
 
+        ax.plot(
+            x_exp * 1000,
+            T_exp,
+            marker="o",
+            label="FLIR"
+        )
+
+        ax.set_xlabel("X Position [mm]")
+        ax.set_ylabel("Temperature [°C]")
+
+        ax.set_title(
+            f"Pass {pass_number} | Block {block_number} | "
+            f"Cooling Time = {cooling_time:.3f} s"
+        )
 
         ax.grid(True)
         ax.legend()
         fig.tight_layout()
 
-
         if output_path is None:
-
             output_path = (
                 self.output_dir
                 / f"Pass_{pass_number}"
                 / "X_Profiles"
-                / (f"Step_{validation_step}_"
-                   f"Block_{block_number}.png")
+                / f"Step_{validation_step}_Block_{block_number}.png"
             )
 
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        fig.savefig( output_path, dpi=300)
+        fig.savefig(output_path, dpi=300)
         plt.close(fig)
 
 
@@ -122,7 +127,6 @@ class ThermalValidationGraphs:
     def plot_y_profile(
         self,
         experimental_points,
-        simulation_points,
         pass_number,
         block_number,
         cooling_time,
@@ -133,44 +137,45 @@ class ThermalValidationGraphs:
 
         y_exp = np.array([
             experimental_points[name]["y"]
-            for name in names])
+            for name in names
+        ])
 
         T_exp = np.array([
             experimental_points[name]["temperature"]
-            for name in names])
-
-
-        y_sim = np.array([
-            simulation_points[name]["y"]
-            for name in names])
-
-        T_sim = np.array([
-            simulation_points[name]["temperature"]
-            for name in names])
+            for name in names
+        ])
 
         fig, ax = plt.subplots(figsize=(7, 5))
-        ax.plot( y_exp * 1000, T_exp, marker="o", label="FLIR")
-        ax.plot( y_sim * 1000, T_sim, marker="s", label="Graph Model")
-        ax.set_xlabel("y [mm]")
-        ax.set_ylabel("Temperature [°C]" )
 
-        ax.set_title( f"Block {block_number} | Cooling Time = {cooling_time:.3f} s")
-      
+        ax.plot(
+            y_exp * 1000,
+            T_exp,
+            marker="o",
+            label="FLIR"
+        )
+
+        ax.set_xlabel("Y Position [mm]")
+        ax.set_ylabel("Temperature [°C]")
+
+        ax.set_title(
+            f"Pass {pass_number} | Block {block_number} | "
+            f"Cooling Time = {cooling_time:.3f} s"
+        )
+
         ax.grid(True)
         ax.legend()
         fig.tight_layout()
 
-
         if output_path is None:
-
             output_path = (
                 self.output_dir
                 / f"Pass_{pass_number}"
                 / "Y_Profiles"
-                / (f"Step_{validation_step}_"
-                   f"Block_{block_number}.png")
+                / f"Step_{validation_step}_Block_{block_number}.png"
             )
 
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
         fig.savefig(output_path, dpi=300)
         plt.close(fig)
@@ -238,11 +243,25 @@ class ThermalValidationGraphs:
         fig, ax = plt.subplots(figsize=(12, 5))
         image = ax.imshow(temperature_field, cmap="turbo", origin="lower", extent=[0, self.substrate_length, 0, self.substrate_width ],aspect="equal")
 
+        experimental_records = []
+        tracked_blocks = validation.get_tracked_blocks(validation_step)
 
         for tracked in tracked_blocks:
 
             block_number = (tracked["block"])
             roi = (self.validation.block_rois[block_number - 1] )
+            experimental_points = (validation.extract_point_temperatures(temperature_field, roi))
+            record = validation.create_experimental_record(
+                pass_number=pass_number,
+                frame_count=frame_count,
+                validation_step=validation_step,
+                block_number=block_number,
+                cooling_time=tracked["cooling_time"],
+                experimental_points=experimental_points,
+                actual_time=actual_time)
+
+            experimental_records.append(record)
+
             rectangle = Rectangle(
                 (roi["x_min"], roi["y_min"]),
                 self.validation.block_length,
@@ -292,16 +311,28 @@ class ThermalValidationGraphs:
         fig.savefig(output_path, dpi=300 )
         plt.close(fig)
 
+        experimental_table = validation.create_experimental_table(experimental_records)
+
+        BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+        EXPERIMENTAL_FILE = (
+            BASE_DIR
+            / "Validation"
+            / "Results"
+            / "Experimental"
+            / "experimental_tracking_history.csv"
+        )
+
+        validation.save_experimental_table(
+            experimental_table,
+            EXPERIMENTAL_FILE
+        )
+
 
     #Save temperature history 
 
     def save_temperature_history(self, table):
 
-        point_names = [
-            "center", "x_minus", "x_plus",
-            "y_minus", "y_plus"
-        ]
-
+        point_names = ["center", "x_minus", "x_plus", "y_minus", "y_plus"]
         records = []
 
         for _, row in table.iterrows():
@@ -417,15 +448,11 @@ if __name__ == "__main__":
 
     DOWNLOADS_DIR = Path(r"C:\Users\Kayleigh\Downloads")
     VALIDATION_DIR = DOWNLOADS_DIR / "Thermal_Validation"
-    VALIDATION_TABLE = VALIDATION_DIR / "Tables" / "validation_results.csv"
+
         
     
     #----- Import File Path ------
     calibration_file = Path( r"C:\\Users\\Kayleigh\\GraphThermalModel\\A36Steel_Info\\ThermalData\\spatial_calibration.npz")
-
- 
-
-    VALIDATION_TABLE_FILE = VALIDATION_DIR/ "Tables" / "validation_results.csv"
 
     PROCESSED_DIR = DOWNLOADS_DIR / "Thermal_Processed" / "Temperature_Data"
 
@@ -435,9 +462,7 @@ if __name__ == "__main__":
     calibration.load_calibration(CALIBRATION_FILE)
 
 
-    
     # CREATE VALIDATION OBJECT
-
     validation = ThermalValidation(
         calibration=calibration,
         blocks_per_layer= BUILD["blocks_per_layer"],
@@ -468,7 +493,6 @@ if __name__ == "__main__":
         print(f"\n======================================")
         print(f"Processing Validation Pass {pass_number} ")
          
-    
 
         # ====================================================
         # A700 TIMING CSV
@@ -544,96 +568,20 @@ if __name__ == "__main__":
             tracked_blocks =  validation.get_tracked_blocks(validation_step)
             print("Tracked blocks:")
 
-            for tracked in tracked_blocks:
 
-                block_number = tracked["block"]
-                cooling_time = tracked["cooling_time"]
+            graphs.plot_validation_frame(
+                temperature_field=( temperature_field),
+                tracked_blocks=(tracked_blocks),
+                pass_number=(pass_number),
+                frame_count=(frame_count),
+                validation_step=(validation_step),
+                actual_time=(actual_time)
+            )
 
-                # Find the physical ROI for this block
-                roi = validation.block_rois[block_number - 1]
-
-                # Extract the five experimental temperatures
-                experimental_points = validation.extract_point_temperatures(
-                    temperature_field=temperature_field,
-                    roi=roi
-                )
-
-
-                # =================================================
-                # PLOT THERMAL IMAGE + BLOCKS + POINTS
-    
-                graphs.plot_validation_frame(
-    
-                    temperature_field=( temperature_field),
-                    tracked_blocks=(tracked_blocks),
-                    pass_number=(pass_number),
-                    frame_count=(frame_count),
-                    validation_step=(validation_step),
-                    actual_time=(actual_time)
-                )
-    
-                graphs.plot_x_profile(
-                    experimental_points=experimental_points,
-                    simulation_points=simulation_points,
-                    pass_number=pass_number,
-                    block_number=block_number,
-                    cooling_time=cooling_time,
-                    validation_step=validation_step
-                )
-    
-                graphs.plot_y_profile(
-                    experimental_points=experimental_points,
-                    simulation_points=simulation_points,
-                    pass_number=pass_number,
-                    block_number=block_number,
-                    cooling_time=cooling_time,
-                    validation_step=validation_step
-                )
-
-
+     
             for tracked in tracked_blocks:
 
                 print(f"Block  {tracked['block']}: {tracked['cooling_time']:.3f} s cooling")
                
 
-            
-
-
-        # ----- Generate validation report outputs -----
-
-    if not VALIDATION_TABLE_FILE.exists():
-        raise FileNotFoundError(
-            f"Validation results not found: {VALIDATION_TABLE_FILE}"
-        )
-
-    table = pd.read_csv(VALIDATION_TABLE_FILE)
-
-    if table.empty:
-        raise ValueError("Validation results table is empty.")
-
-    # Export temperature histories
-    graphs.save_temperature_history(table)
-
-    # Export summary statistics
-    summary = graphs.save_summary_statistics(table)
-
-    # Overall figures
-    graphs.plot_parity(table)
-    graphs.plot_error_by_block(summary)
-
-    # Cooling histories for every validated block
-    for pass_number, block_number in (
-        table[["pass", "block"]]
-        .drop_duplicates()
-        .itertuples(index=False, name=None)
-    ):
-
-        graphs.plot_cooling_history(
-            table=table,
-            pass_number=pass_number,
-            block_number=block_number
-        )
-
-    print("Validation tables and summary figures generated.")
-
-
+       

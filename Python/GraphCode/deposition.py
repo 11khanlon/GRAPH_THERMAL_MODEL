@@ -87,8 +87,10 @@ class DepositionSimulation:
         self.wall_start = None
         self.wall_end = None
         self.computation_time = None
-        self.tracker = DepositionTracker(nodes = self.nodes, initial_temperature = self.temperature, probes = probes)
+        self.tracker = DepositionTracker(nodes=self.nodes, initial_temperature=self.temperature,
+                                          ambient_temperature=self.material_settings[ "ambient_temperature" ], probes=probes)
 
+      
 
     #------------- Helper Functions -----------
     #activate nodes belonging to the newly deposited block 
@@ -182,42 +184,7 @@ class DepositionSimulation:
             [node.active for node in self.nodes],
             dtype=bool)
 
-    #--------------------------------------------------
-    def inactive_node_statistics(self):
-
-        active = self.active_mask()
-        inactive = ~active
-
-        if not np.any(inactive):
-            return
-
-        Tinactive = self.temperature[inactive]
-
-        ambient = self.material_settings["ambient_temperature"]
-
-        print("Max inactive T:", Tinactive.max())
-        print("Inactive nodes > ambient + 10 C:", np.sum(Tinactive > ambient + 10.0))
-
-    #------------------------------------------------
-    def hottest_inactive_node(self):
-
-        active = self.active_mask()
-        inactive = ~active
-
-        if not np.any(inactive):
-            return
-
-        inactive_indices = np.where(inactive)[0]
-        local_index = np.argmax(self.temperature[inactive])
-        node_index = inactive_indices[ local_index]
-        node = self.nodes[node_index]
-
-        print(f"Hottest inactive node: {node.id} ")
-        print(f"Temperature: {self.temperature[node_index]:.2f} °C ")
-        print(f"Layer: {node.block.layer} ")
-        print(f"Position: {node.position} ")
-
-       
+    
     #----------------------------------------
     def print_current_block_temperature(self, block, label):
 
@@ -233,52 +200,6 @@ class DepositionSimulation:
             f"Tmin={Tblock.min():.2f} °C, "
             f"Tmax={Tblock.max():.2f} °C")
 
-
-    def check_temperature_validity(temperature, ambient_temperature):
-
-        if not np.all(np.isfinite(temperature)):
-            raise ValueError("Temperature contains NaN or infinity.")
-
-        if np.any(temperature < ambient_temperature - 1e-6):
-            print("WARNING: Some nodes are below ambient temperature.")
-
-        print(f"Temperature range: {temperature.min():.2f} to  {temperature.max():.2f} °C")
-         
-
-    def check_inactive_heating(nodes, temperature, ambient_temperature, tolerance=1.0):
-
-        inactive = np.array([
-            not node.active
-            for node in nodes])
-
-        if not np.any(inactive):
-            return
-
-        inactive_temperatures = temperature[inactive]
-        heated = np.sum(inactive_temperatures > ambient_temperature + tolerance)
-
-        print(f"Inactive nodes above ambient: {heated}")
-
-        if heated > 0:
-            print("WARNING: Heat may be reaching inactive nodes.")
-
-
-    def block_cooling_rate(block, previous_temperature, current_temperature, dt):
-
-        if dt <= 0:
-            raise ValueError("dt must be positive.")
-
-        indices = np.array([
-            node.id
-            for node in block.nodes])
-
-        T_old = np.mean(previous_temperature[indices])
-        T_new = np.mean(current_temperature[indices])
-
-        cooling_rate = (T_new - T_old) / dt
-        print(f"Block {block.id} temperature rate: {cooling_rate:.2f} °C/s ")
-
-        return cooling_rate
     
     # -----------------------------------------------
     def simulate_block(self, block):
@@ -292,11 +213,23 @@ class DepositionSimulation:
         update_exposed_faces(self.geometry)                              # Update geometry-level exposed faces
         self.node_generator.update_node_exposure(self.surface_thickness)  # Convert block faces → exposed nodes
         self.node_generator.update_surface_types()                        # Classify nodes as forced/free
-        self.update_surface_masks()                                        # Rebuild masks
+        self.update_surface_masks()              # Rebuild masks
+        
+        #establish initial temperature stage 
+        self.tracker.record_thermal_stage(time=self.time, block=block, stage="initial",
+                                          temperature=self.temperature, active_mask=self.active_mask())                     
 
         # Step 1: Arc/HeatSource heating
         delta_T_arc = self.heat_source.apply(nodes=self.nodes, block=block, temperature=self.temperature)
         self.temperature += delta_T_arc
+
+        self.tracker.record_thermal_stage(
+            time=self.time,
+            block=block,
+            stage="heat_source",
+            temperature=self.temperature,
+            active_mask=self.active_mask()
+        )
 
 
         self.print_current_block_temperature(block, "After HeatSource")
@@ -348,6 +281,14 @@ class DepositionSimulation:
             label="After conduction",
             block=block)
 
+        self.tracker.record_thermal_stage(
+            time=self.time,
+            block=block,
+            stage="conduction",
+            temperature=self.temperature,
+            active_mask=self.active_mask()
+        )
+
         # Step 3 --> Convection
         cp = np.array([
             node.material.specific_heat(self.temperature[node.id])
@@ -373,6 +314,14 @@ class DepositionSimulation:
             node.material.specific_heat(self.temperature[i])
             for i, node in enumerate(self.nodes)], dtype=float)
 
+        self.tracker.record_thermal_stage(
+            time=self.time,
+            block=block,
+            stage="forced_convection",
+            temperature=self.temperature,
+            active_mask=self.active_mask()
+        )
+
         # Free convection
         self.temperature = self.cooling.block_cooling(
             temperature=self.temperature,
@@ -390,12 +339,11 @@ class DepositionSimulation:
             block=block
         )
 
-        self.tracker.print_temperature_status(
-            temperature=self.temperature,
-            time=self.time + self.block_time,
-            label="After convection",
-            block=block
-        )
+        self.tracker.print_temperature_status(temperature=self.temperature, time=self.time + self.block_time,
+            label="After convection", block=block )
+
+        self.tracker.record_thermal_stage( time=self.time + self.block_time,
+            block=block,stage="free_convection", temperature=self.temperature, active_mask=self.active_mask())
 
         self.time += self.block_time
 
@@ -407,13 +355,18 @@ class DepositionSimulation:
             laser_position=block.center
         )
 
+    
         self.tracker.record_deposition_frame(
             temperature=self.temperature,
             time=self.time,
             block=block,
             stage="after_block"
         )
-     
+
+        self.tracker.record_block_completion( block=block, time=self.time )
+
+      
+            
 
     # ----------------------------------
     def simulate_dwell(self):
@@ -430,11 +383,7 @@ class DepositionSimulation:
             # Step 1: Conduction
             alpha = self.current_diffusivity()
 
-            self.temperature = self.conduction.dwell_conduction(
-                temperature=self.temperature,
-                alpha=alpha,
-                dt=dt
-            )
+            self.temperature = self.conduction.dwell_conduction(temperature=self.temperature, alpha=alpha, dt=dt )
 
             # Step 2: Forced convection
             cp = np.array([
@@ -526,9 +475,7 @@ class DepositionSimulation:
 
                 current_layer = block.layer
 
-                print(
-                    f"Layer {current_layer + 1}"
-                )
+                print( f"Layer {current_layer + 1}")
 
             self.simulate_block(block)
             print(
@@ -541,12 +488,7 @@ class DepositionSimulation:
 
         # Final cooling period
         if current_layer is not None:
-
-            print(
-                f"Dwell after final layer "
-                f"{current_layer + 1}"
-            )
-
+            print(f"Dwell after final layer {current_layer + 1} ")
             self.simulate_dwell()
 
         self.computation_time = time.perf_counter() - compute_start
@@ -564,12 +506,98 @@ class DepositionSimulation:
         print(f"\nComputer calculation time: "
             f"{self.computation_time:.2f} s")
 
+
+     
+
         self.tracker.finalize()
+
+
+        # -----------------------------------------
+        # Output directories
+
+        output_dir = (
+            Path.home()
+            / "Downloads"
+            / "Thermal_Simulation"
+        )
+
+        diagnostics_dir = output_dir / "Diagnostics"
+        validation_dir = output_dir / "Validation"
+
+        diagnostics_dir.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        validation_dir.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        # -----------------------------------------
+        # Export thermal stage table
+
+        stage_table = self.tracker.export_thermal_stage_table(
+            output_path=(
+                diagnostics_dir
+                / "Tables"
+                / "thermal_stage_nodes.csv"
+            )
+        )
+
+        # -----------------------------------------
+        # Export thermal stage summary
+
+        summary = self.tracker.create_thermal_stage_summary()
+
+        summary_path = (
+            diagnostics_dir
+            / "Tables"
+            / "thermal_stage_summary.csv"
+        )
+
+        summary_path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        summary.to_csv(
+            summary_path,
+            index=False
+        )
+
+        # -----------------------------------------
+        # Export numerical diagnostics
+
+        statistics_table = self.tracker.export_temperature_statistics(
+            output_path=(
+                diagnostics_dir
+                / "Tables"
+                / "temperature_statistics.csv"
+            )
+        )
+
+        # -----------------------------------------
+        # Export five-point validation histories
+
+        tracking_table = self.tracker.export_tracking_histories(
+            blocks=ordered_blocks,
+            block_length=self.block_length,
+            block_width=self.block_info["width"],
+            output_path=(
+                validation_dir
+                / "simulation_tracking_history.csv"
+            )
+        )
+
+        print("\nSimulation diagnostics exported.")
+        print(f"Thermal stage rows: {len(stage_table)}")
+        print(f"Thermal summary rows: {len(summary)}")
+        print(f"Statistics rows: {len(statistics_table)}")
+        print(f"Validation rows: {len(tracking_table)}")
+
 
         return self.tracker.history
 
 
-    # --------------------------------------
-    def maximum_temperature(self):
-        
-        return np.max(self.temperature)
+  

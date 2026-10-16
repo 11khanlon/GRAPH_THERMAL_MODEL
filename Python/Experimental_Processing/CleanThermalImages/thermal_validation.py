@@ -276,31 +276,80 @@ class ThermalValidation:
 
 
     # VALIDATION TABLE
-    def create_validation_table(self, comparison_records):
+    def create_experimental_table(self, experimental_records):
 
-        table = pd.DataFrame(comparison_records)
+        table = pd.DataFrame(experimental_records)
 
         if table.empty:
-
-            print("No comparison records were provided. ")
-
+            print("No experimental records were provided.")
             return table
 
-        table = table.sort_values(by = ["pass", "validation_step", "block"])
+        table = table.sort_values(by=["pass", "validation_step", "block"])
         table = table.reset_index(drop=True)
 
         return table
 
-        
-    # SAVE VALIDATION TABLE
-    def save_validation_table(self, table, output_path):
+
+    def save_experimental_table(self, table, output_path):
 
         output_path = Path(output_path)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        table.to_csv(output_path, index=False)
+        output_path.parent.mkdir( parents=True, exist_ok=True)
+        table.to_csv( output_path, index=False)
 
-        print("\nValidation table saved to:")
-        print(output_path)
+        print(f"Experimental table saved to: {output_path}")
+
+
+    def create_experimental_record(
+        self,
+        pass_number,
+        frame_count,
+        validation_step,
+        block_number,
+        cooling_time,
+        experimental_points,
+        actual_time=None):
+
+        row = {
+            "pass": pass_number,
+            "frame_count": frame_count,
+            "validation_step": validation_step,
+            "block": block_number,
+            "cooling_time_s": cooling_time,
+            "time_s": actual_time
+        }
+
+        point_names = [
+            "center",
+            "x_minus",
+            "x_plus",
+            "y_minus",
+            "y_plus"
+        ]
+
+        for point_name in point_names:
+
+            point = experimental_points[point_name]
+
+            row[f"{point_name}_x_m"] = point["x"]
+            row[f"{point_name}_y_m"] = point["y"]
+
+            row[f"{point_name}_T_exp_C"] = (
+                point["temperature"]
+            )
+
+        gradients = self.calculate_gradients(
+            experimental_points
+        )
+
+        row["dTdx_exp_C_per_m"] = (
+            gradients["dTdx_C_per_m"]
+        )
+
+        row["dTdy_exp_C_per_m"] = (
+            gradients["dTdy_C_per_m"]
+        )
+
+        return row
 
     
 
@@ -385,26 +434,6 @@ if __name__ == "__main__":
     print("\n Validation times [s]:")
     print(validation_times)
 
-    #Comparison Records 
-    '''comparison_records = []
 
-    comparison_records will eventually be populated with:
-    
-    comparison = validation.compare_block(
-         pass_number=pass_number,
-        frame_count=frame_count,
-        validation_step=validation_step,
-        block_number=block_number,
-        cooling_time=cooling_time,
-        experimental_points=experimental_points,
-        simulation_points=simulation_points)
-    
-     comparison_records.append(comparison) 
 
-validation_table = (validation.create_validation_table(comparison_records))
-
-#Save Validation Table
-if not validation_table.empty:
-
-        validation.save_validation_table( validation_table, VALIDATION_TABLE )
-        '''
+     

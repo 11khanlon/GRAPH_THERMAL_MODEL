@@ -13,6 +13,7 @@ from nodes import NodeGenerator
 from graph import ThermalGraph
 from material import WireMaterial, SubstrateMaterial
 from deposition import DepositionSimulation
+from deposition_tracker import DepositionTracker
 from thermocouples import ThermalProbe, middle_block_of_layer, check_probe_location
 from config import MATERIAL, GRAPH, CONVECTION, BLOCK, DWELL, BUILD, SENSORS, WAAM
 
@@ -24,11 +25,7 @@ print(f"Results directory: {RESULT_DIR.resolve()}")
 
 
 def create_geometry_and_nodes():
-    geometry = Geometry(
-        BUILD["stl_file"],
-        substrate_material=SubstrateMaterial(),
-        wire_material=WireMaterial(),
-    )
+    geometry = Geometry(BUILD["stl_file"], substrate_material=SubstrateMaterial(),wire_material=WireMaterial() )
     geometry.build_blocks()
     generator = NodeGenerator(geometry)
     generator.generate()
@@ -40,9 +37,7 @@ def create_geometry_and_nodes():
 def create_probes(geometry):
     thermocouples = []
     for name, sensor in SENSORS.items():
-        position = np.array([
-            sensor["x"], sensor["y"], geometry.substrate_top + sensor["z"]
-        ], dtype=float)
+        position = np.array([sensor["x"], sensor["y"], geometry.substrate_top + sensor["z"] ], dtype=float)
         probe = ThermalProbe(name=name, position=position, region=sensor["region"])
         check_probe_location(probe, geometry)
         probe.summary()
@@ -83,6 +78,7 @@ def run_simulation(geometry, generator, graph, probes):
         probes=probes,
         waam=WAAM,
     )
+
     simulation.run()
     return simulation
 
@@ -317,6 +313,7 @@ def plot_experimental_vs_simulated(data):
     return fig
 
 
+
 def save_results(data):
     RESULT_DIR.mkdir(parents=True, exist_ok=True)
     path = RESULT_DIR / "thermal_history.npz"
@@ -324,9 +321,70 @@ def save_results(data):
     print(f"Saved simulation data: {path}")
     return path
 
+def export_tracker_results(simulation):
+
+    tracker = simulation.tracker
+
+    diagnostics_dir = RESULT_DIR / "Diagnostics" / "Tables"
+    validation_dir = RESULT_DIR / "Validation" / "Tables"
+
+    diagnostics_dir.mkdir(parents=True, exist_ok=True)
+    validation_dir.mkdir(parents=True, exist_ok=True)
+
+    # -----------------------------------------
+    # Numerical diagnostics
+    # Inactive heating, hottest inactive node,
+    # numerical validity, temperature statistics
+
+    statistics_table = tracker.export_temperature_statistics(
+        output_path=diagnostics_dir / "temperature_statistics.csv"
+    )
+
+    # -----------------------------------------
+    # Complete nodal temperature information
+    # after each thermal operation
+
+    stage_table = tracker.export_thermal_stage_table(
+        output_path=diagnostics_dir / "thermal_stage_nodes.csv"
+    )
+
+    # -----------------------------------------
+    # Mean/min/max active-deposit temperatures
+    # after each thermal operation
+
+    stage_summary = tracker.create_thermal_stage_summary()
+
+    stage_summary.to_csv(
+        diagnostics_dir / "thermal_stage_summary.csv",
+        index=False
+    )
+
+    # -----------------------------------------
+    # Five-point temperature histories
+    # for comparison against FLIR measurements
+
+    tracking_table = tracker.export_tracking_histories(
+        blocks=simulation.geometry.deposition_order(),
+        block_length=simulation.block_length,
+        block_width=simulation.block_info["width"],
+        output_path=validation_dir / "simulation_tracking_history.csv"
+    )
+
+    print("\n========== TRACKER EXPORT SUMMARY ==========")
+    print(f"Numerical diagnostic records: {len(statistics_table)}")
+    print(f"Thermal stage node records: {len(stage_table)}")
+    print(f"Thermal stage summary records: {len(stage_summary)}")
+    print(f"Five-point validation records: {len(tracking_table)}")
+
+    return {
+        "statistics": statistics_table,
+        "thermal_stages": stage_table,
+        "stage_summary": stage_summary,
+        "tracking_points": tracking_table}
+
 
 def save_figure(fig, filename):
-    path = RESULT_DIR / filename
+    path = RESULT_DIR / "Figures" / filename
     fig.savefig(path, dpi=300, bbox_inches="tight")
     print(f"Saved figure: {path}")
     plt.close(fig)
@@ -492,6 +550,8 @@ def main():
     simulation = run_simulation(
         geometry, generator, graph, thermocouples + [meltpool_probe]
     )
+
+    tracker_results = export_tracker_results(simulation)
     data = collect_results(simulation, generator.nodes, thermocouples, meltpool_probe)
     print_summary(data)
     print_diagnostics(data, graph)

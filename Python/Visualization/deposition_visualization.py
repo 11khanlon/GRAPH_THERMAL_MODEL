@@ -96,6 +96,7 @@ def animate_thermal_history(geometry, node_positions, temperature_history,
                             substrate_mask=None, node_block_ids=None,
                             ambient_temperature=25.0, maximum_temperature=None,
                             interval=150, deposition_only=False, frame_stride=1):
+    
     """Return (figure, animation) with synchronized 3D and XY top-down panels."""
     xyz = np.asarray(node_positions, float)
     T = np.asarray(temperature_history, float)
