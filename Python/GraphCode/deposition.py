@@ -183,29 +183,12 @@ class DepositionSimulation:
         return np.array(
             [node.active for node in self.nodes],
             dtype=bool)
-
-    
-    #----------------------------------------
-    def print_current_block_temperature(self, block, label):
-
-        indices = np.array([
-            node.id
-            for node in block.nodes])
-
-        Tblock = self.temperature[indices]
-
-        print(f"\n{label} | Block {block.id}: Tmin={Tblock.min():.2f} °C, Tmax={Tblock.max():.2f} °C ")
-        
-
     
     # -----------------------------------------------
     def simulate_block(self, block):
 
-        print("Temperature range:", self.temperature.min(), self.temperature.max())
-        print("Active nodes:", np.sum(self.active_mask()))
-        print("Inactive nodes:", np.sum(~self.active_mask()))
-
         self.activate_block(block)
+        active = self.active_mask()
 
         update_exposed_faces(self.geometry)                              # Update geometry-level exposed faces
         self.node_generator.update_node_exposure(self.surface_thickness)  # Convert block faces → exposed nodes
@@ -215,67 +198,30 @@ class DepositionSimulation:
         #establish initial temperature stage 
         self.tracker.record_thermal_stage(time=self.time, block=block, stage="initial", temperature=self.temperature, active_mask=self.active_mask())                     
 
-        # ***** Step 1: Arc/HeatSource heating ********
+        # =========== Step 1: Arc/HeatSource heating ===========
         delta_T_arc = self.heat_source.apply(nodes = self.nodes, block = block, temperature = self.temperature)
+        self.tracker.print_heat_source_increment(delta_T_arc=delta_T_arc, block=block)
+         
+        delta_T_arc[~active] = 0.0       # Do not apply direct heat-source increments to future material.
         self.temperature += delta_T_arc
-
-        self.tracker.record_thermal_stage(
-            time=self.time,
-            block=block,
-            stage="heat_source",
-            temperature=self.temperature,
-            active_mask=self.active_mask()
-        )
-
-
-        self.print_current_block_temperature(block, "After HeatSource")
-
-        imax = np.argmax(self.temperature)
-        hot_node = self.nodes[imax]
-
-        print(
-            f"Hottest node after heat source: "
-            f"id={hot_node.id}, "
-            f"block={hot_node.block_id}, "
-            f"layer={hot_node.block.layer}, "
-            f"T={self.temperature[imax]:.2f} °C, "
-            f"position={hot_node.position}")
-
-        self.tracker.record_probe_state(
-            temperature=self.temperature,
-            time=self.time,
-            stage="after_heatsource",
-            block=block)
-
-
-        self.tracker.print_temperature_status(
-            temperature=self.temperature,
-            time=self.time,
-            label="After HeatSource",
-            block=block)
+        self.tracker.record_thermal_stage(time=self.time,  block=block, stage="heat_source", temperature=self.temperature, active_mask=self.active_mask())
+        self.tracker.record_probe_state(temperature=self.temperature, time=self.time, stage="after_heatsource", block=block)
+   
 
   
-        # Step 2 -> Conduction
+        #======== Step 2 -> Conduction ==============
         alpha = self.current_diffusivity()
+        self.temperature = self.conduction.block_conduction(self.temperature, alpha, block_time = self.block_time)
 
-        self.temperature = (
-            self.conduction.block_conduction(
-            self.temperature,
-            alpha,
-            block_time = self.block_time)
-            )
+        # IMPORTANT: Record inactive-node heating before resetting.
+        conduction_stats = self.tracker.record_temperature_statistics(temperature=self.temperature, time=self.time + self.block_time, stage="conduction_before_reset", block=block )
+        if conduction_stats["heated_inactive_count"] > 0:
+            print(f"WARNING: {conduction_stats['heated_inactive_count']} inactive nodes heated above ambient + 1°C. ")
+             
+        self.reset_inactive_temperatures()
         
-        self.tracker.record_probe_state(
-            temperature=self.temperature,
-            time=self.time,
-            stage="after_conduction",
-            block=block)
-        
-        self.tracker.print_temperature_status(
-            temperature=self.temperature,
-            time=self.time,
-            label="After conduction",
-            block=block)
+        self.tracker.record_probe_state(temperature=self.temperature, time=self.time, stage="after_conduction", block=block)
+      
 
         self.tracker.record_thermal_stage(
             time=self.time,
@@ -285,21 +231,24 @@ class DepositionSimulation:
             active_mask=self.active_mask()
         )
 
-        # Step 3 --> Convection
-        cp = np.array([
-            node.material.specific_heat(self.temperature[node.id])
-            for node in self.nodes])
 
+        # Step 3 --> Convection
         overlap = (self.forced_surface_mask & self.free_surface_mask)
 
         if np.any(overlap):
             print("WARNING: forced/free overlap:", np.sum(overlap))
 
+        # Restrict convection to active material.
+        forced_surface_mask = self.forced_surface_mask & active
+        free_surface_mask = self.free_surface_mask & active
 
+        cp = np.array([node.material.specific_heat(self.temperature[node.id])
+                    for node in self.nodes])
+    
         # Forced convection + equivalent radiation
         self.temperature = self.cooling.block_cooling(
             temperature=self.temperature,
-            surface_mask=self.forced_surface_mask,
+            surface_mask= forced_surface_mask,
             h=self.convection["forced"],
             cp=cp,
             ambient_temperature = self.material_settings["ambient_temperature"],
@@ -321,46 +270,29 @@ class DepositionSimulation:
         # Free convection
         self.temperature = self.cooling.block_cooling(
             temperature=self.temperature,
-            surface_mask=self.free_surface_mask,
+            surface_mask=free_surface_mask,
             h=self.convection["free"],
             cp=cp,
             ambient_temperature=self.material_settings["ambient_temperature"],
             block_time=self.block_time)
 
-        self.tracker.record_probe_state(
-            temperature=self.temperature,
-            time=self.time + self.block_time,
-            stage="after_convection",
-            block=block)
-
-        self.tracker.print_temperature_status(temperature=self.temperature, time=self.time + self.block_time,
-            label="After convection", block=block)
-
-        self.tracker.record_thermal_stage( time=self.time + self.block_time,
-            block=block,stage="free_convection", temperature=self.temperature, active_mask=self.active_mask())
+        self.reset_inactive_temperatures()
+        self.tracker.record_probe_state(temperature=self.temperature, time=self.time + self.block_time, stage="after_convection", block=block)
+        self.tracker.record_thermal_stage( time=self.time + self.block_time, block=block,stage="free_convection", temperature=self.temperature, active_mask=self.active_mask())
 
         self.time += self.block_time
 
-        self.tracker.record_state(
-            temperature=self.temperature,
-            time=self.time,
-            stage="after_block",
-            block=block,
-            laser_position=block.center)
-
-    
+        self.tracker.record_state(temperature=self.temperature, time=self.time, stage="after_block", block=block,laser_position=block.center)
         self.tracker.record_deposition_frame(
             temperature=self.temperature,
             time=self.time,
             block=block,
-            stage="after_block"
-        )
+            stage="after_block")
 
         self.tracker.record_block_completion(block=block, time=self.time)
-
-        self.temperature = self.reset_inactive_temperatures()
-        self.tracker.hottest_inactive_node()
-      
+        self.tracker.hottest_inactive_node(temperature=self.temperature, active_mask=self.active_mask(), nodes=self.nodes)
+        stats = self.tracker.record_temperature_statistics(temperature=self.temperature, time=self.time, stage="after_block", block=block)
+        self.tracker.print_block_summary( block=block, time=self.time, temperature=self.temperature, active_mask=active, label="Block Complete",  record=stats )
             
 
     # ----------------------------------
@@ -374,11 +306,15 @@ class DepositionSimulation:
         while remaining > 1e-12:
 
             dt = min(self.dwell_dt, remaining)
+            active = self.active_mask()
 
             # Step 1: Conduction
             alpha = self.current_diffusivity()
 
             self.temperature = self.conduction.dwell_conduction(temperature=self.temperature, alpha=alpha, dt=dt )
+
+            if not np.all(self.active_mask()):
+                self.reset_inactive_temperatures()
 
             # Step 2: Forced convection
             cp = np.array([
@@ -429,6 +365,10 @@ class DepositionSimulation:
                 time=self.time,
                 stage="dwell",
                 block=None)
+
+            # Store statistics for later CSV analysis.
+            self.tracker.record_temperature_statistics(temperature=self.temperature, time=self.time,
+                                                        stage="dwell", block=None)
             
     # --------------------------------------
     def run(self):

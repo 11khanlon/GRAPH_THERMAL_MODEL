@@ -43,11 +43,108 @@ class DepositionTracker:
         )
 
     #-----------------------------------------
+    def _temperature(self, temperature):
+        """
+        Convert the supplied temperatures into a NumPy array
+        and verify that there is one temperature per node.
+
+        Parameters
+        ----------
+        temperature : array-like
+            Temperature of every node in the simulation (°C).
+
+        Returns
+        -------
+        np.ndarray
+            Validated one-dimensional temperature array.
+        """
+
+        if temperature is None:
+            raise ValueError(
+                "Temperature is None. Check the temperature "
+                "being passed from deposition.py."
+            )
+
+        temperature = np.asarray(temperature, dtype=float)
+
+        if temperature.shape != (len(self.nodes),):
+            raise ValueError(
+                f"Expected {len(self.nodes)} node temperatures, "
+                f"received shape {temperature.shape}."
+            )
+
+        return temperature
+
+
+    # --------------------------------------------------
+    # HELPER: Validate active node mask
+    # --------------------------------------------------
+    def _mask(self, active_mask=None):
+        """
+        Return a Boolean array identifying active nodes.
+
+        If no mask is supplied, use the current node.active
+        flags stored in the geometry.
+
+        True  = substrate or already-deposited material
+        False = material not yet deposited
+        """
+
+        if active_mask is None:
+            active_mask = self.active_mask()
+
+        active_mask = np.asarray(active_mask, dtype=bool)
+
+        if active_mask.shape != (len(self.nodes),):
+            raise ValueError(
+                f"Expected active mask shape ({len(self.nodes)},), "
+                f"received {active_mask.shape}."
+            )
+
+        return active_mask
+
+    def _block_indices(self, block):
+        """
+        Return the temperature-array indices for all nodes
+        belonging to a specified block.
+
+        Parameters
+        ----------
+        block : Block
+            The deposition block being investigated.
+
+        Returns
+        -------
+        np.ndarray
+            Integer indices identifying the block's nodes.
+
+        Notes
+        -----
+        Assumes node.id matches the node's index in
+        self.nodes and the simulation temperature array.
+        """
+
+        if block is None:
+            return np.array([], dtype=int)
+
+        indices = np.array(
+            [node.id for node in block.nodes],
+            dtype=int
+        )
+
+        if np.any(indices < 0) or np.any(indices >= len(self.nodes)):
+            raise ValueError(
+                f"Block {block.id} contains invalid node indices."
+            )
+
+        return indices
+
+    #-----------------------------------------
     def active_mask(self):
 
         return np.array([node.active for node in self.nodes], dtype=bool)
 
-    #-----------------------------------
+    #--------------------------------------------------------------
     def record_state(self, temperature, time, stage, block=None, laser_position=None):
 
         temperature = np.asarray(temperature, dtype=float)
@@ -71,37 +168,22 @@ class DepositionTracker:
 
         self.laser_position_history.append(position)
 
-    #--------------------------------------------
+    #--------------------------------------------------------------
     def record_probe_state(self, temperature, time, stage, block=None):
 
         for probe in self.probes:
-
-            T_probe = probe.interpolate_temperature(
-                nodes=self.nodes,
-                temperature=temperature,
-                k=8,
-                power=2,
-                active_only=True )
-
+            T_probe = probe.interpolate_temperature(nodes=self.nodes, temperature=temperature, k=8, power=2, active_only=True )
             self.probe_history[probe.name].append(T_probe)
-
             print( f"{stage} | {probe.name} | T={T_probe:.2f} ° ")
                
         self.probe_history_time.append(time)
         self.probe_history_stage.append(stage)
-
         self.probe_history_block.append( None if block is None else block.id)
 
 
     #--------------------------------------
     #measures information after block is deposited
-    def record_deposition_frame(
-        self,
-        temperature,
-        time,
-        block,
-        stage="after_block"):
-
+    def record_deposition_frame(self,temperature, time, block, stage="after_block"):
         active = self.active_mask()
 
         frame = {
@@ -128,79 +210,50 @@ class DepositionTracker:
         self.laser_position_history = np.asarray( self.laser_position_history, dtype=float)
         self.probe_history_time = np.asarray(self.probe_history_time, dtype=float)
         self.probe_history_stage = np.asarray(self.probe_history_stage, dtype=str)
-
         self.probe_history_block = np.asarray(self.probe_history_block, dtype=object)
 
         for name in self.probe_history:
             self.probe_history[name] = np.asarray( self.probe_history[name], dtype=float )
         return self.history
 
-    #------------------------------------
-    #--------------------------------------------------
-    def inactive_node_statistics(self):
-
-        active = self.active_mask()
-        inactive = ~active
-
-        if not np.any(inactive):
-            return
-
-        Tinactive = self.temperature[inactive]
-
-        ambient = self.material_settings["ambient_temperature"]
-
-        print("Max inactive T:", Tinactive.max())
-        print("Inactive nodes > ambient + 10 C:", np.sum(Tinactive > ambient + 10.0))
 
     #------------------------------------------------
-    def hottest_inactive_node(self):
-
-        active = self.active_mask()
-        inactive = ~active
-
-        if not np.any(inactive):
-            return
-
-        inactive_indices = np.where(inactive)[0]
-        local_index = np.argmax(self.temperature[inactive])
-        node_index = inactive_indices[local_index]
-        node = self.nodes[node_index]
-
-        print(f"Hottest inactive node: {node.id} ")
-        print(f"Temperature: {self.temperature[node_index]:.2f} °C ")
-        print(f"Layer: {node.block.layer} ")
-        print(f"Position: {node.position} ")
-
-
-    def check_temperature_validity(temperature, ambient_temperature):
-    
-            if not np.all(np.isfinite(temperature)):
-                raise ValueError("Temperature contains NaN or infinity.")
-    
-            if np.any(temperature < ambient_temperature - 1e-6):
-                print("WARNING: Some nodes are below ambient temperature.")
-    
-            print(f"Temperature range: {temperature.min():.2f} to  {temperature.max():.2f} °C")
-             
-    
-    def check_inactive_heating(nodes, temperature, ambient_temperature, tolerance=1.0):
-
-        inactive = np.array([
-            not node.active
-            for node in nodes])
-
-        if not np.any(inactive):
-            return
-
-        inactive_temperatures = temperature[inactive]
-        heated = np.sum(inactive_temperatures > ambient_temperature + tolerance)
-
-        print(f"Inactive nodes above ambient: {heated}")
-
-        if heated > 0:
-            print("WARNING: Heat may be reaching inactive nodes.")
+    def print_block_summary(self, block, time, temperature, active_mask=None,
+                            label="Block Complete", record=None):
+        """One compact printout of temperatures, active/inactive nodes, and hot spots."""
+        if record is None:
+            record = self.record_temperature_statistics(
+                temperature, time, label, block, active_mask=active_mask
+            )
+        print(f"\n--- {label} | Block {block.id}, Layer {block.layer} | t={time:.3f} s ---")
+        print(f"Active: {record['active_node_count']} | Inactive: {record['inactive_node_count']}")
+        print(f"Global Tmin/Tmax: {record['global_min_C']:.2f} / {record['global_max_C']:.2f} °C")
+        print(f"Active Tmax: {record['active_max_C']:.2f} °C | Substrate Tmax: {record['substrate_max_C']:.2f} °C | Deposit Tmax: {record['active_deposit_max_C']:.2f} °C")
+        print(f"Current block Tmin/Mean/Tmax: {record['current_block_min_C']:.2f} / {record['current_block_mean_C']:.2f} / {record['current_block_max_C']:.2f} °C")
+        print(f"Hottest node: {record['hottest_global_node_id']} ({record['hottest_global_node_type']}), layer={record['hottest_global_layer']}, T={record['hottest_global_temperature_C']:.2f} °C")
+        if record['inactive_node_count']:
+            print(f"Inactive Tmax: {record['hottest_inactive_temperature_C']:.2f} °C | Heated inactive (>ambient+1°C): {record['heated_inactive_count']}")
+        if record['below_ambient_node_count']:
+            print(f"WARNING: {record['below_ambient_node_count']} nodes below ambient")
+        return record
 
 
+    #-------------------------------------------
+    def hottest_inactive_node(self, temperature, active_mask=None, nodes=None):
+        """Print location of the hottest inactive node (does not store statistics)."""
+        temperature = self._temperature(temperature)
+        active = self._mask(active_mask)
+        indices = np.flatnonzero(~active)
+        if not indices.size:
+            print("No inactive nodes remaining.")
+            return None
+        index = int(indices[np.argmax(temperature[indices])])
+        node = self.nodes[index]
+        print(f"Hottest inactive node: {node.id} | T={temperature[index]:.2f} °C | Layer={node.block.layer if node.block else 'N/A'} | Position={node.position}")
+        return node.id
+
+
+    #-----------------------------------------------------------
     def block_cooling_rate(block, previous_temperature, current_temperature, dt):
 
         if dt <= 0:
@@ -218,240 +271,115 @@ class DepositionTracker:
 
         return cooling_rate
 
-    #----------------------------------------
-    def print_temperature_status(self, temperature, time, label, block=None ):
 
-        temperature = np.asarray(temperature, dtype=float)
-        active = self.active_mask()
-        inactive = ~active
-
-        print(f"\n--- {label} ---")
-
+    #---------------------------------------------------
+    def print_heat_source_increment(self, delta_T_arc, block=None):
+        """Identify where the heat-source calculation adds the most temperature."""
+        delta_T_arc = self._temperature(delta_T_arc)
+        if not np.all(np.isfinite(delta_T_arc)):
+            raise ValueError("Heat-source increment contains NaN or infinity")
+        index = int(np.argmax(delta_T_arc))
+        node = self.nodes[index]
+        kind = "SUBSTRATE" if node.is_substrate else "DEPOSITED MATERIAL"
+        layer = None if node.block is None else node.block.layer
+        print(f"Max heat-source ΔT: {delta_T_arc[index]:.2f} °C | Node {node.id} [{kind}] | Block {node.block_id} | Layer {layer} | Position {node.position}")
         if block is not None:
-            print( f"Block {block.id}, Layer {block.layer}")
-            print(f"Simulation time: {time:.3f} s")
+            idx = self._block_indices(block)
+            if idx.size:
+                print(f"Current block heat-source ΔT: min={delta_T_arc[idx].min():.2f}, max={delta_T_arc[idx].max():.2f} °C")
+        return node.id
 
-        print(f"Global Tmin/Tmax: "
-            f"{temperature.min():.2f} / "
-            f"{temperature.max():.2f} °C"
-        )
-
-        print(f"Active nodes: {np.sum(active)}")
-
-        if np.any(active):
-            print(
-                f"Active Tmax: "
-                f"{temperature[active].max():.2f} °C"
-            )
-
-        if np.any(inactive):
-            print(
-                f"Inactive Tmax: "
-                f"{temperature[inactive].max():.2f} °C"
-            )
-
-    #------------------------------------
   
-    def record_temperature_statistics(
-        self,
-        temperature,
-        time,
-        stage,
-        block=None,
-        tolerance=1.0
-    ):
+    #---------------------------------------------------------------
+    def record_temperature_statistics(self, temperature, time, stage, block=None,
+                                      tolerance=1.0, active_mask=None):
+        """Store extrema, validity, hottest inactive node, and block metrics.
 
-        temperature = np.asarray(
-            temperature,
-            dtype=float
-        )
-
-        active = self.active_mask()
+        'heated' means above ambient+tolerance, not proof of a physical heat path.
+        Call BEFORE any inactive-node reset to detect artificial preheating.
+        """
+        temperature = self._temperature(temperature)
+        active = self._mask(active_mask)
         inactive = ~active
-
-        deposited = np.array(
-            [not node.is_substrate for node in self.nodes],
-            dtype=bool
-        )
-
+        finite = np.isfinite(temperature)
+        deposited = np.asarray([not n.is_substrate for n in self.nodes], dtype=bool)
+        substrate = ~deposited
         active_deposited = active & deposited
 
-        # -----------------------------------------
-        # Numerical validity checks
-
-        finite = np.isfinite(temperature)
-
-        all_finite = bool(np.all(finite))
-
-        below_ambient = finite & (
-            temperature < self.ambient_temperature - 1e-6
-        )
-
-        # -----------------------------------------
-        # Inactive node heating
-
-        heated_inactive = (
-            inactive
-            & finite
-            & (
-                temperature >
-                self.ambient_temperature + tolerance
-            )
-        )
-
-        inactive_indices = np.flatnonzero(
-            inactive & finite
-        )
-
-        hottest_inactive_id = None
-        hottest_inactive_temperature = np.nan
-        hottest_inactive_layer = None
-        hottest_inactive_position = [np.nan, np.nan, np.nan]
-
-        if inactive_indices.size > 0:
-
-            local_index = np.argmax(
-                temperature[inactive_indices]
-            )
-
-            node_index = inactive_indices[local_index]
-            node = self.nodes[node_index]
-
-            hottest_inactive_id = node.id
-
-            hottest_inactive_temperature = float(
-                temperature[node_index]
-            )
-
-            hottest_inactive_layer = (
-                None if node.block is None
-                else node.block.layer
-            )
-
-            hottest_inactive_position = np.asarray(
-                node.position,
-                dtype=float
-            )
-
-        # -----------------------------------------
-        # Current block temperature
-
-        block_mean_temperature = np.nan
-
-        if block is not None:
-
-            indices = np.array(
-                [node.id for node in block.nodes],
-                dtype=int
-            )
-
-            if indices.size > 0:
-                block_mean_temperature = float(
-                    np.mean(temperature[indices])
-                )
-
-        # -----------------------------------------
-        # Temperature statistics
-
         def safe_min(mask):
-            values = temperature[mask & finite]
-            return float(np.min(values)) if values.size else np.nan
+            vals = temperature[mask & finite]
+            return float(vals.min()) if vals.size else np.nan
 
         def safe_max(mask):
-            values = temperature[mask & finite]
-            return float(np.max(values)) if values.size else np.nan
+            vals = temperature[mask & finite]
+            return float(vals.max()) if vals.size else np.nan
 
-        all_nodes = np.ones(len(self.nodes), dtype=bool)
+        def hottest(mask):
+            indices = np.flatnonzero(mask & finite)
+            if not indices.size:
+                return None, np.nan, None, [np.nan] * 3
+            index = int(indices[np.argmax(temperature[indices])])
+            node = self.nodes[index]
+            return (node.id, float(temperature[index]),
+                    None if node.block is None else node.block.layer,
+                    np.asarray(node.position, dtype=float).tolist())
 
+        inactive_id, inactive_T, inactive_layer, inactive_xyz = hottest(inactive)
+        global_id, global_T, global_layer, global_xyz = hottest(np.ones(len(self.nodes), dtype=bool))
+        block_idx = self._block_indices(block) if block is not None else np.empty(0, dtype=int)
+        block_vals = temperature[block_idx] if block_idx.size else np.empty(0)
+        block_vals = block_vals[np.isfinite(block_vals)]
+        block_mean = float(block_vals.mean()) if block_vals.size else np.nan
+        block_min = float(block_vals.min()) if block_vals.size else np.nan
+        block_max = float(block_vals.max()) if block_vals.size else np.nan
         record = {
-            "time_s": float(time),
-            "stage": stage,
+            "time_s": float(time), "stage": stage,
             "block_id": None if block is None else block.id,
             "layer": None if block is None else block.layer,
-
-            "global_min_C": safe_min(all_nodes),
-            "global_max_C": safe_max(all_nodes),
-
-            "active_min_C": safe_min(active),
-            "active_max_C": safe_max(active),
-
+            "global_min_C": safe_min(np.ones(len(self.nodes), dtype=bool)),
+            "global_max_C": safe_max(np.ones(len(self.nodes), dtype=bool)),
+            "active_min_C": safe_min(active), "active_max_C": safe_max(active),
+            "substrate_max_C": safe_max(substrate & active),
             "active_deposit_max_C": safe_max(active_deposited),
-
-            "active_node_count": int(np.sum(active)),
-            "inactive_node_count": int(np.sum(inactive)),
-
-            "heated_inactive_count": int(
-                np.sum(heated_inactive)
+            "active_node_count": int(active.sum()),
+            "inactive_node_count": int(inactive.sum()),
+            "heated_inactive_count": int(np.sum(inactive & finite & (temperature > self.ambient_temperature + tolerance))),
+            "heated_inactive_above_10C": int(np.sum(inactive & finite & (temperature > self.ambient_temperature + 10.0))),
+            "hottest_inactive_node_id": inactive_id,
+            "hottest_inactive_temperature_C": inactive_T,
+            "hottest_inactive_layer": inactive_layer,
+            "hottest_inactive_x_m": float(inactive_xyz[0]),
+            "hottest_inactive_y_m": float(inactive_xyz[1]),
+            "hottest_inactive_z_m": float(inactive_xyz[2]),
+            "hottest_global_node_id": global_id,
+            "hottest_global_temperature_C": global_T,
+            "hottest_global_layer": global_layer,
+            "hottest_global_x_m": float(global_xyz[0]),
+            "hottest_global_y_m": float(global_xyz[1]),
+            "hottest_global_z_m": float(global_xyz[2]),
+            "hottest_global_node_type": (
+                None if global_id is None else
+                ("substrate" if self.nodes[global_id].is_substrate else "deposited")
             ),
-
-            "heated_inactive_above_10C": int(
-                    np.sum(
-                        inactive
-                        & finite
-                        & (
-                            temperature >
-                            self.ambient_temperature + 10.0
-                        )
-                    )
-                ),
-            "hottest_inactive_node_id": hottest_inactive_id,
-            "hottest_inactive_temperature_C":
-                hottest_inactive_temperature,
-
-            "hottest_inactive_layer": hottest_inactive_layer,
-
-            "hottest_inactive_x_m":
-                float(hottest_inactive_position[0]),
-
-            "hottest_inactive_y_m":
-                float(hottest_inactive_position[1]),
-
-            "hottest_inactive_z_m":
-                float(hottest_inactive_position[2]),
-
-            "all_temperatures_finite": all_finite,
-
-            "nonfinite_node_count": int(
-                np.sum(~finite)
-            ),
-
-            "below_ambient_node_count": int(
-                np.sum(below_ambient)
-            ),
-
-            "current_block_mean_C":
-                block_mean_temperature
+            "all_temperatures_finite": bool(np.all(finite)),
+            "nonfinite_node_count": int(np.sum(~finite)),
+            "below_ambient_node_count": int(np.sum(finite & (temperature < self.ambient_temperature - 1e-6))),
+            "current_block_mean_C": block_mean,
+            "current_block_min_C": block_min,
+            "current_block_max_C": block_max,
         }
-
         self.temperature_statistics.append(record)
-
-        # Stop immediately if temperatures become invalid.
-        if not all_finite:
-            raise ValueError(
-                f"Non-finite temperatures at "
-                f"t={time:.4f}s, stage={stage}"
-            )
-
+        if not record["all_temperatures_finite"]:
+            raise ValueError(f"Non-finite temperatures at t={time:.4f}s, stage={stage}")
         return record
 
 
     def export_temperature_statistics(self, output_path):
 
-        table = pd.DataFrame(
-            self.temperature_statistics
-        )
-
+        table = pd.DataFrame(self.temperature_statistics)
         output_path = Path(output_path)
-
-        output_path.parent.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-
-        table.to_csv(
-            output_path,
-            index=False
-        )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        table.to_csv(output_path, index=False)
 
         return table
 
@@ -467,14 +395,9 @@ class DepositionTracker:
 
         temperatures = np.column_stack([
             self.probe_history[name]
-            for name in names
-        ])
+            for name in names])
 
-        return (
-            names,
-            np.asarray(self.probe_history_time),
-            temperatures
-        )
+        return (names, np.asarray(self.probe_history_time), temperatures)
 
      #-------------------------------------------
     def deposition_temperature_history(self):
