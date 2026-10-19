@@ -109,12 +109,8 @@ def node_on_face(node, block, face, thickness):
 class NodeGenerator:
 
     """
-    Generates random nodes inside every block
-    Section 4.3.1.1
-
-    Random nodes are distributed uniformly inside each
-    deposition block.
-
+    Generates random nodes inside every block Section 4.3.1.1
+    Random nodes are distributed uniformly inside each deposition block.
     Node density controls accuracy
     """
 
@@ -140,8 +136,7 @@ class NodeGenerator:
             volume_mm3 = (
                 abs(x1-x0)*1000 *
                 abs(y1-y0)*1000 *
-                abs(z1-z0)*1000
-            )
+                abs(z1-z0)*1000)
 
             expected_nodes = volume_mm3 * node_density
 
@@ -174,8 +169,7 @@ class NodeGenerator:
 
         substrate_nodes = sum(
             node.is_substrate
-            for node in self.nodes
-        )
+            for node in self.nodes)
 
         deposition_nodes = len(self.nodes) - substrate_nodes
 
@@ -207,12 +201,7 @@ class NodeGenerator:
 
                 for node in block.nodes:
 
-                    if node_on_face(
-                        node,
-                        block,
-                        face,
-                        surface_thickness
-                    ):
+                    if node_on_face(node, block, face, surface_thickness):
                         node.exposed_faces.add(face)
 
     # -----------------------------------------------------
@@ -287,8 +276,7 @@ class NodeGenerator:
         return [
             n
             for n in self.nodes
-            if not n.active
-        ]
+            if not n.active]
 
   
     # -----------------------------------------------------
@@ -296,8 +284,7 @@ class NodeGenerator:
 
         return np.array([
             n.position
-            for n in self.nodes
-        ])
+            for n in self.nodes])
 
 
     # -----------------------------------------------------

@@ -295,8 +295,7 @@ class Geometry:
             layer_blocks = [
                 block for block in self.blocks
                 if (not block.is_substrate
-                    and block.layer == layer
-                )
+                    and block.layer == layer)
             ]
 
             # Sort by x coordinate
@@ -337,13 +336,11 @@ class Geometry:
         # Count blocks
         substrate_blocks = sum(
             block.is_substrate
-            for block in self.blocks
-        )
+            for block in self.blocks)
 
         deposition_blocks = sum(
             not block.is_substrate
-            for block in self.blocks
-        )
+            for block in self.blocks)
 
 
         print(f"\nSubstrate blocks :", substrate_blocks)

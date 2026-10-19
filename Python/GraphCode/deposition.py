@@ -73,9 +73,7 @@ class DepositionSimulation:
 
         rho = np.array([node.material.rho for node in self.nodes], dtype=float)
 
-        self.cooling = ConvectionSolver(
-            density = rho,
-            block_length = self.block_length)
+        self.cooling = ConvectionSolver( density = rho, block_length = self.block_length)
 
         self.heat_source = ArcHeatSource(
             material_model=self.wire_material,
@@ -95,11 +93,15 @@ class DepositionSimulation:
     #------------- Helper Functions -----------
     #activate nodes belonging to the newly deposited block 
     def activate_block(self, block):
-
+        ambient = self.material_settings["ambient_temperature"]
+        for node in block.nodes:
+            self.temperature[node.id] = ambient
+            node.active = True
         block.active = True
 
-        for node in block.nodes:
-            node.active = True
+    def reset_inactive_temperatures(self):
+        mask = self.active_mask()
+        self.temperature[~mask] = (self.material_settings["ambient_temperature"])
 
     def update_surface_masks(self):
 
@@ -132,12 +134,10 @@ class DepositionSimulation:
         return np.array([
             node.id
             for node in self.nodes
-            if (
-                node.active
+            if (node.active
                 and not node.is_substrate
-                and node.block.layer == layer
-            )
-        ])
+                and node.block.layer == layer)
+                ])
 
     #---------------------------------------
     def diffusivity_from_layer(self, layer):
@@ -194,11 +194,8 @@ class DepositionSimulation:
 
         Tblock = self.temperature[indices]
 
-        print(
-            f"{label} | "
-            f"Block {block.id}: "
-            f"Tmin={Tblock.min():.2f} °C, "
-            f"Tmax={Tblock.max():.2f} °C")
+        print(f"\n{label} | Block {block.id}: Tmin={Tblock.min():.2f} °C, Tmax={Tblock.max():.2f} °C ")
+        
 
     
     # -----------------------------------------------
@@ -216,11 +213,10 @@ class DepositionSimulation:
         self.update_surface_masks()              # Rebuild masks
         
         #establish initial temperature stage 
-        self.tracker.record_thermal_stage(time=self.time, block=block, stage="initial",
-                                          temperature=self.temperature, active_mask=self.active_mask())                     
+        self.tracker.record_thermal_stage(time=self.time, block=block, stage="initial", temperature=self.temperature, active_mask=self.active_mask())                     
 
-        # Step 1: Arc/HeatSource heating
-        delta_T_arc = self.heat_source.apply(nodes=self.nodes, block=block, temperature=self.temperature)
+        # ***** Step 1: Arc/HeatSource heating ********
+        delta_T_arc = self.heat_source.apply(nodes = self.nodes, block = block, temperature = self.temperature)
         self.temperature += delta_T_arc
 
         self.tracker.record_thermal_stage(
@@ -329,18 +325,16 @@ class DepositionSimulation:
             h=self.convection["free"],
             cp=cp,
             ambient_temperature=self.material_settings["ambient_temperature"],
-            block_time=self.block_time
-        )
+            block_time=self.block_time)
 
         self.tracker.record_probe_state(
             temperature=self.temperature,
             time=self.time + self.block_time,
             stage="after_convection",
-            block=block
-        )
+            block=block)
 
         self.tracker.print_temperature_status(temperature=self.temperature, time=self.time + self.block_time,
-            label="After convection", block=block )
+            label="After convection", block=block)
 
         self.tracker.record_thermal_stage( time=self.time + self.block_time,
             block=block,stage="free_convection", temperature=self.temperature, active_mask=self.active_mask())
@@ -352,8 +346,7 @@ class DepositionSimulation:
             time=self.time,
             stage="after_block",
             block=block,
-            laser_position=block.center
-        )
+            laser_position=block.center)
 
     
         self.tracker.record_deposition_frame(
@@ -363,8 +356,10 @@ class DepositionSimulation:
             stage="after_block"
         )
 
-        self.tracker.record_block_completion( block=block, time=self.time )
+        self.tracker.record_block_completion(block=block, time=self.time)
 
+        self.temperature = self.reset_inactive_temperatures()
+        self.tracker.hottest_inactive_node()
       
             
 

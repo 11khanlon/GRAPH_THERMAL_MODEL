@@ -1,6 +1,7 @@
-"""Run the WAAM graph thermal model, save results, and create diagnostics.
-
-Keep calibration in calibrate_graph.py and animations in Visualization/.
+"""
+Run the WAAM graph thermal model, save results, and create diagnostics
+Keep calibration in calibrate_graph.py and animations in Visualization
+Things to add: geometry and node vizualization
 """
 
 from pathlib import Path
@@ -46,8 +47,7 @@ def create_probes(geometry):
     middle_block = middle_block_of_layer(geometry, layer=0)
     meltpool_probe = ThermalProbe(
         name="meltpool_probe", position=middle_block.center,
-        region="deposition", layer=0,
-    )
+        region="deposition", layer=0)
     check_probe_location(meltpool_probe, geometry)
     meltpool_probe.summary()
     return thermocouples, meltpool_probe

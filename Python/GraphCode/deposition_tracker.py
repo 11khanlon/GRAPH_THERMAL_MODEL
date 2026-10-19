@@ -163,7 +163,7 @@ class DepositionTracker:
 
         inactive_indices = np.where(inactive)[0]
         local_index = np.argmax(self.temperature[inactive])
-        node_index = inactive_indices[ local_index]
+        node_index = inactive_indices[local_index]
         node = self.nodes[node_index]
 
         print(f"Hottest inactive node: {node.id} ")
@@ -229,7 +229,7 @@ class DepositionTracker:
 
         if block is not None:
             print( f"Block {block.id}, Layer {block.layer}")
-        print(f"Simulation time: {time:.3f} s")
+            print(f"Simulation time: {time:.3f} s")
 
         print(f"Global Tmin/Tmax: "
             f"{temperature.min():.2f} / "

@@ -64,14 +64,11 @@ class ThermalGraph:
         ]
 
         distances = np.array([
-            np.linalg.norm(
-                node.position - target_position
-            )
+            np.linalg.norm(node.position - target_position)
             for node in substrate_nodes
         ])
 
         nearest_index = np.argmin(distances)
-
         sensor_node = substrate_nodes[nearest_index]
 
         return sensor_node, distances[nearest_index]
@@ -82,11 +79,8 @@ class ThermalGraph:
     def build(self):
 
         t0 = time.perf_counter() 
-
         coords = self.coordinates()
-
         tree = cKDTree(coords)
-
         epsilon = GRAPH["epsilon"]
 
         # adjacency matrix
@@ -95,8 +89,7 @@ class ThermalGraph:
         # ----------------------------------------------------
         # Estimate σ (standard deviation of pairwise distances)
 
-        sample = tree.query(coords, k=8)[0][:, 1:]
-
+        sample = tree.query(coords, k=30)[0][:, 1:]
         sigma = np.std(sample)
 
         print("Neighborhood radius =", epsilon)
@@ -106,26 +99,18 @@ class ThermalGraph:
 
         for i in range(self.N):
 
-            neighbors = tree.query_ball_point(
-                coords[i],
-                epsilon
-            )
+            neighbors = tree.query_ball_point(coords[i], epsilon)
 
             for j in neighbors:
 
                 if i == j:
                     continue
 
-                distance = np.linalg.norm(
-                    coords[i] - coords[j]
-                )
+                distance = np.linalg.norm(coords[i] - coords[j])
 
                 # Equation (11)
 
-                weight = np.exp(
-                    -(distance ** 2) /
-                    (sigma ** 2)
-                )
+                weight = np.exp(-(distance ** 2) / (sigma ** 2))
 
                 self.A[i, j] = weight
                 self.A[j, i] = weight
@@ -196,7 +181,6 @@ class ThermalGraph:
 
         print("\nCheck eigensystem assembly time: ")
         print(f"Eigen solve: " f"{time.perf_counter()-t0:.2f} s")
-
         print("\nEigen decomposition complete.")
 
         return eigenvalues, eigenvectors
@@ -299,12 +283,12 @@ if __name__ == "__main__":
     from nodes import NodeGenerator
     from config import BUILD
     from geometry import Geometry
-    from material import Al5183Material, Al6061Material
+    from material import SubstrateMaterial, WireMaterial
     
 
     stl_file = BUILD["stl_file"]
-    substrate_material = Al6061Material()
-    wire_material = Al5183Material()
+    substrate_material = SubstrateMaterial()
+    wire_material = WireMaterial()
     geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
 
     geom.build_blocks()

@@ -1,2 +1,2 @@
 time_s,stage,block_id,layer,global_min_C,global_max_C,active_min_C,active_max_C,active_deposit_max_C,active_node_count,inactive_node_count,heated_inactive_count,heated_inactive_above_10C,hottest_inactive_node_id,hottest_inactive_temperature_C,hottest_inactive_layer,hottest_inactive_x_m,hottest_inactive_y_m,hottest_inactive_z_m,all_temperatures_finite,nonfinite_node_count,below_ambient_node_count,current_block_mean_C
-0.0,initial,,,25.0,25.0,25.0,25.0,,983,10,0,0,983,25.0,0,0.022529241816660737,0.025143656292668373,0.014847353397698366,True,0,0,
+0.0,initial,,,25.0,25.0,25.0,25.0,,9832,130,0,0,9832,25.0,0,0.022529241816660737,0.025143656292668373,0.014847353397698366,True,0,0,
