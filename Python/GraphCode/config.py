@@ -114,7 +114,7 @@ GRAPH = {
 
     "seed": 42,
     "epsilon": 3e-3,  # neighborhood radius ε, m
-    "gain": 12E7,     # gain factor g, m^-2
+    "gain": 1E7,     # gain factor g, m^-2
     "node_density": 0.1 # node density, nodes/mm^3
 }
 
