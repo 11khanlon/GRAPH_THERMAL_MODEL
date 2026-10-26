@@ -28,8 +28,8 @@ CALIBRATION_FILE = THERMAL_DATA_DIR / "spatial_calibration.npz"
 DOWNLOADS_DIR = Path(r"C:\Users\Kayleigh\Downloads")
 
 PASS_DIRS = {
-    1: Path( r"C:\Users\Kayleigh\Downloads\Thermal_Images_Pass1_" + MATERIAL['name']),
-    2: Path(r"C:\Users\Kayleigh\Downloads\Thermal_Images_Pass2_" + MATERIAL['name'])
+    1: Path( r"C:\\Users\\Kayleigh\Downloads\\Thermal_Images_Pass1_" + MATERIAL['name']),
+    2: Path(r"C:\\Users\\Kayleigh\Downloads\\Thermal_Images_Pass2_" + MATERIAL['name'])
 }
 
 OUTPUT_DIR = DOWNLOADS_DIR / f"Thermal_Processed_{MATERIAL['name']}"

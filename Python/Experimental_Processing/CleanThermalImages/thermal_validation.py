@@ -203,6 +203,79 @@ class ThermalValidation:
         
         return { "dTdx_C_per_m": dTdx, "dTdy_C_per_m": dTdy}
 
+    
+    def extract_cooling_history(self, timing,pass_directory, pass_number):
+        records = []
+
+        # Pre-index temperature files by FLIR frame number
+        frame_files = {}
+
+        for file in Path(pass_directory).glob("*.npy"):
+            try:
+                frame_number = int(file.stem.split("_")[0])
+                frame_files[frame_number] = file
+            except ValueError:
+                continue
+
+        # Process frames in chronological order
+        timing_sorted = timing.sort_values("elapsed_time")
+
+        for _, frame in timing_sorted.iterrows():
+
+            frame_count = int(frame["Count"])
+            actual_time = float(frame["elapsed_time"])
+
+            if frame_count not in frame_files:
+                continue
+
+            # Number of blocks that have completed deposition
+            completed_blocks = min(
+                self.blocks_per_layer,
+                int(np.floor(actual_time / self.time_per_block))
+            )
+
+            if completed_blocks < 1:
+                continue
+
+            temperature_field = np.load(frame_files[frame_count])
+
+            for block_number in range(1, completed_blocks + 1):
+                roi = self.block_rois[block_number - 1]
+                points = self.extract_point_temperatures(temperature_field, roi)
+                block_end_time = block_number * self.time_per_block
+
+                record = {
+                    "pass": pass_number,
+                    "frame_count": frame_count,
+                    "block": block_number,
+                    "time_s": actual_time,
+                    "actual_cooling_time_s": (actual_time - block_end_time
+                    )
+                }
+
+                for name, point in points.items():
+                    record[f"{name}_T_exp_C"] = point["temperature"]
+
+                gradients = self.calculate_gradients(points)
+                record["dTdx_exp_C_per_m"] = gradients["dTdx_C_per_m"]
+                record["dTdy_exp_C_per_m"] =  gradients["dTdy_C_per_m"]
+                records.append(record)
+
+        history = pd.DataFrame(records)
+
+        if history.empty:
+            return history
+
+        history = history.sort_values(["pass", "block", "actual_cooling_time_s"]).reset_index(drop=True)
+
+        # Cooling rate at each tracking point
+        for point_name in ["center", "x_minus", "x_plus","y_minus", "y_plus"]:
+            temperature_column = f"{point_name}_T_exp_C"
+            history[f"{point_name}_dTdt_C_per_s"] = (history.groupby(["pass", "block"])[temperature_column].diff()/history.groupby(["pass", "block"])["actual_cooling_time_s"].diff())
+
+        return history
+
+
 
     # MODEL COMPARISON
 
@@ -299,6 +372,7 @@ class ThermalValidation:
         print(f"Experimental table saved to: {output_path}")
 
 
+    
     def create_experimental_record(
         self,
         pass_number,
@@ -307,49 +381,147 @@ class ThermalValidation:
         block_number,
         cooling_time,
         experimental_points,
-        actual_time=None):
+        actual_time=None,
+        temperature_field=None
+    ):
+        """
+        Create one experimental observation for one block
+        at one FLIR frame.
+
+        Includes:
+        - Frame and timing information
+        - Five tracking-point temperatures
+        - Physical and pixel coordinates
+        - X/Y temperature gradients
+        - ROI temperature statistics
+        - ROI maximum temperature and its location
+        """
 
         row = {
-            "pass": pass_number,
-            "frame_count": frame_count,
-            "validation_step": validation_step,
-            "block": block_number,
-            "cooling_time_s": cooling_time,
-            "time_s": actual_time
+            "pass": int(pass_number),
+            "frame_count": int(frame_count),
+            "validation_step": int(validation_step),
+            "block": int(block_number),
+            "time_s": float(actual_time) if actual_time is not None else np.nan,
+            "cooling_time_s": float(cooling_time),
+            "nominal_time_s": (
+                float(validation_step * self.time_per_block)
+            ),
+            "frame_time_error_s": (
+                float(actual_time - validation_step * self.time_per_block)
+                if actual_time is not None else np.nan
+            )
         }
 
+        roi = self.block_rois[block_number - 1]
+
+
+        block_end_time = block_number * self.time_per_block
+
+        row["block_end_time_s"] = float(block_end_time)
+
+        row["actual_cooling_time_s"] = (
+            float(actual_time - block_end_time)
+            if actual_time is not None else np.nan
+        )
+
+        row["nominal_cooling_since_completion_s"] = (
+            float(validation_step * self.time_per_block - block_end_time)
+        )
+
+        # --------------------------------------------------
+        # ROI physical boundaries
+        # --------------------------------------------------
+
+        for key in ("x_min", "x_max", "y_min", "y_max", "x_center", "y_center"):
+            row[f"roi_{key}_m"] = float(roi[key])
+
+        # --------------------------------------------------
+        # Five tracking points
+        # --------------------------------------------------
+
         point_names = [
-            "center",
-            "x_minus",
-            "x_plus",
-            "y_minus",
-            "y_plus"
+            "center", "x_minus", "x_plus",
+            "y_minus", "y_plus"
         ]
 
-        for point_name in point_names:
+        for name in point_names:
+            point = experimental_points[name]
 
-            point = experimental_points[point_name]
+            row[f"{name}_x_m"] = float(point["x"])
+            row[f"{name}_y_m"] = float(point["y"])
+            row[f"{name}_u_px"] = int(point["u"])
+            row[f"{name}_v_px"] = int(point["v"])
+            row[f"{name}_T_exp_C"] = float(point["temperature"])
 
-            row[f"{point_name}_x_m"] = point["x"]
-            row[f"{point_name}_y_m"] = point["y"]
+        # --------------------------------------------------
+        # Spatial temperature gradients
+        # --------------------------------------------------
 
-            row[f"{point_name}_T_exp_C"] = (
-                point["temperature"]
-            )
+        gradients = self.calculate_gradients(experimental_points)
 
-        gradients = self.calculate_gradients(
-            experimental_points
-        )
-
-        row["dTdx_exp_C_per_m"] = (
+        row["dTdx_exp_C_per_m"] = float(
             gradients["dTdx_C_per_m"]
         )
-
-        row["dTdy_exp_C_per_m"] = (
+        row["dTdy_exp_C_per_m"] = float(
             gradients["dTdy_C_per_m"]
         )
 
+        # --------------------------------------------------
+        # FLIR temperature statistics inside the block ROI
+        # --------------------------------------------------
+
+        if temperature_field is not None:
+
+            corners = [
+                (roi["x_min"], roi["y_min"]),
+                (roi["x_min"], roi["y_max"]),
+                (roi["x_max"], roi["y_min"]),
+                (roi["x_max"], roi["y_max"])
+            ]
+
+            pixels = [
+                self.calibration.physical_to_rectified_pixel(
+                    x, y, rotated=True
+                )
+                for x, y in corners
+            ]
+
+            u_values = [p[0] for p in pixels]
+            v_values = [p[1] for p in pixels]
+
+            height, width = temperature_field.shape
+
+            u0 = max(0, min(u_values))
+            u1 = min(width, max(u_values) + 1)
+            v0 = max(0, min(v_values))
+            v1 = min(height, max(v_values) + 1)
+
+            roi_field = temperature_field[v0:v1, u0:u1]
+
+            if roi_field.size == 0 or not np.any(np.isfinite(roi_field)):
+                raise ValueError(
+                    f"No valid FLIR pixels for block {block_number}"
+                )
+
+            row["roi_pixel_count"] = int(
+                np.count_nonzero(np.isfinite(roi_field))
+            )
+            row["roi_T_min_C"] = float(np.nanmin(roi_field))
+            row["roi_T_mean_C"] = float(np.nanmean(roi_field))
+            row["roi_T_max_C"] = float(np.nanmax(roi_field))
+            row["roi_T_std_C"] = float(np.nanstd(roi_field))
+
+            peak_index = np.nanargmax(roi_field)
+            peak_v, peak_u = np.unravel_index(
+                peak_index, roi_field.shape
+            )
+
+            row["roi_T_max_u_px"] = int(u0 + peak_u)
+            row["roi_T_max_v_px"] = int(v0 + peak_v)
+
         return row
+
 
     
 

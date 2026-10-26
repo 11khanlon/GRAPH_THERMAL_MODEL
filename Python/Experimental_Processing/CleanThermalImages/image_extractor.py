@@ -38,9 +38,7 @@ class ImagePointExtractor:
     #-----------------------------------
     def redraw_points(self):
     
-            self.display_image = (
-                self.original_image.copy()
-            )
+            self.display_image = (self.original_image.copy())
     
             for number, (u, v) in enumerate(self.points, start = 1):
     
@@ -61,10 +59,7 @@ class ImagePointExtractor:
             cv2.imshow(self.window_name, self.display_image)           
 
     #-----------------------------------
-    def select_points(self, 
-                      img, 
-                      window_name = "Select Image Points",
-                      max_points = None):
+    def select_points(self,  img,  window_name = "Select Image Points", max_points = None):
 
         self.points = []
         self.original_image = (img.copy())
@@ -141,11 +136,9 @@ class ImagePointExtractor:
 
 
         if line_pixels:
-
             line_pixels = np.vstack(line_pixels)
 
         else:
-
             line_pixels = np.empty(
                 (0, 2), dtype=int)
 
@@ -212,9 +205,7 @@ if __name__ == "__main__":
     from pathlib import Path
 
     # Create artificial test image
-    image = Path(
-        r"C:\\Users\\Kayleigh\\GraphThermalModel\\Python\\ThermalData\\Substrate_Calibration.tiff"
-    )
+    image = Path(r"C:\\Users\\Kayleigh\\GraphThermalModel\\Python\\ThermalData\\Substrate_Calibration.tiff")
 
     # Draw test rectangle
     cv2.rectangle(
@@ -229,25 +220,12 @@ if __name__ == "__main__":
     print("\nSelected camera coordinates:")
     print(points)
 
-    line_mask, line_pixels = (
-        extractor.select_independent_lines(image)
-    )
+    line_mask, line_pixels = ( extractor.select_independent_lines(image))
 
-    cv2.imshow(
-        "Independent Line Mask",
-        line_mask * 255
-    )
-
+    cv2.imshow("Independent Line Mask", line_mask * 255)
     cv2.waitKey(0)
-
     cv2.destroyAllWindows()
-
-    line_mask, line_pixels = (
-        extractor.select_continuous_line(
-            image
-        )
-    )
-
+    line_mask, line_pixels = ( extractor.select_continuous_line(image))
     cv2.imshow("Continuous Line Mask", line_mask * 255)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,7 +10,6 @@ from image_extractor import ImagePointExtractor
 '''
 Homography code determines (x, y) <--> (u, v)
 Helps map off axis camera orientation to top view 
-
 '''
 
 # ----------------------------------------
