@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from config import load_experimental_dwell, DWELL
 from conduction import ConductionSolver
 from convection import ConvectionSolver
 from heat_source import ArcHeatSource
@@ -11,6 +12,7 @@ import time
 from pathlib import Path
 from face import update_exposed_faces
 from deposition_tracker import DepositionTracker
+
 
 
 #------------------------
@@ -88,7 +90,8 @@ class DepositionSimulation:
         self.tracker = DepositionTracker(nodes=self.nodes, initial_temperature=self.temperature,
                                           ambient_temperature=self.material_settings[ "ambient_temperature" ], probes=probes)
 
-      
+    if DWELL["dwell"] is None:
+            load_experimental_dwell()
 
     #------------- Helper Functions -----------
     #activate nodes belonging to the newly deposited block 

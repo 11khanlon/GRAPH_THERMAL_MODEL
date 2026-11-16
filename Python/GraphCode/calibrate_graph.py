@@ -1,7 +1,7 @@
-"""Calibrate graph neighborhood radius and spectral conduction gain against Pass 1 TC data.
+"""Calibrate graph neighborhood radius and spectral conduction gain against steel Pass 1 TC data.
 
 Run from your project environment: python calibrate_graph.py
-This script uses the project's existing geometry, graph, and deposition classes.
+This script uses simulation_runner.py and mesh_convergence.py output.
 """
 from pathlib import Path
 import traceback
@@ -10,38 +10,79 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from geometry import Geometry
-from nodes import NodeGenerator
-from graph import ThermalGraph
-from deposition import DepositionSimulation
-from thermocouples import ThermalProbe
-from config import MATERIAL, GRAPH, CONVECTION, BLOCK, DWELL, BUILD, SENSORS, WAAM
-
-# Change this import ONLY if your project's material classes live in another module.
-from material import Al6061Material, Al5183Material
+from config import GRAPH
+from simulation_runner import run_simulation, PROBE_NAMES
 
 TC_COLUMNS = ("ch0", "ch1", "ch2", "ch3")
-TC_NAMES = ("TC_0", "TC_1", "TC_2", "TC_3")
-EPSILON_VALUES = np.array([1, 3.0, 4.0, 4.75, 5.5, 6.5, 12, 30, 35]) * 1e-3  # meters
-GAIN_VALUES = np.array([1e5, 3e5, 1e6, 3e6, 1e7, 1e8])       # m^-2
+TC_NAMES = PROBE_NAMES
 
-# At least this fraction of the baseline's valid experimental comparison samples
-# must remain comparable in each candidate. No time-delay fitting is performed.
+EPSILON_VALUES = np.array([1e-3, 3.0e-3, 4.0e-3])
+GAIN_VALUES = np.array([ 3e6, 1e7, 1e8]) 
+'''EPSILON_VALUES = np.array([1, 3.0, 4.0, 4.75, 5.5, 6.5, 12, 30, 35]) * 1e-3  # meters
+GAIN_VALUES = np.array([1e5, 3e5, 1e6, 3e6, 1e7, 1e8])       # m^-2'''
+
+# At least this fraction of the baseline's valid experimental comparison samples must remain comparable in each candidate. No time-delay fitting is performed
 MIN_COVERAGE = 0.95
 # Set to an integer only if your node generator uses NumPy's global random state.
 NODE_SEED = 12345
 
-HERE = Path(__file__).resolve().parent
-OUTPUT_DIR = HERE / "Validation" / "Results" / "Calibration"
+from pathlib import Path
+import pandas as pd
+
+def selected_density():
+    summary_file = (
+        Path(__file__).resolve().parents[2]
+        / "Validation"
+        / "Results"
+        / "MeshConvergence"
+        / "mesh_convergence_summary.csv"
+    )
+
+    df = pd.read_csv(summary_file)
+
+    # Exclude the finest mesh (zero self-error)
+    candidates = df.sort_values("density").iloc[:-1]
+
+    # Find candidates that passed convergence
+    acceptable = candidates.loc[
+        candidates["passes_tolerance"]
+        .astype(str)
+        .str.lower()
+        .eq("true")
+    ]
+
+    if acceptable.empty:
+        raise ValueError(
+            "No node density passed the convergence tolerances."
+        )
+
+    # Select lowest acceptable density
+    density = float(acceptable.iloc[0]["density"])
+
+    print(f"Selected node density: {density:.6f} nodes/mm³")
+
+    return density
+
+
+
+PROJECT_DIR = Path(__file__).resolve().parents[2]
+
+OUTPUT_DIR = (
+    PROJECT_DIR
+    / "Validation"
+    / "Results"
+    / "Calibration"
+)
+
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def find_data_file():
     """Find the supplied Pass 1 CSV under a project parent directory."""
     checked = []
-    for root in (HERE, *list(HERE.parents)[:4]):
+    for root in (PROJECT_DIR, *list(PROJECT_DIR.parents)[:4]):
         for pass_folder in ("Pass_1", "Pass1"):
-            candidate = (root / "Al5183_Info" / "ThermalData" /
+            candidate = (root / "A36Steel_Info" / "ThermalData" /
                          "Processed" / pass_folder / "Thermocouples_Pass1.csv")
             checked.append(candidate)
             if candidate.is_file():
@@ -80,42 +121,6 @@ def load_experimental_data():
     if not any(df[col].notna().any() for col in TC_COLUMNS):
         raise ValueError("No usable experimental thermocouple measurements.")
     return df
-
-
-def get_probe_results(simulation):
-    """Read tracker results, accommodating the two known naming conventions."""
-    tracker = simulation.tracker
-    histories = getattr(tracker, "probe_history", None)
-    if histories is None:
-        histories = getattr(tracker, "probe_temperature_histories", None)
-    times = getattr(tracker, "probe_history_time", None)
-    if times is None:
-        times = getattr(tracker, "probe_time", None)
-    if histories is None or times is None:
-        raise AttributeError(
-            "Could not locate tracker probe histories/time. Check "
-            "DepositionTracker.record_probe_state() and its attributes."
-        )
-    times = np.asarray(times, dtype=float)
-    values = np.column_stack([np.asarray(histories[name], dtype=float)
-                              for name in TC_NAMES])
-    if values.shape != (len(times), 4):
-        raise ValueError(f"Probe array shape {values.shape} incompatible with "
-                         f"{len(times)} timestamps")
-    if not np.all(np.isfinite(times)) or np.any(np.diff(times) < 0):
-        raise ValueError("Probe timestamps must be finite and nondecreasing")
-    # A tracker can record more than one state at the same instant.
-    if np.any(np.diff(times) == 0):
-        unique_times, inverse = np.unique(times, return_inverse=True)
-        combined = np.full((len(unique_times), 4), np.nan)
-        for j in range(len(unique_times)):
-            for k in range(4):
-                candidates = values[inverse == j, k]
-                finite = candidates[np.isfinite(candidates)]
-                if finite.size:
-                    combined[j, k] = finite[-1]
-        times, values = unique_times, combined
-    return times, values
 
 
 def compare_temperatures(experimental, sim_time, sim_temperature,
@@ -164,56 +169,37 @@ def compare_temperatures(experimental, sim_time, sim_temperature,
     return float(np.sqrt(np.mean(np.square(all_errors)))), counts, len(all_errors)
 
 
-def run_candidate(epsilon, gain):
-    """Create a fresh graph and deposition run for this epsilon/gain pair."""
-    trial_settings = dict(GRAPH)
-    trial_settings.update(epsilon=float(epsilon), gain=float(gain))
-    old_epsilon = GRAPH["epsilon"]
-    try:
-        # graph.py currently reads config.GRAPH directly during build().
-        GRAPH["epsilon"] = float(epsilon)
-        if NODE_SEED is not None:
-            np.random.seed(NODE_SEED)
-        geometry = Geometry(
-            BUILD["stl_file"],
-            substrate_material=Al6061Material(),
-            wire_material=Al5183Material(),
-        )
-        geometry.build_blocks()
-        generator = NodeGenerator(geometry)
-        generator.generate()
-        probes = [
-            ThermalProbe(
-                name=name,
-                position=np.array([sensor["x"], sensor["y"],
-                                   geometry.substrate_top + sensor["z"]]),
-                region=sensor["region"],
-            )
-            for name, sensor in SENSORS.items()
-        ]
-        graph = ThermalGraph(generator.nodes)
-        graph.build()
-        graph.degree_matrix()
-        graph.laplacian()
-        graph.eigensystem()
-        simulation = DepositionSimulation(
-            geometry=geometry,
-            node_generator=generator,
-            graph=graph,
-            material=MATERIAL,
-            convection=CONVECTION,
-            graph_settings=trial_settings,
-            dwell_info=DWELL,
-            dwell_time=DWELL["dwell"],
-            block_info=BLOCK,
-            build_info=BUILD,
-            probes=probes,
-            waam=WAAM,
-        )
-        simulation.run()
-        return get_probe_results(simulation)
-    finally:
-        GRAPH["epsilon"] = old_epsilon
+# Mesh convergence must be run first. This is a numerical-resolution choice,
+# not an optimization over experimental error.
+MESH_SUMMARY = PROJECT_DIR / "Validation" / "Results" / "MeshConvergence" / "mesh_convergence_summary.csv"
+NODE_DENSITY = None  # Set an explicit density to override automatic selection.
+
+
+def per_tc_rmse(experimental, sim_time, sim_temperature):
+    """Diagnostics only; original pooled-RMSE objective is unchanged."""
+    exp_time = experimental["RelativeTime_s"].to_numpy(dtype=float)
+    metrics = {}
+    for k, channel in enumerate(TC_COLUMNS):
+        measured = experimental[channel].to_numpy(dtype=float)
+        valid = (np.isfinite(measured) & (exp_time >= sim_time[0])
+                 & (exp_time <= sim_time[-1]))
+        if not np.any(valid):
+            metrics[f"{channel}_RMSE_C"] = np.nan
+            continue
+        predicted = np.interp(exp_time[valid], sim_time, sim_temperature[:, k])
+        valid_pairs = np.isfinite(predicted)
+        errors = predicted[valid_pairs] - measured[valid][valid_pairs]
+        metrics[f"{channel}_RMSE_C"] = (float(np.sqrt(np.mean(errors**2)))
+                                         if len(errors) else np.nan)
+    return metrics
+
+
+def run_candidate(epsilon, gain, density):
+    """Use the shared runner, rather than duplicating graph/deposition setup."""
+    result = run_simulation(node_density=density, epsilon=epsilon, gain=gain,
+                            seed=NODE_SEED)
+    # Preserve the original calibration behavior: no graph-connectivity filter.
+    return result["time"], result["temperature"]
 
 
 def save_best_fit_plot(experimental, sim_time, sim_temperature, epsilon, gain, rmse):
@@ -251,7 +237,7 @@ def save_rmse_heatmap(results):
     plt.close(fig)
 
 
-def calibrate_graph(experimental):
+def calibrate_graph(experimental, density):
     rows = []
     best = None
     # Require each candidate to cover nearly all recorded samples for each TC.
@@ -260,7 +246,7 @@ def calibrate_graph(experimental):
         for gain in GAIN_VALUES:
             print(f"\nTesting epsilon={epsilon * 1e3:.3f} mm; gain={gain:.3e}", flush=True)
             try:
-                times, temperatures = run_candidate(epsilon, gain)
+                times, temperatures = run_candidate(epsilon, gain, density)
                 rmse, counts, n_compared = compare_temperatures(
                     experimental, times, temperatures, reference_counts
                 )
@@ -272,13 +258,17 @@ def calibrate_graph(experimental):
                 traceback.print_exc(limit=2)
                 rmse, counts, n_compared = np.inf, [], 0
                 status = f"error: {type(exc).__name__}: {exc}"
+            tc_metrics = (per_tc_rmse(experimental, times, temperatures)
+                          if status in ("ok", "insufficient coverage") else {})
             rows.append({
+                "node_density": density,
                 "epsilon_m": epsilon,
                 "epsilon_mm": epsilon * 1e3,
                 "gain": gain,
                 "RMSE_C": rmse,
                 "samples_compared": n_compared,
                 "status": status,
+                **tc_metrics,
                 **{f"n_{name}": counts[k] if k < len(counts) else 0
                    for k, name in enumerate(TC_COLUMNS)},
             })
@@ -298,7 +288,9 @@ def calibrate_graph(experimental):
 
 if __name__ == "__main__":
     experimental = load_experimental_data()
-    results = calibrate_graph(experimental)
+    density = selected_density()
+    print(f"Using node density: {density:g} nodes/mm³")
+    results = calibrate_graph(experimental, density)
     print("\nBEST CANDIDATES")
     print(results.head(10).to_string(index=False))
     print(f"\nResults directory: {OUTPUT_DIR}")

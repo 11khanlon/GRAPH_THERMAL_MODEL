@@ -2,7 +2,6 @@
 1st file
 Stores variables in one spot so they can easily be modified
 Configuration file for the Graph Theory DED thermal model
-
 """
 
 from pathlib import Path
@@ -22,7 +21,7 @@ MATERIAL = {
 
 IMAGE_PROCESSING = {
      "PRE_BUFFER_S": 1,  # seconds
-     "NUMBER_OF_PASSES": 2   #this is just the number of desired passes you want to analyze
+     "NUMBER_OF_PASSES": 1   #this is just the number of desired passes you want to analyze
      #Make sure to rename the actual filepaths for thermal_image_processor and use the count to select desired images 
 }
 
@@ -49,7 +48,6 @@ WAAM = {
     "head_height": 3.0e-3,          # m
     "head_top_radius": 1.0e-3,      # m
     "head_tip_radius": 0.8e-3,      # m
-
 }
 
 #--------LASER PARAMETERS---------
@@ -70,7 +68,6 @@ LASER = {
     "head_tip_radius": 0.8e-3,     # m
 
     "beam_radius": 0.25e-3         # m
-
 }
 
 
@@ -79,8 +76,8 @@ LASER = {
 BUILD = {
     "stl_file": r"C:\\Users\\Kayleigh\\GraphThermalModel\\STL\\SingleTrak.stl",  #insertfile 
 
-    "substrate_length": 152.4e-3,    #m
-    "substrate_width": 50.8e-3,      #m
+    "substrate_length": 170.0e-3,    #m
+    "substrate_width": 76.20e-3,      #m
     "substrate_height": 12.7e-3,     #m
 
     "substrate_blocks_x": 1,
@@ -89,9 +86,8 @@ BUILD = {
 
     "blocks_per_layer": 10,   #simulation blocks. 10 blocks per layer
     
-    "bead_length": 0.127,  #m
-    "x_start": 12.7/1000   #m
-    
+    "bead_length": 140/1000,  #m
+    "x_start": 15.207/1000   #m
 }
 
 #----------- BLOCK DISCRETIZATION ---------------
@@ -102,8 +98,8 @@ BLOCK = {
     "width": 4.194e-3,    #m 
     "height": 2.501e-3,  #m 
 
-    "surface_band_thickness": 0.1806e-3 / 2,
-    "surface_thickness": 0.1806e-3 / 2,
+    "surface_band_thickness": 0.5e-3 /2 ,
+    "surface_thickness": 0.5e-3 / 2 ,
      "time_per_block": 1
 }
 
@@ -115,7 +111,7 @@ GRAPH = {
     "seed": 42,
     "epsilon": 3e-3,  # neighborhood radius ε, m
     "gain": 1E7,     # gain factor g, m^-2
-    "node_density": 0.1 # node density, nodes/mm^3
+    "node_density": 0.01 # node density, nodes/mm^3
 }
 
 
@@ -124,33 +120,32 @@ SENSORS = {
 
     #Thermocouple1
     "TC_0": {
-        "x": 0,
-        "y": 50.8e-3,
-        "z": -0.2e-3,
+        "x": 135.80e-3,
+        "y": 8.382e-3,
+        "z": 0,
         "region": "substrate"
     },
 
     "TC_1": {
-            "x": 0,
-            "y": 0,
-            "z": -0.2e-3,
+            "x": 135.80e-3,
+            "y": 59.436e-3,
+            "z": 0,
             "region": "substrate"
         },
 
     "TC_2": {
-                "x": 152.4e-3,
-                "y": 0,
-                "z": -0.2e-3,
+                "x": 34.20e-3,
+                "y": 8.382e-3,
+                "z": 0,
                 "region": "substrate"
             },
 
     "TC_3": {
-                "x": 152.4e-3,
-                "y": 50.8e-3,
-                "z": -0.2e-3,
+                "x": 34.20e-3,
+                "y": 59.436e-3,
+                "z": 0,
                 "region": "substrate"
             }
-
 }
 
 #-------- CONVECTION ---------
@@ -162,28 +157,38 @@ CONVECTION = {
 }
 
 
-#------- DWELL TIME ---------
+# ------- DWELL TIME ---------
+
 PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
+
 PASS_INFO_FILE = (
     PROJECT_DIR
-    / "A36Steel_Info"
+    / MATERIAL["material_directory"]
     / "ThermalData"
     / "Processed"
     / "Pass_1"
-    / "Pass1_Info.csv"
-)
-
-# Read experimental dwell duration
-pass_info = pd.read_csv(PASS_INFO_FILE)
-
-dwell_duration = float(pass_info.loc[0, "DwellDuration_s"])
+    / "Pass1_Info.csv")
 
 DWELL = {
-    "dwell_time_step": 1.0,   # seconds
-    "dwell": dwell_duration   # experimental dwell duration (seconds)
+    "dwell_time_step": 1.0,
+    "dwell": None
 }
 
-print(f"Experimental dwell duration: {DWELL['dwell']:.3f} s")
+
+def load_experimental_dwell():
+
+    if not PASS_INFO_FILE.exists():
+        raise FileNotFoundError(
+            f"Experimental dwell metadata not found: {PASS_INFO_FILE}\n"
+            "Run synchronize_thermal_data.py first.")
+
+    pass_info = pd.read_csv(PASS_INFO_FILE)
+    dwell_duration = float(pass_info.loc[0, "DwellDuration_s"])
+    DWELL["dwell"] = dwell_duration
+
+    print(f"Experimental dwell duration: {DWELL['dwell']:.3f} s")
+
+    return dwell_duration
 
 
 if __name__ == "__main__":

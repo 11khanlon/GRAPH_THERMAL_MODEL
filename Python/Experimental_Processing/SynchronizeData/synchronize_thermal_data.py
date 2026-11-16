@@ -286,18 +286,27 @@ for pass_index in range(NUMBER_OF_PASSES):
     deposition_duration = (deposition_end - deposition_start).total_seconds()
 
 
+    # Determine dwell/cooling duration
     if pass_index + 1 < len(start_times):
 
-        # The next actual deposition start ends the dwell
+        # Between deposition passes
         dwell_end = start_times.iloc[pass_index + 1]
-
-        DWELL_S = (dwell_end - deposition_end).total_seconds()
 
     else:
 
-        # No subsequent deposition start was recorded
-        dwell_end = deposition_end
-        DWELL_S = 0.0
+        # Final pass: use last available experimental TC timestamp
+        dwell_end = tc["Timestamp"].max()
+
+    # Calculate actual duration
+    DWELL_S = (dwell_end - deposition_end).total_seconds()
+
+    if DWELL_S < 0:
+        raise ValueError(
+            "Dwell end occurs before deposition end. "
+            "Check experimental timestamps."
+        )
+
+    print(f"Experimental dwell/cooling duration: {DWELL_S:.3f} s")
 
 
     window_start = deposition_start - pd.Timedelta(seconds=PRE_BUFFER_S)

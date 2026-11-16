@@ -20,15 +20,6 @@ thermal_metadata = {
 }
 
 
-'''
-There will be a prebuffer of 1 second 
-the dwell, however, will not be hardcoded. this dwell will be stored at the time in between the arc is on and of in between layers. This is found form the PROCESSACTIVE Tab. 
-When the torch turns from True to false here once layer one is complete, the dwell period starts. when the torch turns from false to true, the dwell period ends. This will be stored in a variable called DWELL_S.
-I dont think i need a post dwell buffer. what what this used for again? 
-for each pass, the idea is add a 1second prebuffer, then deposit material (processactive = True), then dwell for the time in between layers (DWELL_S). Create another layer, then dwell.
-
-
-'''
 
 
 print("Thermal metadata:", thermal_metadata)

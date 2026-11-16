@@ -3,6 +3,7 @@
 import numpy as np
 
 
+
 # ---------------------------------------------------------
 # Thermal probe class
 class ThermalProbe:
@@ -499,15 +500,15 @@ if __name__ == "__main__":
 
     from geometry import Geometry
     from nodes import NodeGenerator
-    from material import Al5183Material, Al6061Material, AluminumMaterial
+    from material import A36Material, SubstrateMaterial, WireMaterial
 
     from config import BUILD, SENSORS, SENSORS
 
     stl_file = BUILD["stl_file"]
 
 
-    substrate_material = Al6061Material()
-    wire_material = Al5183Material()
+    substrate_material = SubstrateMaterial()
+    wire_material = WireMaterial()
 
     geometry = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
     geometry.build_blocks()
