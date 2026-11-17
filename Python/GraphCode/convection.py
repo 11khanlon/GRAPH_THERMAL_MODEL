@@ -12,90 +12,35 @@ import numpy as np
 class ConvectionSolver:
 
     #Newton cooling model 
-    def __init__(self,
-                 density,
-                 block_length):
+    def __init__(self, density, block_length):
         
-        self.rho = density
+        self.rho = density       #material density, found from config.py
         self.L = block_length
     
-
     # -------------------------------------------------------
-
+    #β = h / (rho L Cp)
     def beta(self, h, cp):
-
-        #β = h / (rho L Cp)
-
         return h / (self.rho * self.L * cp )
 
     # -------------------------------------------------------
     #Apply Newton cooling to surface nodes
-    def cool(self,
-            temperature,
-            surface_mask,
-            h,
-            cp,
-            ambient_temperature,
-            dt):
-
-
+    def cool(self,temperature, surface_mask, h, cp, ambient_temperature, dt):
         T = temperature.copy()
-
         beta = self.beta(h, cp)
-
         factor = np.exp(-beta * dt)
-
-        T[surface_mask] = (
-            ambient_temperature
-            + (T[surface_mask] - ambient_temperature)
-            * factor[surface_mask]
-        )
+        T[surface_mask] = ambient_temperature + (T[surface_mask] - ambient_temperature) * factor[surface_mask]
 
         return T
 
-    
     # -------------------------------------------------------
     #Cooling immediately after one block
-    def block_cooling(
-            self,
-            temperature,
-            surface_mask,
-            h,
-            cp,
-            ambient_temperature,
-            block_time
-        ):
-
-        return self.cool(
-            temperature,
-            surface_mask, 
-            h, 
-            cp, 
-            ambient_temperature,
-            block_time
-        )
+    def block_cooling(self, temperature, surface_mask, h, cp, ambient_temperature, block_time):
+        return self.cool(temperature, surface_mask, h, cp, ambient_temperature, block_time)
 
     # -------------------------------------------------------
     #cooling during dwell time
-    def dwell_cooling(
-                self,
-                temperature,
-                surface_mask,
-                h,
-                cp,
-                ambient_temperature,
-                dt):
-    
-
-        return self.cool(
-            temperature,
-            surface_mask, 
-            h, 
-            cp, 
-            ambient_temperature, 
-            dt)
-
-
+    def dwell_cooling(self, temperature, surface_mask, h, cp, ambient_temperature, dt):
+        return self.cool(temperature, surface_mask, h, cp, ambient_temperature, dt)
 
 # ------------------------------------------------------------
 
@@ -108,51 +53,35 @@ if __name__ == "__main__":
     from face import update_exposed_faces
 
     surface_band_thickness = BLOCK["surface_band_thickness"]
-
     surface_thickness = BLOCK["surface_thickness"] 
-
     wire_material = WireMaterial()
     substrate_material = SubstrateMaterial()
 
     stl_file = BUILD["stl_file"]
-    geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
+    geom = Geometry(stl_file, substrate_material = substrate_material, wire_material = wire_material)
+    geom.build_blocks()       #geometry object is called. then call function inside the class to build blocks 
 
-    geom.build_blocks()
-
-    generator = NodeGenerator(geom)
-
-    generator.generate()
-
-    nodes = generator.nodes
-
+    generator = NodeGenerator(geom)       #create a node generator object with the geometry object as input
+    generator.generate()                  #call generate function to generate nodes  
+    nodes = generator.nodes               #obtain nodes from generator object     
     update_exposed_faces(geom)
-
     generator.update_node_exposure(surface_thickness)
-
     generator.update_surface_types()
 
     #Create surface masks 
     forced_surface_mask = np.array(
-        [node.forced_surface for node in nodes],
-        dtype=bool)
+        [node.forced_surface for node in nodes], dtype=bool)
 
     free_surface_mask = np.array(
-        [node.free_surface for node in nodes],
-        dtype=bool)
+        [node.free_surface for node in nodes], dtype=bool)
 
     #initial temperature 
-    temperature = np.full(
-        len(nodes),
-        MATERIAL["ambient_temperature"])
-
+    temperature = np.full(len(nodes), MATERIAL["ambient_temperature"])
     temperature[forced_surface_mask] = 1200.0
-
     blocks_per_layer = BUILD["blocks_per_layer"]
     block_length = geom.length / blocks_per_layer
 
-    solver = ConvectionSolver(
-        density = MATERIAL["density"],
-        block_length = block_length)
+    solver = ConvectionSolver( density = MATERIAL["density"], block_length = block_length)
 
   
     cp = np.array([
@@ -185,21 +114,12 @@ if __name__ == "__main__":
     )
 
     print("\n------ CONVECTION TEST ------")
-
-    print(f"Forced surface nodes : "
-        f"{np.sum(forced_surface_mask)}")
-
-    print(f"Free surface nodes   : "
-          f"{np.sum(free_surface_mask)}")
-
-    print("Maximum forced-surface temperature before:",
-    np.max(temperature[forced_surface_mask]))
-
-    print("Maximum forced-surface temperature after:",
-        np.max(cooled_forced[forced_surface_mask]))
+    print(f"Forced surface nodes : {np.sum(forced_surface_mask)} ")
+    print(f"Free surface nodes   : {np.sum(free_surface_mask)} ")
+    print("Maximum forced-surface temperature before:", np.max(temperature[forced_surface_mask]))
+    print("Maximum forced-surface temperature after:", np.max(cooled_forced[forced_surface_mask]))
 
     print("\n------ SURFACE MASK TEST ------")
-
     print("Total nodes:", len(nodes))
 
     print("Forced mask shape:", forced_surface_mask.shape)

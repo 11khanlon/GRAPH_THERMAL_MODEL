@@ -16,9 +16,7 @@ from simulation_runner import run_simulation, PROBE_NAMES
 TC_COLUMNS = ("ch0", "ch1", "ch2", "ch3")
 TC_NAMES = PROBE_NAMES
 
-EPSILON_VALUES = np.array([1e-3, 3.0e-3, 4.0e-3])
-GAIN_VALUES = np.array([ 3e6, 1e7, 1e8]) 
-'''EPSILON_VALUES = np.array([1, 3.0, 4.0, 4.75, 5.5, 6.5, 12, 30, 35]) * 1e-3  # meters
+EPSILON_VALUES = np.array([1, 3.0, 4.0, 4.75, 5.5, 6.5, 12, 30, 35]) * 1e-3  # meters
 GAIN_VALUES = np.array([1e5, 3e5, 1e6, 3e6, 1e7, 1e8])       # m^-2'''
 
 # At least this fraction of the baseline's valid experimental comparison samples must remain comparable in each candidate. No time-delay fitting is performed
@@ -52,17 +50,13 @@ def selected_density():
     ]
 
     if acceptable.empty:
-        raise ValueError(
-            "No node density passed the convergence tolerances."
-        )
+        raise ValueError("No node density passed the convergence tolerances.")
 
     # Select lowest acceptable density
     density = float(acceptable.iloc[0]["density"])
-
     print(f"Selected node density: {density:.6f} nodes/mm³")
 
     return density
-
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[2]
@@ -77,8 +71,8 @@ OUTPUT_DIR = (
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
+#Find the supplied Pass 1 CSV under a project parent directory
 def find_data_file():
-    """Find the supplied Pass 1 CSV under a project parent directory."""
     checked = []
     for root in (PROJECT_DIR, *list(PROJECT_DIR.parents)[:4]):
         for pass_folder in ("Pass_1", "Pass1"):

@@ -13,8 +13,6 @@ from pathlib import Path
 from face import update_exposed_faces
 from deposition_tracker import DepositionTracker
 
-
-
 #------------------------
 class DepositionSimulation:
 
@@ -148,9 +146,7 @@ class DepositionSimulation:
         indices = self.layer_indices(layer)
 
         if len(indices) == 0:
-            return self.material_model.diffusivity(
-                self.material_settings["ambient_temperature"]
-            )
+            return self.material_model.diffusivity(self.material_settings["ambient_temperature"])
 
         T_layer = self.temperature[indices]
 
@@ -210,8 +206,6 @@ class DepositionSimulation:
         self.tracker.record_thermal_stage(time=self.time,  block=block, stage="heat_source", temperature=self.temperature, active_mask=self.active_mask())
         self.tracker.record_probe_state(temperature=self.temperature, time=self.time, stage="after_heatsource", block=block)
    
-
-  
         #======== Step 2 -> Conduction ==============
         alpha = self.current_diffusivity()
         self.temperature = self.conduction.block_conduction(self.temperature, alpha, block_time = self.block_time)
@@ -222,7 +216,6 @@ class DepositionSimulation:
             print(f"WARNING: {conduction_stats['heated_inactive_count']} inactive nodes heated above ambient + 1°C. ")
              
         self.reset_inactive_temperatures()
-        
         self.tracker.record_probe_state(temperature=self.temperature, time=self.time, stage="after_conduction", block=block)
       
 
@@ -233,7 +226,6 @@ class DepositionSimulation:
             temperature=self.temperature,
             active_mask=self.active_mask()
         )
-
 
         # Step 3 --> Convection
         overlap = (self.forced_surface_mask & self.free_surface_mask)
@@ -322,8 +314,7 @@ class DepositionSimulation:
             # Step 2: Forced convection
             cp = np.array([
                 node.material.specific_heat(self.temperature[i])
-                for i, node in enumerate(self.nodes)
-            ], dtype=float)
+                for i, node in enumerate(self.nodes)], dtype=float)
 
             self.temperature = self.cooling.dwell_cooling(
                 temperature=self.temperature,
@@ -393,36 +384,19 @@ class DepositionSimulation:
         print(f"Travel speed: " f"{self.waam['scan_speed'] * 1000:.3f} mm/s")
         print(f"Time per block: " f"{self.block_time:.4f} s")
     
-
         current_layer = None
-
         ordered_blocks = self.geometry.deposition_order()
 
         for block in ordered_blocks:
-
             if block.layer != current_layer:
-
                 if current_layer is not None:
-
-                    print(
-                        f"Dwell after layer "
-                        f"{current_layer + 1}"
-                    )
-
+                    print(f"Dwell after layer {current_layer + 1} ")
                     self.simulate_dwell()
-
                 current_layer = block.layer
-
                 print( f"Layer {current_layer + 1}")
 
             self.simulate_block(block)
-            print(
-                f"Deposited block {block.id}, "
-                f"layer={block.layer}, "
-                f"time={self.time:.2f} s, "
-                f"Tmax={np.max(self.temperature):.2f} °C"
-            )
-
+            print(f"Deposited block {block.id}, layer={block.layer} , time={self.time:.2f} s, Tmax={np.max(self.temperature):.2f} °C")
 
         # Final cooling period
         if current_layer is not None:
@@ -434,86 +408,33 @@ class DepositionSimulation:
 
         print("-------------------")
         print("Simulation complete!")
-
-        print(f"\nSimulation end:",
-            self.wall_end.strftime("%Y-%m-%d %H:%M:%S"))
-        
-        print(f"\nSimulated process time: "
-              f"{self.time:.2f} s")
-        
-        print(f"\nComputer calculation time: "
-            f"{self.computation_time:.2f} s")
-
-
-     
-
+        print(f"\nSimulation end:", self.wall_end.strftime("%Y-%m-%d %H:%M:%S")) 
+        print(f"\nSimulated process time: {self.time:.2f} s ") 
+        print(f"\nComputer calculation time: {self.computation_time:.2f} s ")
         self.tracker.finalize()
 
 
         # -----------------------------------------
         # Output directories
 
-        output_dir = (
-            Path.home()
-            / "Downloads"
-            / "Thermal_Simulation"
-        )
-
+        output_dir = Path.home() / "Downloads" / "Thermal_Simulation"
         diagnostics_dir = output_dir / "Diagnostics"
         validation_dir = output_dir / "Validation"
+        diagnostics_dir.mkdir( parents=True, exist_ok=True)
+        validation_dir.mkdir(parents=True, exist_ok=True)
 
-        diagnostics_dir.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-
-        validation_dir.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-
-        # -----------------------------------------
         # Export thermal stage table
+        stage_table = self.tracker.export_thermal_stage_table(output_path=(diagnostics_dir  / "Tables"  / "thermal_stage_nodes.csv"))
 
-        stage_table = self.tracker.export_thermal_stage_table(
-            output_path=(
-                diagnostics_dir
-                / "Tables"
-                / "thermal_stage_nodes.csv"
-            )
-        )
-
-        # -----------------------------------------
         # Export thermal stage summary
-
         summary = self.tracker.create_thermal_stage_summary()
-
-        summary_path = (
-            diagnostics_dir
-            / "Tables"
-            / "thermal_stage_summary.csv"
-        )
-
-        summary_path.parent.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-
-        summary.to_csv(
-            summary_path,
-            index=False
-        )
+        summary_path = diagnostics_dir/ "Tables"/ "thermal_stage_summary.csv"
+        summary_path.parent.mkdir( parents=True, exist_ok=True)
+        summary.to_csv(summary_path, index=False)
 
         # -----------------------------------------
         # Export numerical diagnostics
-
-        statistics_table = self.tracker.export_temperature_statistics(
-            output_path=(
-                diagnostics_dir
-                / "Tables"
-                / "temperature_statistics.csv"
-            )
-        )
+        statistics_table = self.tracker.export_temperature_statistics(output_path=(diagnostics_dir/ "Tables"/ "temperature_statistics.csv"))
 
         # -----------------------------------------
         # Export five-point validation histories
@@ -522,11 +443,7 @@ class DepositionSimulation:
             blocks=ordered_blocks,
             block_length=self.block_length,
             block_width=self.block_info["width"],
-            output_path=(
-                validation_dir
-                / "simulation_tracking_history.csv"
-            )
-        )
+            output_path= validation_dir/ "simulation_tracking_history.csv" )
 
         print("\nSimulation diagnostics exported.")
         print(f"Thermal stage rows: {len(stage_table)}")

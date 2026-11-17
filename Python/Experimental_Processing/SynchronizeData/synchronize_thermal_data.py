@@ -3,12 +3,11 @@ Synchronize experimental WAAM thermal data
 
 Master clock: Fronius.csv -> PROCESSACTIVE
 
-For Pass 1 and Pass 2:
+For each pass:
     - Find deposition start: False -> True
     - Find deposition end:   True -> False
-    - Keep 5 s before deposition
-    - Keep 30 s dwell after deposition
-    - Keep 5 s after dwell
+    - Keep time, if desired as a buffer, before deposition
+    - Keep dwell after deposition
     - Synchronize thermocouples to Fronius start
     - Insert interpolated TC value at t = 0
     - Determine corresponding A700 camera Count range
@@ -54,14 +53,8 @@ def clean_timestamp_column(series):
     cleaned = (series
         .astype(str)
         .str.strip()
-        .str.replace(
-            r"^Timestamp\(['\"]?",
-            "",
-            regex=True)
-        .str.replace(
-            r"['\"]?\)$",
-            "",
-            regex=True)
+        .str.replace(r"^Timestamp\(['\"]?", "", regex=True)
+        .str.replace( r"['\"]?\)$", "", regex=True)
     )
 
     return pd.to_datetime(cleaned, format="mixed", errors="raise")
@@ -89,9 +82,7 @@ fronius["PROCESSACTIVE"] = (fronius["PROCESSACTIVE"]
 
 
 if fronius["PROCESSACTIVE"].isna().any():
-
     bad_values = fronius.loc[fronius["PROCESSACTIVE"].isna()]
-
     raise ValueError(f"PROCESSACTIVE contains values other than True/False.\n {bad_values}")
 
 
@@ -100,7 +91,6 @@ TC_CHANNELS = ["ch0", "ch1", "ch2", "ch3"]
 
 for channel in TC_CHANNELS:
 
-    
     # Example: "0030.05409" becomes: 30.05409 C
     # Remove whitespace and quotation marks first.
     tc[channel] = (
@@ -134,16 +124,10 @@ print(f"Detected deposition starts:{len(start_times)} ")
 print(f"Detected deposition ends: {len(end_times)} ")
 
 if len(start_times) < NUMBER_OF_PASSES:
-    raise ValueError(
-        f"Requested {NUMBER_OF_PASSES} passes, "
-        f"but detected only {len(start_times)} deposition starts."
-    )
+    raise ValueError(f"Requested {NUMBER_OF_PASSES} passes, but detected only {len(start_times)} deposition starts. ")
 
 if len(end_times) < NUMBER_OF_PASSES:
-    raise ValueError(
-        f"Requested {NUMBER_OF_PASSES} passes, "
-        f"but detected only {len(end_times)} deposition ends."
-    )
+    raise ValueError(f"Requested {NUMBER_OF_PASSES} passes, but detected only {len(end_times)} deposition ends. ")
       
 
 # ============================================================
@@ -157,33 +141,25 @@ def interpolate_tc_at_time(tc_data, target_time):
 
     if before.empty or after.empty:
 
-        raise ValueError("Cannot interpolate thermocouple "
-            f"data at {target_time}. Need data on both sides.")
-
+        raise ValueError(f"Cannot interpolate thermocouple data at {target_time}. Need data on both sides.")
 
     t1 = before["Timestamp"].iloc[0]
     t2 = after["Timestamp"].iloc[0]
 
     # Exact measurement already exists
     if t1 == target_time:
-
         row = before.copy()
-
         row["RelativeTime_s"] = 0.0
         row["InterpolatedStart"] = False
 
         return row
-
 
     if t2 == target_time:
-
         row = after.copy()
-
         row["RelativeTime_s"] = 0.0
         row["InterpolatedStart"] = False
 
         return row
-
 
     total_dt = (t2 - t1).total_seconds()
     target_dt = (target_time - t1).total_seconds()
@@ -209,11 +185,8 @@ Camera frames are not interpolated because count refers to an actual JPEG
 '''
 
 def nearest_camera_frame(camera_data, target_time):
-
     time_difference = (camera_data["Timestamp"] - target_time).abs()
-
     index = time_difference.idxmin()
-
     return camera_data.loc[index]
 
 
@@ -249,23 +222,15 @@ def add_pass_coordinates(data, deposition_start, deposition_end, pass_number):
 
     # Position only exists while depositing
     data["Position_m"] = np.nan
-
     depositing = data["IsDepositing"]
-
     t = data.loc[depositing, "RelativeTime_s"]
 
     if pass_number == 1:
-
-        # Pass 1: 0 m --> 0.128 m
         position = (SCAN_SPEED_M_S * t) + x_start
-
         data.loc[ depositing,  "Position_m"] = np.clip(position, 0.0, BEAD_LENGTH_M)
 
     elif pass_number == 2:
-
-        # Pass 2: 0.128 m --> 0 m
         position = BEAD_LENGTH_M - SCAN_SPEED_M_S * t
-
         data.loc[depositing, "Position_m"] = np.clip(position, 0.0, BEAD_LENGTH_M)
 
     else:
@@ -301,18 +266,11 @@ for pass_index in range(NUMBER_OF_PASSES):
     DWELL_S = (dwell_end - deposition_end).total_seconds()
 
     if DWELL_S < 0:
-        raise ValueError(
-            "Dwell end occurs before deposition end. "
-            "Check experimental timestamps."
-        )
-
+        raise ValueError("Dwell end occurs before deposition end. Check experimental timestamps." )
     print(f"Experimental dwell/cooling duration: {DWELL_S:.3f} s")
 
-
     window_start = deposition_start - pd.Timedelta(seconds=PRE_BUFFER_S)
-
     window_end = dwell_end
-
   
     # Output directory for this pass
     pass_dir =  OUTPUT_DIR / f"Pass_{pass_number}"
@@ -320,11 +278,8 @@ for pass_index in range(NUMBER_OF_PASSES):
 
 
     # --------- Fronius crop------------- 
-    fronius_pass = fronius[(fronius["Timestamp"] >= window_start)
-                           & (fronius["Timestamp"] <= window_end)].copy()
-
+    fronius_pass = fronius[(fronius["Timestamp"] >= window_start) & (fronius["Timestamp"] <= window_end)].copy()
     fronius_pass = add_pass_coordinates(fronius_pass, deposition_start, deposition_end, pass_number)
-
     fronius_pass["Stage"] = assign_stage(fronius_pass["Timestamp"], deposition_start, deposition_end, dwell_end)
 
 

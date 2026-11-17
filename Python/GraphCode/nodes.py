@@ -1,9 +1,7 @@
 """
-Step 3 of the graph-theory DED thermal model
-Creates the point cloud used by the graph-theory solver.
+Creates the point cloud used by the graph-theory solver
 
 Implements Step 1 from Riensche et al. (2023):
-
     - Random node generation
     - Uniform node density
     - One point cloud for substrate + deposited part
@@ -18,12 +16,7 @@ from config import GRAPH, MATERIAL, BUILD
 #---------- Graph Node -----------
 class Node:
 
-    def __init__(self,
-                 node_id,
-                 position,
-                 block_id, 
-                 block, 
-                 is_substrate=False):
+    def __init__(self, node_id, position, block_id, block,  is_substrate=False):
 
         self.id = node_id
 
@@ -58,28 +51,16 @@ class Node:
         self.weights = []
 
     def __repr__(self):
+        return (f"Node(id={self.id}, block={self.block_id}, material={self.material.name}, active={self.active})" )
 
-        return (
-            f"Node("
-            f"id={self.id}, "
-            f"block={self.block_id}, "
-            f"material={self.material.name},"
-            f"active={self.active})"
-        )
-
-    #-------------------------------------------------- 
-    
+#-------------------------------------------------- 
+"""
+Determine whether a node lies within the surface region associated with a particular block face
+The thickness is a numerical surface-band parameter
+"""  
 def node_on_face(node, block, face, thickness):
-    """
-    Determine whether a node lies within the surface
-    region associated with a particular block face.
-
-    The thickness is a numerical surface-band parameter.
-    It is NOT a threshold specified by Riensche et al.
-    """
-
+   
     x, y, z = node.position
-
     x0, y0, z0 = block.start
     x1, y1, z1 = block.end
 
@@ -106,25 +87,16 @@ def node_on_face(node, block, face, thickness):
 
 #%%
 # -------- Node Generator ---------
+#Generates random nodes inside every block Section 4.3.1.1
 class NodeGenerator:
 
-    """
-    Generates random nodes inside every block Section 4.3.1.1
-    Random nodes are distributed uniformly inside each deposition block.
-    Node density controls accuracy
-    """
-
     def __init__(self, geometry):
-
         self.geometry = geometry
-
         self.nodes = []
 
     # -----------------------------------------------------
     def generate(self):
-
         node_id = 0
-
         node_density = GRAPH["node_density"]  # nodes/mm³
 
         for block in self.geometry.blocks:
@@ -141,9 +113,8 @@ class NodeGenerator:
             expected_nodes = volume_mm3 * node_density
 
             n_nodes = max(1,int(np.round(expected_nodes)))
+            rng = np.random.default_rng(seed= GRAPH["seed"])
 
-
-            rng = np.random.default_rng(seed=42)
             # Uniform random node placement
             for _ in range(n_nodes):
 
@@ -151,20 +122,12 @@ class NodeGenerator:
                 y = rng.uniform(y0, y1)
                 z = rng.uniform(z0, z1)
 
-                node = Node(
-                    node_id=node_id,
-                    position=(x, y, z),
-                    block_id=block.id,
-                    block=block,
-                    is_substrate=block.is_substrate
-                )
+                node = Node(node_id=node_id, position=(x, y, z),
+                    block_id=block.id, block=block, is_substrate=block.is_substrate)
 
                 self.nodes.append(node)
-
                 block.node_indices.append(node_id)
-
                 block.nodes.append(node)
-
                 node_id += 1
 
         substrate_nodes = sum(
@@ -190,33 +153,25 @@ class NodeGenerator:
 
         # Examine active blocks
         for block in self.geometry.blocks:
-
             if not block.active:
                 continue
 
             for face, exposed in block.exposed_faces.items():
-
                 if not exposed:
                     continue
 
                 for node in block.nodes:
-
                     if node_on_face(node, block, face, surface_thickness):
                         node.exposed_faces.add(face)
 
     # -----------------------------------------------------
+    """
+    Classify exposed nodes according to their convection boundary condition.
+    Forced convection: Exposed surfaces of deposited material and top surface of substrate
+    Free convection: Exposed sides and bottom of substrate
+    """
     def update_surface_types(self):
-        """
-        Classify exposed nodes according to their convection boundary condition.
-
-        Forced convection:
-            Exposed surfaces of deposited material
-            Exposed top surface of substrate
-
-        Free convection:
-            Exposed sides and bottom of substrate
-        """
-
+        
         for node in self.nodes:
 
             # Reset previous classification
@@ -244,48 +199,25 @@ class NodeGenerator:
                 # Substrate sides/bottom -> free convection
                 elif any(
                     face in node.exposed_faces
-                    for face in [
-                        "left",
-                        "right",
-                        "front",
-                        "back",
-                        "bottom"
-                    ]
-                ):
+                    for face in ["left", "right", "front", "back", "bottom"]):
 
                     node.free_surface = True
 
             # DEPOSITION
+            # Exposed deposition surfaces -> forced convection
             else:
-                # Exposed deposition surfaces -> forced convection
                 node.forced_surface = True
 
  
     # -----------------------------------------------------
     def active_nodes(self):
+        return [n for n in self.nodes if n.active]
 
-        return [
-            n
-            for n in self.nodes
-            if n.active
-        ]
-
-    # -----------------------------------------------------
     def inactive_nodes(self):
+        return [n for n in self.nodes if not n.active]
 
-        return [
-            n
-            for n in self.nodes
-            if not n.active]
-
-  
-    # -----------------------------------------------------
     def coordinates(self):
-
-        return np.array([
-            n.position
-            for n in self.nodes])
-
+        return np.array([n.position for n in self.nodes])
 
     # -----------------------------------------------------
     def validate_nodes(self):
@@ -352,26 +284,18 @@ class NodeGenerator:
 
     # -----------------------------------------------------
     def print_surface_statistics(self):
-        """
-        Print statistics for currently exposed nodes.
-        """
-
+    
         surface_nodes = [
             node
             for node in self.nodes
-            if node.exposed_faces
-        ]
+            if node.exposed_faces]
 
         print("\n------ SURFACE NODE STATISTICS ------")
-
         print(f"Total nodes: {len(self.nodes)}")
-
         print(f"Surface nodes: {len(surface_nodes)}")
 
         if len(self.nodes) > 0:
-
             percentage = (100 * len(surface_nodes) / len(self.nodes))
-
             print(f"Surface fraction : {percentage:.2f}%")
 
         face_counts = {
@@ -400,9 +324,7 @@ if __name__ == "__main__":
     import sys
 
     # Get the parent "Python" folder
-    python_folder = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..")
-    )
+    python_folder = os.path.abspath( os.path.join(os.path.dirname(__file__), ".."))
 
     # Add it to Python's import search path
     if python_folder not in sys.path:
@@ -416,35 +338,27 @@ if __name__ == "__main__":
 
 
     stl_file = BUILD["stl_file"]
-
     wire_material = WireMaterial()
     substrate_material = SubstrateMaterial()
 
+    #create geometry object and build blocks
     geom = Geometry( stl_file, substrate_material=substrate_material, wire_material=wire_material)
-
     geom.build_blocks()
 
+    #generate nodes
     generator = NodeGenerator(geom)
-
     nodes = generator.generate()
-
     update_exposed_faces(geom)
-
     surface_thickness = BLOCK["height"]/2
     generator.update_node_exposure(surface_thickness)
-
     print(generator.nodes[0])
 
     generator.validate_nodes()
-
     plot_geometry_with_nodes(geom, generator)
-
     generator.print_surface_statistics()
 
     print("\n------ MATERIAL VALIDATION ------")
-
     for material_name in [MATERIAL["name"], MATERIAL["name"]]:
-
         count = sum( node.material.name == material_name
             for node in generator.nodes)
 
@@ -453,8 +367,7 @@ if __name__ == "__main__":
     assert all(
         node.material.name == MATERIAL["name"]
         for node in generator.nodes
-        if node.is_substrate
-    )
+        if node.is_substrate)
 
     assert all(
         node.material.name == MATERIAL["name"]

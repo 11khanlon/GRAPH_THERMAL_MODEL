@@ -8,6 +8,9 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from contextlib import redirect_stdout, redirect_stderr
+from datetime import datetime
+import sys
 
 from geometry import Geometry
 from nodes import NodeGenerator
@@ -76,8 +79,7 @@ def run_simulation(geometry, generator, graph, probes):
         block_info=BLOCK,
         build_info=BUILD,
         probes=probes,
-        waam=WAAM,
-    )
+        waam=WAAM)
 
     simulation.run()
     return simulation
@@ -93,30 +95,20 @@ def collect_results(simulation, nodes, thermocouples, meltpool_probe):
         "active_history": np.asarray(tracker.active_history, dtype=bool),
         "node_positions": np.asarray([n.position for n in nodes], dtype=float),
         "substrate_mask": np.asarray([n.is_substrate for n in nodes], dtype=bool),
-        "node_block_ids": np.asarray([
-            n.block_id if n.block_id is not None else -1 for n in nodes
-        ], dtype=int),
+        "node_block_ids": np.asarray([n.block_id if n.block_id is not None else -1 for n in nodes], dtype=int),
         "probe_time": np.asarray(tracker.probe_history_time, dtype=float),
         "tc_names": np.asarray(tc_names),
-        "tc_temperature": np.column_stack([
-            np.asarray(tracker.probe_history[name], dtype=float) for name in tc_names
-        ]),
+        "tc_temperature": np.column_stack([np.asarray(tracker.probe_history[name], dtype=float) for name in tc_names]),
         "tc_positions": np.asarray([p.position for p in thermocouples], dtype=float),
-        "meltpool_temperature": np.asarray(
-            tracker.probe_history[meltpool_probe.name], dtype=float
-        ),
-        "meltpool_position": np.asarray(meltpool_probe.position, dtype=float),
+        "meltpool_temperature": np.asarray(tracker.probe_history[meltpool_probe.name], dtype=float),
+        "meltpool_position": np.asarray(meltpool_probe.position, dtype=float)
     }
 
     # The current tracker uses 'laser' terminology for the moving WAAM heat source.
     if hasattr(tracker, "laser_position_history"):
-        result["laser_position_history"] = np.asarray(
-            tracker.laser_position_history, dtype=float
-        )
+        result["laser_position_history"] = np.asarray(tracker.laser_position_history, dtype=float)
     elif hasattr(tracker, "heat_source_position_history"):
-        result["laser_position_history"] = np.asarray(
-            tracker.heat_source_position_history, dtype=float
-        )
+        result["laser_position_history"] = np.asarray(tracker.heat_source_position_history, dtype=float)
     else:
         # No position history recorded; NaN tells visualization to hide the source.
         result["laser_position_history"] = np.full((len(result["time"]), 3), np.nan)
@@ -138,110 +130,53 @@ def collect_results(simulation, nodes, thermocouples, meltpool_probe):
     return result
 
 def plot_experimental_thermocouples():
-    """
-    Plot experimental thermocouple temperatures
-    from the processed Pass 1 CSV.
-    """
-
+  
     # GraphThermalModel/
     PROJECT_DIR = Path(__file__).resolve().parents[2]
 
-    csv_file = (
-        PROJECT_DIR
-        / "A36Steel_Info"
-        / "ThermalData"
-        / "Processed"
-        / "Pass_1"
-        / "Thermocouples_Pass1.csv"
-    )
+    csv_file = ( PROJECT_DIR / "A36Steel_Info" / "ThermalData" / "Processed" / "Pass_1" / "Thermocouples_Pass1.csv")
 
     if not csv_file.exists():
-        raise FileNotFoundError(
-            f"Experimental thermocouple data not found:\n{csv_file}"
-        )
+        raise FileNotFoundError(f"Experimental thermocouple data not found:\n{csv_file}" )
 
     df = pd.read_csv(csv_file)
-
-    # Convert time to numeric
-    df["RelativeTime_s"] = pd.to_numeric(
-        df["RelativeTime_s"],
-        errors="coerce"
-    )
-
-    # Keep deposition start and later
-    df = df[df["RelativeTime_s"] >= 0].copy()
-
+    df["RelativeTime_s"] = pd.to_numeric( df["RelativeTime_s"], errors="coerce")  # Convert time to numeric
+    df = df[df["RelativeTime_s"] >= 0].copy()         # Keep deposition start and later
     tc_columns = ["ch0", "ch1", "ch2", "ch3"]
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
     for i, col in enumerate(tc_columns):
-
-        # Convert invalid values such as FALSE to NaN
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-
-        # Keep valid measurements
-        valid = df[["RelativeTime_s", col]].dropna()
-
-        # Sort by time
-        valid = valid.sort_values("RelativeTime_s")
-
-        ax.plot(
-            valid["RelativeTime_s"],
-            valid[col],
-            linewidth=1.5,
-            label=f"TC_{i} (Experimental)"
-        )
+        df[col] = pd.to_numeric(df[col], errors="coerce")  # Convert invalid values such as FALSE to NaN
+        valid = df[["RelativeTime_s", col]].dropna()       # Keep valid measurements
+        valid = valid.sort_values("RelativeTime_s")            # Sort by time
+        ax.plot(valid["RelativeTime_s"], valid[col], linewidth=1.5, label=f"TC_{i} (Experimental)")
 
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Temperature (°C)")
     ax.set_title("Experimental Thermocouple Temperature Histories")
-
     ax.grid(True, alpha=0.3)
     ax.legend()
-
     fig.tight_layout()
-
     save_figure(fig, "experimental_thermocouple_history.png")
-
     print(f"Loaded experimental data: {csv_file}")
 
     return fig
 
 
 def plot_experimental_vs_simulated(data):
-    """
-    Compare experimental and simulated thermocouple
-    temperature histories on a single plot.
-    """
-
     PROJECT_DIR = Path(__file__).resolve().parents[2]
-
-    csv_file = (
-        PROJECT_DIR
-        / "A36Steel_Info"
-        / "ThermalData"
-        / "Processed"
-        / "Pass_1"
-        / "Thermocouples_Pass1.csv"
-    )
+    csv_file = (PROJECT_DIR/ "A36Steel_Info" / "ThermalData"/ "Processed"/ "Pass_1"/ "Thermocouples_Pass1.csv")
 
     if not csv_file.exists():
-        raise FileNotFoundError(
-            f"Experimental data not found: {csv_file}"
-        )
+        raise FileNotFoundError(f"Experimental data not found: {csv_file}")
 
     experimental = pd.read_csv(csv_file)
 
     # Experimental time
-    experimental["RelativeTime_s"] = pd.to_numeric(
-        experimental["RelativeTime_s"],
-        errors="coerce"
-    )
+    experimental["RelativeTime_s"] = pd.to_numeric( experimental["RelativeTime_s"], errors="coerce")
 
-    experimental = experimental[
-        experimental["RelativeTime_s"] >= 0
-    ].copy()
+    experimental = experimental[ experimental["RelativeTime_s"] >= 0].copy()
 
     # Mapping between experimental channels and simulation probes
     tc_mapping = {
@@ -252,42 +187,17 @@ def plot_experimental_vs_simulated(data):
     }
 
     colors = ["tab:blue", "tab:orange", "tab:green", "tab:red"]
-
     fig, ax = plt.subplots(figsize=(12, 7))
 
     for i, (tc_name, channel) in enumerate(tc_mapping.items()):
-
         color = colors[i]
+        experimental[channel] = pd.to_numeric( experimental[channel], errors="coerce" )    #experimental temperatures 
+        valid = experimental[ ["RelativeTime_s", channel]].dropna().sort_values("RelativeTime_s")
+        ax.plot(valid["RelativeTime_s"],valid[channel], color=color, linestyle="-", linewidth=1.8, label=f"{tc_name} Experimental"  )
 
-        # -----------------------------
-        # Experimental temperatures
-        # -----------------------------
-        experimental[channel] = pd.to_numeric(
-            experimental[channel],
-            errors="coerce"
-        )
-
-        valid = experimental[
-            ["RelativeTime_s", channel]
-        ].dropna().sort_values("RelativeTime_s")
-
-        ax.plot(
-            valid["RelativeTime_s"],
-            valid[channel],
-            color=color,
-            linestyle="-",
-            linewidth=1.8,
-            label=f"{tc_name} Experimental"
-        )
-
-        # -----------------------------
         # Simulated temperatures
-        # -----------------------------
         if tc_name not in data["tc_names"]:
-            raise ValueError(
-                f"{tc_name} not found in simulation thermocouples."
-            )
-
+            raise ValueError( f"{tc_name} not found in simulation thermocouples." )
         sim_index = list(data["tc_names"]).index(tc_name)
 
         ax.plot(
@@ -296,22 +206,17 @@ def plot_experimental_vs_simulated(data):
             color=color,
             linestyle="--",
             linewidth=1.8,
-            label=f"{tc_name} Simulated"
-        )
+            label=f"{tc_name} Simulated")
 
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Temperature (°C)")
     ax.set_title("Experimental vs. Simulated Thermocouple Temperatures")
-
     ax.grid(True, alpha=0.3)
     ax.legend(ncol=2, fontsize=9)
-
     fig.tight_layout()
-
     save_figure(fig, "experimental_vs_simulated_thermocouples.png")
 
     return fig
-
 
 
 def save_results(data):
@@ -320,6 +225,7 @@ def save_results(data):
     np.savez_compressed(path, **data)
     print(f"Saved simulation data: {path}")
     return path
+
 
 def export_tracker_results(simulation):
 
@@ -331,44 +237,23 @@ def export_tracker_results(simulation):
     diagnostics_dir.mkdir(parents=True, exist_ok=True)
     validation_dir.mkdir(parents=True, exist_ok=True)
 
-    # -----------------------------------------
-    # Numerical diagnostics
-    # Inactive heating, hottest inactive node,
-    # numerical validity, temperature statistics
+    # Numerical diagnostics: Inactive heating, hottest inactive node, numerical validity, temperature statistics
+    statistics_table = tracker.export_temperature_statistics(output_path=diagnostics_dir / "temperature_statistics.csv")
 
-    statistics_table = tracker.export_temperature_statistics(
-        output_path=diagnostics_dir / "temperature_statistics.csv"
-    )
+    # Complete nodal temperature information after each thermal operation
+    stage_table = tracker.export_thermal_stage_table(output_path=diagnostics_dir / "thermal_stage_nodes.csv")
 
-    # -----------------------------------------
-    # Complete nodal temperature information
-    # after each thermal operation
-
-    stage_table = tracker.export_thermal_stage_table(
-        output_path=diagnostics_dir / "thermal_stage_nodes.csv"
-    )
-
-    # -----------------------------------------
-    # Mean/min/max active-deposit temperatures
-    # after each thermal operation
-
+    
+    # Mean/min/max active-deposit temperatures after each thermal operation
     stage_summary = tracker.create_thermal_stage_summary()
+    stage_summary.to_csv( diagnostics_dir / "thermal_stage_summary.csv", index=False)
 
-    stage_summary.to_csv(
-        diagnostics_dir / "thermal_stage_summary.csv",
-        index=False
-    )
-
-    # -----------------------------------------
-    # Five-point temperature histories
-    # for comparison against FLIR measurements
-
+    # Five-point temperature histories for comparison against FLIR measurements
     tracking_table = tracker.export_tracking_histories(
         blocks=simulation.geometry.deposition_order(),
         block_length=simulation.block_length,
         block_width=simulation.block_info["width"],
-        output_path=validation_dir / "simulation_tracking_history.csv"
-    )
+        output_path=validation_dir / "simulation_tracking_history.csv")
 
     print("\n========== TRACKER EXPORT SUMMARY ==========")
     print(f"Numerical diagnostic records: {len(statistics_table)}")
@@ -376,11 +261,7 @@ def export_tracker_results(simulation):
     print(f"Thermal stage summary records: {len(stage_summary)}")
     print(f"Five-point validation records: {len(tracking_table)}")
 
-    return {
-        "statistics": statistics_table,
-        "thermal_stages": stage_table,
-        "stage_summary": stage_summary,
-        "tracking_points": tracking_table}
+    return {"statistics": statistics_table, "thermal_stages": stage_table, "stage_summary": stage_summary, "tracking_points": tracking_table}
 
 
 def save_figure(fig, filename):
@@ -423,8 +304,7 @@ def plot_line_histories(data):
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(data["time"], global_max, label="Maximum active-node temperature")
     ax.plot(data["time"], global_mean, label="Mean active-node temperature")
-    ax.set(xlabel="Time (s)", ylabel="Temperature (°C)",
-           title="Global Thermal Evolution")
+    ax.set(xlabel="Time (s)", ylabel="Temperature (°C)", title="Global Thermal Evolution")
     ax.grid(alpha=0.3)
     ax.legend()
     fig.tight_layout()
@@ -434,8 +314,7 @@ def plot_line_histories(data):
               for col in data["tc_temperature"].T]
     fig, ax = plt.subplots(figsize=(9, 5))
     ax.bar(data["tc_names"], tc_max)
-    ax.set(xlabel="Thermocouple", ylabel="Maximum Temperature (°C)",
-           title="Maximum Temperature at Each Thermocouple")
+    ax.set(xlabel="Thermocouple", ylabel="Maximum Temperature (°C)", title="Maximum Temperature at Each Thermocouple")
     ax.grid(axis="y", alpha=0.3)
     fig.tight_layout()
     save_figure(fig, "thermocouple_maximum.png")
@@ -447,11 +326,9 @@ def plot_final_temperature(data):
     temp = data["temperature"][-1, mask]
     fig = plt.figure(figsize=(11, 8))
     ax = fig.add_subplot(111, projection="3d")
-    scatter = ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2], c=temp,
-                         cmap="inferno", s=6)
+    scatter = ax.scatter(xyz[:, 0], xyz[:, 1], xyz[:, 2], c=temp, cmap="inferno", s=6)
     fig.colorbar(scatter, ax=ax, shrink=0.65, label="Temperature (°C)")
-    ax.set(xlabel="X (mm)", ylabel="Y (mm)", zlabel="Z (mm)",
-           title="Final 3D Temperature Distribution")
+    ax.set(xlabel="X (mm)", ylabel="Y (mm)", zlabel="Z (mm)", title="Final 3D Temperature Distribution")
     fig.tight_layout()
     save_figure(fig, "final_3d_temperature.png")
 
@@ -463,10 +340,7 @@ def plot_probe_locations(data):
     ax3d = fig.add_subplot(121, projection="3d")
     ax2d = fig.add_subplot(122)
 
-    for mask, color, name in [
-        (substrate, "gray", "Substrate"),
-        (~substrate, "orange", "Deposition"),
-    ]:
+    for mask, color, name in [(substrate, "gray", "Substrate"), (~substrate, "orange", "Deposition")]:
         points = xyz[mask]
         if len(points):
             ax3d.scatter(*points.T, s=3, alpha=0.15, color=color, label=name)
@@ -528,8 +402,7 @@ def print_diagnostics(data, graph):
     print("\n------ GRAPH CONNECTIVITY ------")
     for name, mask in [
         ("Left", substrate & (xyz[:, 0] < 10e-3)),
-        ("Right", substrate & (xyz[:, 0] > 142e-3)),
-    ]:
+        ("Right", substrate & (xyz[:, 0] > 142e-3))]:
         if np.any(mask):
             print(f"{name} mean weighted degree: {degrees[mask].mean():.6f}")
 
@@ -541,27 +414,55 @@ def print_diagnostics(data, graph):
             print(f"{name} nearest substrate node: {distance_mm:.3f} mm")
 
 
-
-def main():
-    RESULT_DIR.mkdir(parents=True, exist_ok=True)
+def run_main_simulation():
     geometry, generator = create_geometry_and_nodes()
     thermocouples, meltpool_probe = create_probes(geometry)
     graph = create_graph(generator.nodes)
-    simulation = run_simulation(
-        geometry, generator, graph, thermocouples + [meltpool_probe]
-    )
+    simulation = run_simulation(geometry, generator, graph, thermocouples + [meltpool_probe])
 
     tracker_results = export_tracker_results(simulation)
     data = collect_results(simulation, generator.nodes, thermocouples, meltpool_probe)
+
     print_summary(data)
     print_diagnostics(data, graph)
     save_results(data)
+
     plot_line_histories(data)
     plot_final_temperature(data)
     plot_probe_locations(data)
     plot_experimental_thermocouples()
     plot_experimental_vs_simulated(data)
+
     print("\nSimulation and plotting complete.")
+
+
+def main():
+    RESULT_DIR.mkdir(parents=True, exist_ok=True)
+
+    log_dir = RESULT_DIR / "Logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = log_dir / f"simulation_{timestamp}.txt"
+
+    class Tee:
+        def __init__(self, *streams):
+            self.streams = streams
+
+        def write(self, message):
+            for stream in self.streams:
+                stream.write(message)
+                stream.flush()
+
+        def flush(self):
+            for stream in self.streams:
+                stream.flush()
+
+    with open(log_file, "w", encoding="utf-8") as f:
+        with redirect_stdout(Tee(sys.stdout, f)), redirect_stderr(Tee(sys.stderr, f)):
+            run_main_simulation()
+
+    print(f"\nSimulation log saved to: {log_file}")
 
 
 if __name__ == "__main__":

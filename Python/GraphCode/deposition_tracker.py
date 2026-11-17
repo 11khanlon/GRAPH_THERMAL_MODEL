@@ -19,10 +19,7 @@ class DepositionTracker:
         self.laser_position_history = [np.array([np.nan, np.nan, np.nan])]
 
         # Thermocouple history
-        self.probe_history = {
-            probe.name: []
-            for probe in self.probes
-        }
+        self.probe_history = {probe.name: [] for probe in self.probes}
 
         self.probe_history_time = []
         self.probe_history_stage = []
@@ -32,110 +29,47 @@ class DepositionTracker:
         self.block_completion_times = {}
         self.thermal_stage_history = []
 
-
         self.ambient_temperature = float(ambient_temperature)
         self.temperature_statistics = []
-        self.record_temperature_statistics(
-            temperature=initial_temperature,
-            time=0.0,
-            stage="initial",
-            block=None
-        )
+        self.record_temperature_statistics( temperature=initial_temperature, time=0.0, stage="initial", block=None)
 
     #-----------------------------------------
     def _temperature(self, temperature):
-        """
-        Convert the supplied temperatures into a NumPy array
-        and verify that there is one temperature per node.
-
-        Parameters
-        ----------
-        temperature : array-like
-            Temperature of every node in the simulation (°C).
-
-        Returns
-        -------
-        np.ndarray
-            Validated one-dimensional temperature array.
-        """
-
+    
         if temperature is None:
-            raise ValueError(
-                "Temperature is None. Check the temperature "
-                "being passed from deposition.py."
-            )
+            raise ValueError("Temperature is None. Check the temperature being passed from deposition.py" )
 
         temperature = np.asarray(temperature, dtype=float)
 
         if temperature.shape != (len(self.nodes),):
             raise ValueError(
-                f"Expected {len(self.nodes)} node temperatures, "
-                f"received shape {temperature.shape}."
-            )
+                f"Expected {len(self.nodes)} node temperatures, received shape {temperature.shape} " )
 
         return temperature
 
 
     # --------------------------------------------------
     # HELPER: Validate active node mask
-    # --------------------------------------------------
     def _mask(self, active_mask=None):
-        """
-        Return a Boolean array identifying active nodes.
-
-        If no mask is supplied, use the current node.active
-        flags stored in the geometry.
-
-        True  = substrate or already-deposited material
-        False = material not yet deposited
-        """
-
+   
         if active_mask is None:
             active_mask = self.active_mask()
 
         active_mask = np.asarray(active_mask, dtype=bool)
 
         if active_mask.shape != (len(self.nodes),):
-            raise ValueError(
-                f"Expected active mask shape ({len(self.nodes)},), "
-                f"received {active_mask.shape}."
-            )
+            raise ValueError(f"Expected active mask shape ({len(self.nodes)},), received {active_mask.shape} " )
 
         return active_mask
 
     def _block_indices(self, block):
-        """
-        Return the temperature-array indices for all nodes
-        belonging to a specified block.
-
-        Parameters
-        ----------
-        block : Block
-            The deposition block being investigated.
-
-        Returns
-        -------
-        np.ndarray
-            Integer indices identifying the block's nodes.
-
-        Notes
-        -----
-        Assumes node.id matches the node's index in
-        self.nodes and the simulation temperature array.
-        """
-
         if block is None:
             return np.array([], dtype=int)
 
-        indices = np.array(
-            [node.id for node in block.nodes],
-            dtype=int
-        )
+        indices = np.array([node.id for node in block.nodes], dtype=int)
 
         if np.any(indices < 0) or np.any(indices >= len(self.nodes)):
-            raise ValueError(
-                f"Block {block.id} contains invalid node indices."
-            )
+            raise ValueError(f"Block {block.id} contains invalid node indices.")
 
         return indices
 
@@ -218,13 +152,10 @@ class DepositionTracker:
 
 
     #------------------------------------------------
-    def print_block_summary(self, block, time, temperature, active_mask=None,
-                            label="Block Complete", record=None):
-        """One compact printout of temperatures, active/inactive nodes, and hot spots."""
+    def print_block_summary(self, block, time, temperature, active_mask=None, label="Block Complete", record=None):
+       
         if record is None:
-            record = self.record_temperature_statistics(
-                temperature, time, label, block, active_mask=active_mask
-            )
+            record = self.record_temperature_statistics( temperature, time, label, block, active_mask=active_mask)
         print(f"\n--- {label} | Block {block.id}, Layer {block.layer} | t={time:.3f} s ---")
         print(f"Active: {record['active_node_count']} | Inactive: {record['inactive_node_count']}")
         print(f"Global Tmin/Tmax: {record['global_min_C']:.2f} / {record['global_max_C']:.2f} °C")
@@ -273,8 +204,8 @@ class DepositionTracker:
 
 
     #---------------------------------------------------
+    #Identify where the heat-source calculate adds the most temperature
     def print_heat_source_increment(self, delta_T_arc, block=None):
-        """Identify where the heat-source calculation adds the most temperature."""
         delta_T_arc = self._temperature(delta_T_arc)
         if not np.all(np.isfinite(delta_T_arc)):
             raise ValueError("Heat-source increment contains NaN or infinity")
@@ -293,11 +224,7 @@ class DepositionTracker:
     #---------------------------------------------------------------
     def record_temperature_statistics(self, temperature, time, stage, block=None,
                                       tolerance=1.0, active_mask=None):
-        """Store extrema, validity, hottest inactive node, and block metrics.
-
-        'heated' means above ambient+tolerance, not proof of a physical heat path.
-        Call BEFORE any inactive-node reset to detect artificial preheating.
-        """
+    
         temperature = self._temperature(temperature)
         active = self._mask(active_mask)
         inactive = ~active

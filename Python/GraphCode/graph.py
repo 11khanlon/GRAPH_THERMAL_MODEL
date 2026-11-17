@@ -1,9 +1,6 @@
 """
-Step 4
-
-Constructs the graph used for thermal diffusion.
+Constructs the graph used for thermal diffusion
 Implements Section 4.3.1.2 and creates:
-
 A = adjacency matrix
 H = degree matrix
 L = graph Laplacian
@@ -13,7 +10,6 @@ Lφ = φΛ
 """
 
 import numpy as np
-
 from scipy.spatial import cKDTree
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
@@ -21,18 +17,14 @@ from scipy.sparse import lil_matrix, csr_matrix, diags
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse import save_npz, load_npz
 import time 
-
-
-
 from config import GRAPH
 
-
+#-----------------------------
 class ThermalGraph:
 
     def __init__(self, nodes):
 
         self.nodes = nodes
-
         self.N = len(nodes)
 
         self.A = None
@@ -43,30 +35,21 @@ class ThermalGraph:
         self.eigenvectors = None
 
     # --------------------------------------------------------
-
     def coordinates(self):
-
-        return np.array(
-            [node.position for node in self.nodes]
-        )
+        return np.array( [node.position for node in self.nodes])
 
     # --------------------------------------------------------
+    #Find substrate node closest to the target 
     def find_sensor_node(self, target_position):
-        """
-        Find the substrate node closest to the target
-        thermocouple position.
-        """
 
         substrate_nodes = [
             node
             for node in self.nodes
-            if node.is_substrate
-        ]
+            if node.is_substrate]
 
         distances = np.array([
             np.linalg.norm(node.position - target_position)
-            for node in substrate_nodes
-        ])
+            for node in substrate_nodes])
 
         nearest_index = np.argmin(distances)
         sensor_node = substrate_nodes[nearest_index]
@@ -80,36 +63,30 @@ class ThermalGraph:
 
         t0 = time.perf_counter() 
         coords = self.coordinates()
-        tree = cKDTree(coords)
+        tree = cKDTree(coords)     #find coordinates in an area
         epsilon = GRAPH["epsilon"]
-
-        # adjacency matrix
-        self.A = lil_matrix((self.N, self.N))
+        self.A = lil_matrix((self.N, self.N))   # adjacency matrix, determined by number of nodes 
 
         # ----------------------------------------------------
         # Estimate σ (standard deviation of pairwise distances)
 
-        sample = tree.query(coords, k=30)[0][:, 1:]
-        sigma = np.std(sample)
+        sample = tree.query(coords, k=30)[0][:, 1:]       
+        sigma = np.std(sample)                           
 
         print("Neighborhood radius =", epsilon)
         print("Gaussian sigma =", sigma)
 
         # ----------------------------------------------------
-
         for i in range(self.N):
-
             neighbors = tree.query_ball_point(coords[i], epsilon)
 
             for j in neighbors:
-
                 if i == j:
                     continue
 
                 distance = np.linalg.norm(coords[i] - coords[j])
 
                 # Equation (11)
-
                 weight = np.exp(-(distance ** 2) / (sigma ** 2))
 
                 self.A[i, j] = weight
@@ -120,11 +97,7 @@ class ThermalGraph:
 
         #convert from construction format to computation format 
         self.A = self.A.tocsr()
-
-        print(
-            f"\n Graph assembly time: "
-            f"{time.perf_counter()-t0:.2f} s"
-        )
+        print( f"\n Graph assembly time: {time.perf_counter()-t0:.2f} s " )
 
         print("Adjacency matrix complete.")
 
@@ -133,29 +106,19 @@ class ThermalGraph:
     def degree_matrix(self):
 
         degrees = np.asarray(self.A.sum(axis=1)).flatten()
-
         self.H = diags(degrees)
-
-        print(f"\nDegree matric verification: ")
+        print(f"\nDegree matrix verification: ")
         print(self.H.diagonal()[:10])
-
+       
         return self.H
 
     # --------------------------------------------------------
-
+    #L = H - A
     def laplacian(self):
-
-        """
-        L = H - A
-        Equation (14)
-        """
-
         if self.H is None:
-
             self.degree_matrix()
 
         self.L = self.H - self.A
-
         return self.L
 
     # --------------------------------------------------------
@@ -172,11 +135,8 @@ class ThermalGraph:
         print("This could take a while.")
 
         L_dense = self.L.toarray()
-
         eigenvalues, eigenvectors = eigh(L_dense)
-
         self.eigenvalues = eigenvalues
-
         self.eigenvectors = eigenvectors
 
         print("\nCheck eigensystem assembly time: ")
@@ -186,19 +146,14 @@ class ThermalGraph:
         return eigenvalues, eigenvectors
 
 
-
-
-    
     # --------------------------------------------------------
 
     def summary(self):
 
         print("\n----------- Graph Summary -----------")
-
         print("Nodes:", self.N)
 
         edges = self.A.nnz // 2
-
         print("Edges:", edges)
 
         avg_degree = np.mean(
@@ -218,16 +173,12 @@ class ThermalGraph:
         substrate_to_part = 0
 
         for i in range(self.N):
-
             for j in self.nodes[i].neighbors:
-
                 if self.nodes[i].is_substrate != self.nodes[j].is_substrate:
-
                     substrate_to_part += 1
 
         print()
-        print("Substrate-Deposition edges:",
-            substrate_to_part // 2)
+        print("Substrate-Deposition edges:", substrate_to_part // 2)
 
         print(f"\n Check connected components")
         n_components, labels = connected_components(self.A)
@@ -235,8 +186,7 @@ class ThermalGraph:
 
         print(f"\n Check Symmetry:")
         difference = self.A - self.A.T
-        print("Symmetric:",
-            difference.nnz == 0)
+        print("Symmetric:", difference.nnz == 0)
 
         print(f"\n Laplacian verification:")
         row_sum = np.abs(self.L.sum(axis=1))
@@ -251,25 +201,15 @@ class ThermalGraph:
         print("Minimum weight:",self.A.data.min())
         print("Maximum weight:", self.A.data.max())
 
-    
-
         print("-------------------------------------")
 
     # --------------------------------------------------------
-
+    #Returns indices of active nodes. This is used during deposition!
     def active_subgraph(self):
-
-        """
-        Returns indices of active nodes
-        Used during deposition
-        """
-
         active = []
 
         for i, node in enumerate(self.nodes):
-
             if node.active:
-
                 active.append(i)
 
         return np.array(active)

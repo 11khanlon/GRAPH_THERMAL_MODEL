@@ -1,7 +1,7 @@
 """
-1st file
 Stores variables in one spot so they can easily be modified
 Configuration file for the Graph Theory DED thermal model
+Make sure you run the new data through synchronize_thermal_data.py first to get the correct dwell time for the pass you are analyzing
 """
 
 from pathlib import Path
@@ -191,24 +191,4 @@ def load_experimental_dwell():
     return dwell_duration
 
 
-if __name__ == "__main__":
 
-    import numpy as np
-
-    '''Bi_free = CONVECTION["free"]*BLOCK["length"] / LASER["thermal_conductivity"]
-    Bi_forced = CONVECTION["forced"]*BLOCK["length"] / LASER["thermal_conductivity"]
-
-    if Bi_free < 0.1:
-        print(f"\nConduction resistance is less than convection ✓ ")
-        print(f" Biot number for free convection:", Bi_free)
-
-    if Bi_forced < 0.1:
-            print(f"\nConduction resistance is less than convection ✓ ")
-            print(f" Biot number for forced convection:", Bi_forced)
-
-    print(f"\n---- Needed subtrate depth -------")
-    number_of_blocks = 5  #worst case scenario for heat accumulation 
-
-    Ld = 2 * np.sqrt(LASER["thermal_diffusivity"] * BLOCK["time_per_block"])
-
-    print(f"Needed substrate depth in mm :", number_of_blocks* Ld * 1000)'''

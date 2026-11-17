@@ -23,14 +23,13 @@ import time
 from config import BUILD, BLOCK, WAAM
 
 # -----------------------------------------
+"""
+Represents one discretized block
+A block may belong to either:
+• substrate
+• deposited material
+"""
 class Block:
-
-    """
-    Represents one discretized block
-    A block may belong to either:
-    • substrate
-    • deposited material
-    """
 
     def __init__(self, block_id, layer, start, end, is_substrate = False, material = None):
 
@@ -38,7 +37,6 @@ class Block:
         self.layer = layer
         self.start = np.asarray(start, dtype=float)
         self.end = np.asarray(end, dtype=float)
-
         self.center = (self.start + self.end) / 2
 
         self.is_substrate = is_substrate
@@ -49,24 +47,12 @@ class Block:
         self.nodes = []
         self.node_indices = []
 
-        self.exposed_faces = {
-            "top": False,
-            "bottom": False,
-            "left": False,
-            "right": False,
-            "front": False,
-            "back": False}
+        self.exposed_faces = {"top": False, "bottom": False, "left": False, 
+                              "right": False, "front": False, "back": False} #initial empty list
 
     def __repr__(self):
-
         region = "Substrate" if self.is_substrate else "Deposition"
-
-        return (
-            f"Block("
-            f"id={self.id}, "
-            f"{region}, "
-            f"layer={self.layer})"
-        )
+        return (f"Block( id={self.id}, {region}, layer = {self.layer}" )
 
 # -----------------------------------------
 class Geometry:
@@ -93,13 +79,10 @@ class Geometry:
             raise RuntimeError(f"Unable to load STL:\n{e}")
 
         elapsed = time.perf_counter() - start
-
         print(f"STL loaded in {elapsed:.2f} seconds. Success!")
-
 
         # Convert STL from mm -> m
         self.mesh.apply_scale(1e-3)
-
  
         # SUBSTRATE PARAMETERS
         self.substrate_length = BUILD["substrate_length"]
@@ -170,8 +153,6 @@ class Geometry:
         self.substrate_bottom = 0.0
         self.substrate_top = self.substrate_height
 
-
-    
     # -----------------------------------------
     def build_substrate(self):
 
@@ -194,17 +175,14 @@ class Geometry:
 
 
         for k in range(nz):
-
             z0 = zmin + k * block_height
             z1 = min(z0 + block_height, zmax)
 
             for j in range(ny):
-
                 y0 = ymin + j * block_width
                 y1 = min(y0 + block_width, ymax)
 
                 for i in range(nx):
-
                     x0 = xmin + i * block_length
                     x1 = min(x0 + block_length, xmax)
 
@@ -212,15 +190,9 @@ class Geometry:
                     end   = (x1, y1, z1)
 
                     self.blocks.append(
-                        Block(
-                            self.next_block_id,
-                            k - nz,
-                            start,
-                            end,
-                            is_substrate=True,
-                            material=self.substrate_material
-                        )
-                    )
+                        Block( self.next_block_id, k - nz,
+                            start, end, is_substrate=True,
+                            material=self.substrate_material))
 
                     self.next_block_id += 1
 
@@ -229,7 +201,6 @@ class Geometry:
 
     def build_deposition(self):
 
-        
         block_height = BLOCK["height"]
         total_layers = int(np.ceil(self.height / BLOCK["height"]))
         z = self.zmin
@@ -257,39 +228,25 @@ class Geometry:
 
                 self.blocks.append(
 
-                    Block(
-                        self.next_block_id,
-                        layer,
-                        start,
-                        end,
-                        is_substrate=False,
-                        material=self.wire_material
-                    )
-                )
-
+                    Block(self.next_block_id, layer, start,
+                        end, is_substrate=False, material=self.wire_material))
+                
                 self.next_block_id += 1
-
 
     # -----------------------------------------
     def build_blocks(self):
-
         self.build_substrate()
-
         self.build_deposition()
 
     # ---------------------------------------------
+    """
+    Return deposited blocks in laser scan order
+    Even layers: left -> right
+    Odd layers: right -> left
+    """
     def deposition_order(self):
-        """
-        Return deposited blocks in laser scan order
-
-        Even layers: left -> right
-        Odd layers: right -> left
-        """
-
         ordered_blocks = []
-
         total_layers = int(np.ceil(self.height / BLOCK["height"]))
-
         for layer in range(total_layers):
 
             layer_blocks = [
@@ -299,15 +256,11 @@ class Geometry:
             ]
 
             # Sort by x coordinate
-            layer_blocks.sort(
-                key=lambda block: block.start[0]
-            )
+            layer_blocks.sort(key=lambda block: block.start[0])
 
             # Reverse every other layer
             if layer % 2 == 1:
-
                 layer_blocks.reverse()
-
             ordered_blocks.extend(layer_blocks)
 
         return ordered_blocks
@@ -315,7 +268,6 @@ class Geometry:
    
     # --------------------------------------------------------------
     def validate_geometry(self):
-
 
         print("------- Geometry Validation --------")
       
@@ -332,22 +284,14 @@ class Geometry:
         print(f"Width  : {self.substrate_width:.4f} m")
         print(f"Height : {self.substrate_height:.4f} m")
 
-       
         # Count blocks
-        substrate_blocks = sum(
-            block.is_substrate
-            for block in self.blocks)
-
-        deposition_blocks = sum(
-            not block.is_substrate
-            for block in self.blocks)
-
+        substrate_blocks = sum(block.is_substrate for block in self.blocks)
+        deposition_blocks = sum( not block.is_substrate for block in self.blocks)
 
         print(f"\nSubstrate blocks :", substrate_blocks)
         print(f"Deposition blocks:", deposition_blocks)
         print(f"Total blocks:", len(self.blocks))
 
-    
         # Check interface
         substrate_top = max(
             block.end[2]
@@ -360,19 +304,14 @@ class Geometry:
             if not block.is_substrate)
 
         gap = deposition_bottom - substrate_top
-        ids = [ block.id for block in geom.blocks]
+        ids = [block.id for block in geom.blocks]
 
-        active = sum(
-        block.active
-        for block in geom.blocks)
+        active = sum(block.active for block in geom.blocks)
 
         print(f"\nActive blocks:", active)
 
-
         layers = sorted(set(block.layer for block in geom.blocks))
         print(f"\nTotal Layers:", layers)
-     
-
         print(f"\nSubstrate top     : {substrate_top:.6f} m")
         print(f"Deposition bottom : {deposition_bottom:.6f} m")
         print(f"Gap               : {gap:.6e} m")
@@ -384,7 +323,6 @@ class Geometry:
             print("WARNING: Gap detected.")
 
         
-
 # -------------------------------------
 
 if __name__ == "__main__":
@@ -393,9 +331,7 @@ if __name__ == "__main__":
     import sys
 
     # Get the parent "Python" folder
-    python_folder = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..")
-    )
+    python_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
     # Add it to Python's import search path
     if python_folder not in sys.path:
@@ -411,21 +347,15 @@ if __name__ == "__main__":
     substrate_material = SubstrateMaterial()
 
     geom = Geometry(stl_file, substrate_material=substrate_material, wire_material=wire_material)
-    
     geom.build_blocks()
-
     print(geom.blocks[0])
-
     print(geom.blocks[-1])
 
     plot_geometry(geom)
-
     geom.validate_geometry()
-
     update_exposed_faces(geom)
 
     #print_exposed_faces(geom)
-
     print_exposure_statistics(geom)
 
 

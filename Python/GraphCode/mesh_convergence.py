@@ -1,20 +1,15 @@
 """Node-density convergence study for the steel graph thermal model.
+ Run: python mesh_convergence.py
 
-Place in Python/GraphCode alongside geometry.py, nodes.py, graph.py, deposition.py,
-thermocouples.py, material.py, and config.py. Run: python mesh_convergence.py
-
-Numerical convergence is measured against the finest simulated node density,
-NOT against experimental TC data. Epsilon/gain are held fixed by default.
+Numerical convergence is measured against the finest simulated node density, NOT against experimental TC data. Epsilon/gain are held fixed by default.
 """
 from __future__ import annotations
-
 import traceback
 import subprocess
 import sys
 from pathlib import Path
 from contextlib import redirect_stdout, redirect_stderr
 from datetime import datetime
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -23,7 +18,6 @@ from config import GRAPH
 from simulation_runner import run_simulation, PROBE_NAMES
 
 # ------------------------- USER SETTINGS -------------------------
-
 # Density in nodes/mm^3. Start modestly; full graph eigensystems can be costly
 NODE_DENSITIES = [.01, 0.1, 0.2, 0.35, 0.5, 0.6, 0.7]
 
@@ -44,13 +38,7 @@ RMSE_TOLERANCE_C = 2.0
 PEAK_DIFFERENCE_TOLERANCE_C = 5.0
 
 PROJECT_DIR = Path(__file__).resolve().parents[2]
-
-OUTPUT_DIR = (
-    PROJECT_DIR
-    / "Validation"
-    / "Results"
-    / "MeshConvergence"
-)
+OUTPUT_DIR = PROJECT_DIR / "Validation" / "Results" / "MeshConvergence"
 
 
 def epsilon_for_density(density):
@@ -60,15 +48,10 @@ def epsilon_for_density(density):
 
 
 def run_case(density):
-    return run_simulation(
-        node_density=density,
-        epsilon=epsilon_for_density(density),
-        gain=float(GRAPH["gain"]),
-        seed=RANDOM_SEED)
+    return run_simulation(node_density = density, epsilon = epsilon_for_density(density), gain = float(GRAPH["gain"]), seed = RANDOM_SEED)
 
-
+#Interpolate each case on the shared reference time grid; never extrapolate
 def compare_to_reference(case, reference):
-    """Interpolate each case on the shared reference time grid; never extrapolate."""
     a_t, a_y = case["time"], case["temperature"]
     b_t, b_y = reference["time"], reference["temperature"]
     common = b_t[(b_t >= a_t[0]) & (b_t <= a_t[-1])]
@@ -87,13 +70,9 @@ def compare_to_reference(case, reference):
         row[f"{name}_RMSE_C"] = float(np.sqrt(np.mean(difference**2)))
         row[f"{name}_peak_difference_C"] = float(abs(np.max(a[valid]) - np.max(b[valid])))
     row["RMSE_vs_finest_C"] = float(np.sqrt(np.mean(np.square(errors))))
-    row["max_peak_difference_C"] = max(
-        row[f"{name}_peak_difference_C"] for name in PROBE_NAMES
-    )
-    row["passes_tolerance"] = (
-        row["RMSE_vs_finest_C"] <= RMSE_TOLERANCE_C
-        and row["max_peak_difference_C"] <= PEAK_DIFFERENCE_TOLERANCE_C
-    )
+    row["max_peak_difference_C"] = max(row[f"{name}_peak_difference_C"] for name in PROBE_NAMES)
+    row["passes_tolerance"] = row["RMSE_vs_finest_C"] <= RMSE_TOLERANCE_C and row["max_peak_difference_C"] <= PEAK_DIFFERENCE_TOLERANCE_C
+    
     return row
 
 def plot_error_vs_time(results):

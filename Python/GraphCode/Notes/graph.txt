@@ -1,5 +1,3 @@
-
-
 -------------------------------------------
 Overall Purpose of Python Script: 
 Every node is going to become a graph vertex 
@@ -66,10 +64,6 @@ KDTree organizes points spatially so nearby neighbors can be found much faster.
 You input the coordinates of a node into the CDTree. Then it organizes and searches for pooints
 Suppose there are 5000 nodes  --> Instead of searching the entire domain, it searches only nearby regions of those nodes
 A naive algorithm compares every node to every other node --> That requires roughly 5000^2 comparisons which is approximately 25 million 
-
-
-
-
 
 epsilon = GRAPH["epsilon"] reads the neighborhood radius from config.py 
 

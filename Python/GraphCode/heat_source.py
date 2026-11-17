@@ -14,18 +14,12 @@ import numpy as np
 
 class ArcHeatSource:
 
-    def __init__(
-        self,
-        material_model,
-        reference_temperature,
-        liquidus_temperature,
-        waam):
+    def __init__(self, material_model, reference_temperature, liquidus_temperature, waam):
 
         # Material model
         self.material = material_model
 
-        # Constant-property reference temperature
-        # for Rosenthal source equation
+        # Constant-property reference temperature for Rosenthal source equation
         self.Tref = reference_temperature
 
         # Look up material properties at Tref
@@ -55,22 +49,14 @@ class ArcHeatSource:
 
     #-------- WAAM Information ------
     def waam_arc_power(self):
-
         effective_power = self.thermal_efficiency * self.voltage * self.current
-
         return effective_power
     
-
     # --------------DED Powder Information -----------------
-
+    #Returns laser-induced temperature at local coordinates (x,y,z)
     def arc_temperature_rise(self, x, y, z):
-
-        #Returns laser-induced temperature at local coordinates (x,y,z)
-  
         r = np.sqrt(x**2 + y**2 + z**2)
-
-        # avoid 0 in denomenator
-        r = max(r, 1e-8)
+        r = max(r, 1e-8)      # avoid 0 in denomenator
 
         #Equation 19 
         delta_T = (self.power
@@ -84,20 +70,17 @@ class ArcHeatSource:
         return delta_T
 
     # -------------------------------
-
+    """
+    This function heats only the newly deposited block
+    Returns updated temperature ***rise***. Deposition.py handles the temperature updating 
+    """
     def heat_block(self, nodes, block):
-        
-        """
-        This function heats only the newly deposited block
-        Returns updated temperature vector
-        """
 
         delta_T = np.zeros(len(nodes), dtype = float)
 
-        xc, yc, zc = block.center
+        xc, yc, zc = block.center        #unpack block center from block object 
 
         for node in block.nodes:
-
             if not node.active:
                 continue
 
@@ -110,19 +93,14 @@ class ArcHeatSource:
         return delta_T
 
     # ------------------------------------
-
+    # Calculate arc-induced temperature rise for previously existing active material within the subsurface heating threshold
     def heat_subsurface(self, nodes, block, temperature, cutoff = 0.20):
 
-        # Calculate arc-induced temperature rise for previously existing active material within the subsurface heating threshold
-        
         delta_T = np.zeros(len(nodes), dtype=float)
-
         threshold = cutoff * self.Tliquidus
-        
         xc, yc, zc = block.center
 
         for node in nodes:
-
             if not node.active:
                 continue
 
@@ -135,25 +113,19 @@ class ArcHeatSource:
             z = node.position[2] - zc
 
             node_delta_T = self.arc_temperature_rise(x, y, z)
-
             predicted_temperature = temperature[node.id] + node_delta_T
             
             if predicted_temperature >= threshold:
-
                 delta_T[node.id] = node_delta_T
                 
-
         return delta_T
 
     # ------------------------------
     #Surface + subsurface heating
-
     def apply(self, nodes, block, temperature):
 
         delta_T_block = self.heat_block(nodes, block)
-
         delta_T_subsurface = self.heat_subsurface(nodes, block, temperature)
-        
         delta_T_arc = delta_T_block + delta_T_subsurface
         
         return delta_T_arc
@@ -178,12 +150,7 @@ if __name__ == "__main__":
     generator.generate()
     nodes = generator.nodes
 
-
-    block = next(
-        block
-        for block in geom.blocks
-        if not block.is_substrate
-    )
+    block = next(block for block in geom.blocks if not block.is_substrate)
 
     material_model = block.material
 
@@ -191,8 +158,7 @@ if __name__ == "__main__":
         material_model=material_model,
         reference_temperature=MATERIAL["ambient_temperature"],
         liquidus_temperature=MATERIAL["liquidus_temperature"],
-        waam=WAAM
-    )
+        waam=WAAM)
 
     heat = ArcHeatSource(
         material_model = material_model,
@@ -238,13 +204,11 @@ if __name__ == "__main__":
     changed = 0
 
     for node in block.nodes:
-
         if heated[node.id] > MATERIAL["ambient_temperature"]:
             changed += 1
 
     print(f"Nodes in current block        : {len(block.nodes)}")
     print(f"Nodes actually heated in current block : {changed}")
-
 
 
     print("\n--------- Nodes in current block: ----------")
@@ -259,12 +223,6 @@ if __name__ == "__main__":
 
         delta_T = heat.arc_temperature_rise(x, y, z)
 
-        print(
-            f"Node {node.id}: "
-            f"position={node.position}, "
-            f"local=({x:.6e}, {y:.6e}, {z:.6e}), "
-            f"r={r:.6e}, "
-            f"deltaT={delta_T:.2f}"
-        )
+        print(f"Node {node.id}: position={node.position}, local=({x:.6e}, {y:.6e}, {z:.6e}), r={r:.6e}, deltaT={delta_T:.2f}")
 
     print("--------------------------------------")

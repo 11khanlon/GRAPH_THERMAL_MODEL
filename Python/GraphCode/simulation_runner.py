@@ -18,7 +18,7 @@ from geometry import Geometry
 from nodes import NodeGenerator
 from graph import ThermalGraph
 from deposition import DepositionSimulation
-from thermocouples import ThermalProbe
+from thermocouples import ThermalProbe, check_probe_location
 from material import A36Material, WireMaterial, SubstrateMaterial
 from config import load_experimental_dwell, DWELL
 
@@ -82,6 +82,7 @@ def run_simulation(node_density=None, epsilon=None, gain=None, seed=DEFAULT_SEED
         generator.generate()
         nodes = generator.nodes
         generator.validate_nodes()
+        generator.print_surface_statistics() 
         if not nodes:
             raise ValueError("Node generator returned zero nodes")
         probes = [ThermalProbe(name=name,

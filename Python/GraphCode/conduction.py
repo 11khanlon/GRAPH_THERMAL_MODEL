@@ -12,70 +12,39 @@ class ConductionSolver:
 
     def __init__(self, graph, gain):
 
-        """
-        graph : ThermalGraph Graph object after eigensystem() has been computed.
-        gain : float, Gain factor g from the paper.
-        """
-
         if graph.eigenvalues is None:
             raise ValueError("Graph eigensystem has not been computed.")
 
-        self.graph = graph
-        self.gain = gain
+        self.graph = graph   #ThermalGraph Graph object after eigensystem() has been computed
+        self.gain = gain     #float, Gain factor g from the paper
 
         self.lambda_values = graph.eigenvalues
         self.phi = graph.eigenvectors
 
     # ---------------------------------------------------------
 
+    #Construct:  Φ exp(-alpha g Λ dt) Φᵀ
     def propagator(self, alpha, dt):
-
-        """
-        Construct:  Φ exp(-alpha g Λ dt) Φᵀ
-        Return: ndarray, Spectral propagation matrix.
-        """
-
         decay = np.exp(-alpha * self.gain * self.lambda_values * dt)
-
         D = np.diag(decay)
-
         return self.phi @ D @ self.phi.T
 
     # ---------------------------------------------------------
 
+    #advance one conduction timestep. Returns the new temperature vector
     def step(self, temperature, alpha, dt):
-
-        """
-        Advance one conduction timestep
-        Returns: ndarray --> Updated temperatures after conduction
-        """
-
         P = self.propagator(alpha, dt)
-
         return P @ temperature
 
     # ---------------------------------------------------------
 
     def block_conduction(self, temperature, alpha, block_time):
-        
         return self.step(temperature, alpha, block_time)
 
     # ---------------------------------------------------------
-
-    def dwell_conduction(self,
-                         temperature,
-                         alpha,
-                         dt):
-
-        #Conduction during dwell time --> Implements Equation (17)
-
-        return self.step(temperature,
-                         alpha,
-                         dt)
-
-    
-
-
+    #Conduction during dwell time --> Implements Equation (17)
+    def dwell_conduction(self,temperature,alpha, dt):
+        return self.step(temperature, alpha, dt)
 
 # ------------------------------------------------------------
 
@@ -117,15 +86,10 @@ if __name__ == "__main__":
     ], dtype=int)
 
     if block_node_ids.size == 0:
-        raise ValueError(
-            "Selected deposition block contains no nodes. "
-            "Check node generation and block-node assignment.")
-
-    # Apply test heat
-    T0[block_node_ids] = 1500.0
-
+        raise ValueError("Selected deposition block contains no nodes. Check node generation and block-node assignment.")     
+ 
+    T0[block_node_ids] = 1500.0       # Apply test heat
     T_average = np.mean(T0[block_node_ids])
-
     alpha = block.material.diffusivity(T_average)
 
     print(f"Current block average temperature : " f"{T_average:.2f} °C")
@@ -134,11 +98,8 @@ if __name__ == "__main__":
     print("\n----------- Conduction Verification -----------")
     print(f"Initial maximum temperature : "f"{T0.max():.2f} °C")
 
-    print(f"Layer average temperature   : "
-        f"{np.mean(T0):.2f} °C")
-
-    print(f"Diffusivity: "
-        f"{alpha:.3e} m²/s")
+    print(f"Layer average temperature: {np.mean(T0):.2f} °C")
+    print(f"Diffusivity: {alpha:.3e} m²/s ")
 
     # Conduct for one block
     T1 = solver.block_conduction(
@@ -146,14 +107,11 @@ if __name__ == "__main__":
         alpha = alpha,
         block_time =BLOCK["time_per_block"])
 
-    print(f"Final maximum temperature: "
-        f"{T1.max():.2f} °C")
+    print(f"Final maximum temperature: {T1.max():.2f} °C")
 
-    print(f"Final minimum temperature: "
-        f"{T1.min():.2f} °C")
+    print(f"Final minimum temperature:{T1.min():.2f} °C ")
 
     print("\nTemperature statistics")
-    
     print("T0:")
     print("  max :", T0.max())
     print("  min :", T0.min())

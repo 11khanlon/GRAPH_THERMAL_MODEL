@@ -1,0 +1,983 @@
+Loading STL...
+STL loaded in 0.06 seconds. Success!
+Substrate Nodes : 1645
+Deposition Nodes: 10
+Total Nodes     : 1655
+
+Node Validation
+Substrate Nodes : 1645
+Deposition Nodes: 10
+Total Nodes     : 1655
+
+
+Active Nodes    : 1645
+Inactive Nodes  : 10
+
+Minimum Nodes per Block : 1
+Maximum Nodes per Block : 1645
+Average Nodes per Block : 150.45
+
+Requested Density : 0.010 nodes/mm³
+Average Density   : 0.007 nodes/mm³
+
+Minimum Density : 0.007
+Maximum Density : 0.010
+Average Density : 0.007
+
+------ SURFACE NODE STATISTICS ------
+Total nodes: 1655
+Surface nodes: 0
+Surface fraction : 0.00%
+    top: 0
+ bottom: 0
+   left: 0
+  right: 0
+  front: 0
+   back: 0
+-------------------------------------
+
+------ PROBE LOCATION: TC_0 ------
+Position [mm]: [135.8     8.382  12.7  ]
+Region: substrate
+Inside substrate: True
+Within wall XY footprint: False
+Depth below substrate top [mm]: 0.0
+----------------------------------
+
+------ PROBE: TC_0 ------
+Target position [mm]: [135.8     8.382  12.7  ]
+Region: substrate
+Node ID: None
+Sampling mode: passive interpolation
+Graph modified by probe: False
+--------------------------------
+
+------ PROBE LOCATION: TC_1 ------
+Position [mm]: [135.8    59.436  12.7  ]
+Region: substrate
+Inside substrate: True
+Within wall XY footprint: False
+Depth below substrate top [mm]: 0.0
+----------------------------------
+
+------ PROBE: TC_1 ------
+Target position [mm]: [135.8    59.436  12.7  ]
+Region: substrate
+Node ID: None
+Sampling mode: passive interpolation
+Graph modified by probe: False
+--------------------------------
+
+------ PROBE LOCATION: TC_2 ------
+Position [mm]: [34.2    8.382 12.7  ]
+Region: substrate
+Inside substrate: True
+Within wall XY footprint: False
+Depth below substrate top [mm]: 0.0
+----------------------------------
+
+------ PROBE: TC_2 ------
+Target position [mm]: [34.2    8.382 12.7  ]
+Region: substrate
+Node ID: None
+Sampling mode: passive interpolation
+Graph modified by probe: False
+--------------------------------
+
+------ PROBE LOCATION: TC_3 ------
+Position [mm]: [34.2   59.436 12.7  ]
+Region: substrate
+Inside substrate: True
+Within wall XY footprint: False
+Depth below substrate top [mm]: 0.0
+----------------------------------
+
+------ PROBE: TC_3 ------
+Target position [mm]: [34.2   59.436 12.7  ]
+Region: substrate
+Node ID: None
+Sampling mode: passive interpolation
+Graph modified by probe: False
+--------------------------------
+
+------ PROBE LOCATION: meltpool_probe ------
+Position [mm]: [92.         38.10000012 13.9505    ]
+Region: deposition
+Inside substrate: False
+Within wall XY footprint: True
+Depth below substrate top [mm]: -1.2505
+----------------------------------
+
+------ PROBE: meltpool_probe ------
+Target position [mm]: [92.         38.10000012 13.9505    ]
+Region: deposition
+Layer restriction: 0
+Node ID: None
+Sampling mode: passive interpolation
+Graph modified by probe: False
+--------------------------------
+Neighborhood radius = 0.003
+Gaussian sigma = 0.0023330410830778602
+
+ Graph assembly time: 0.02 s 
+Adjacency matrix complete.
+
+Degree matrix verification: 
+[1.08759424 0.         0.88258418 0.21647544 0.         0.48771089
+ 1.54926435 0.35187127 0.44244649 1.39526049]
+Computing eigenvectors...
+This could take a while.
+
+Check eigensystem assembly time: 
+Eigen solve: 0.58 s
+
+Eigen decomposition complete.
+
+----------- Graph Summary -----------
+Nodes: 1655
+Edges: 864
+
+Neighbor information:
+Average neighbors: 1.04
+Minimum neighbors : 0
+Maximum neighbors : 5
+Average neighbors : 1.0441087613293052
+Median neighbors  : 1.0
+
+ Verify substrate is connected to deposition connections:
+
+Substrate-Deposition edges: 1
+
+ Check connected components
+Connected components: 928
+
+ Check Symmetry:
+Symmetric: True
+
+ Laplacian verification:
+Maximum row sum: 3.3306690738754696e-16
+
+Smallest eigenvalues
+[-9.49519685e-16 -7.95362010e-16 -7.31746312e-16 -7.02909289e-16
+ -6.36898302e-16 -6.32715592e-16 -6.23119314e-16 -6.17811943e-16
+ -6.13586308e-16 -5.43494840e-16]
+Largest eigenvalue
+3.0763388058614978
+
+Isolated nodes: 601
+Minimum weight: 0.19212210133713128
+Maximum weight: 0.9532371123969149
+-------------------------------------
+
+------ ARC SOURCE MATERIAL PROPERTIES ------
+Reference temperature: 25.00 °C
+Thermal conductivity:  52.4336 W/m-K
+Specific heat:         502.53 J/kg-K
+Thermal diffusivity:   1.329175e-05 m²/s
+Effective arc power:   1609.92 W
+initial | TC_0 | T=25.00 ° 
+initial | TC_1 | T=25.00 ° 
+initial | TC_2 | T=25.00 ° 
+initial | TC_3 | T=25.00 ° 
+initial | meltpool_probe | T=nan ° 
+----------------------------
+Beginning deposition
+
+Simulation start: 2026-11-16 20:40:56
+----------------------------
+
+------ PROCESS DISCRETIZATION ------
+Deposition length : 140.000 mm
+Blocks per layer  : 10
+Block length: 14.000 mm
+Travel speed: 12.700 mm/s
+Time per block: 1.1024 s
+Layer 1
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 316.42 °C | Node 1444 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.0114954  0.03612308 0.01067119]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_heatsource | meltpool_probe | T=55.06 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_conduction | meltpool_probe | T=55.06 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+after_convection | meltpool_probe | T=55.06 ° 
+Hottest inactive node: 1646 | T=25.00 °C | Layer=0 | Position=[0.03983538 0.03784366 0.01484735]
+
+--- Block Complete | Block 1, Layer 0 | t=1.102 s ---
+Active: 1646 | Inactive: 9
+Global Tmin/Tmax: 25.00 / 333.29 °C
+Active Tmax: 333.29 °C | Substrate Tmax: 333.29 °C | Deposit Tmax: 55.06 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 787 (substrate), layer=-1, T=333.29 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 1, layer=0 , time=1.10 s, Tmax=333.29 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 669.51 °C | Node 269 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.02940047 0.0386557  0.01259554]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_heatsource | meltpool_probe | T=234.88 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_conduction | meltpool_probe | T=218.99 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+after_convection | meltpool_probe | T=218.99 ° 
+Hottest inactive node: 1647 | T=25.00 °C | Layer=0 | Position=[0.05383538 0.03784366 0.01484735]
+
+--- Block Complete | Block 2, Layer 0 | t=2.205 s ---
+Active: 1647 | Inactive: 8
+Global Tmin/Tmax: 25.00 / 694.51 °C
+Active Tmax: 694.51 °C | Substrate Tmax: 694.51 °C | Deposit Tmax: 524.14 °C
+Current block Tmin/Mean/Tmax: 29.29 / 29.29 / 29.29 °C
+Hottest node: 269 (substrate), layer=-1, T=694.51 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 2, layer=0 , time=2.20 s, Tmax=694.51 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 603.64 °C | Node 896 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.04337119 0.03894915 0.01204781]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_heatsource | meltpool_probe | T=301.37 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_conduction | meltpool_probe | T=230.59 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+after_convection | meltpool_probe | T=230.59 ° 
+Hottest inactive node: 1648 | T=25.00 °C | Layer=0 | Position=[0.06783538 0.03784366 0.01484735]
+
+--- Block Complete | Block 3, Layer 0 | t=3.307 s ---
+Active: 1648 | Inactive: 7
+Global Tmin/Tmax: 25.00 / 925.33 °C
+Active Tmax: 925.33 °C | Substrate Tmax: 925.33 °C | Deposit Tmax: 724.48 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 269 (substrate), layer=-1, T=925.33 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 3, layer=0 , time=3.31 s, Tmax=925.33 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 815.95 °C | Node 1584 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.06189842 0.03676935 0.01173638]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_heatsource | meltpool_probe | T=272.16 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_conduction | meltpool_probe | T=268.13 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+after_convection | meltpool_probe | T=268.13 ° 
+Hottest inactive node: 1649 | T=25.00 °C | Layer=0 | Position=[0.08183538 0.03784366 0.01484735]
+
+--- Block Complete | Block 4, Layer 0 | t=4.409 s ---
+Active: 1649 | Inactive: 6
+Global Tmin/Tmax: 25.00 / 1064.36 °C
+Active Tmax: 1064.36 °C | Substrate Tmax: 1064.36 °C | Deposit Tmax: 851.79 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 269 (substrate), layer=-1, T=1064.36 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 4, layer=0 , time=4.41 s, Tmax=1064.36 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 863.23 °C | Node 236 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.07452566 0.03629081 0.01263271]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_heatsource | meltpool_probe | T=185.73 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_conduction | meltpool_probe | T=185.32 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+after_convection | meltpool_probe | T=185.32 ° 
+Hottest inactive node: 1650 | T=25.00 °C | Layer=0 | Position=[0.09583538 0.03784366 0.01484735]
+
+--- Block Complete | Block 5, Layer 0 | t=5.512 s ---
+Active: 1650 | Inactive: 5
+Global Tmin/Tmax: 25.00 / 1163.81 °C
+Active Tmax: 1163.81 °C | Substrate Tmax: 1163.81 °C | Deposit Tmax: 945.08 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 269 (substrate), layer=-1, T=1163.81 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 5, layer=0 , time=5.51 s, Tmax=1163.81 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 469.07 °C | Node 1649 [DEPOSITED MATERIAL] | Block 5 | Layer 0 | Position [0.08183538 0.03784366 0.01484735]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_heatsource | meltpool_probe | T=141.33 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_conduction | meltpool_probe | T=141.29 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+after_convection | meltpool_probe | T=141.29 ° 
+Hottest inactive node: 1651 | T=25.00 °C | Layer=0 | Position=[0.10983538 0.03784366 0.01484735]
+
+--- Block Complete | Block 6, Layer 0 | t=6.614 s ---
+Active: 1651 | Inactive: 4
+Global Tmin/Tmax: 25.00 / 1265.96 °C
+Active Tmax: 1265.96 °C | Substrate Tmax: 1265.96 °C | Deposit Tmax: 1018.70 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 1584 (substrate), layer=-1, T=1265.96 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 6, layer=0 , time=6.61 s, Tmax=1265.96 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 653.13 °C | Node 337 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.10194821 0.03602614 0.01206578]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_heatsource | meltpool_probe | T=542.78 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_conduction | meltpool_probe | T=542.75 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+after_convection | meltpool_probe | T=542.75 ° 
+Hottest inactive node: 1652 | T=25.00 °C | Layer=0 | Position=[0.12383538 0.03784366 0.01484735]
+
+--- Block Complete | Block 7, Layer 0 | t=7.717 s ---
+Active: 1652 | Inactive: 3
+Global Tmin/Tmax: 25.00 / 1372.65 °C
+Active Tmax: 1372.65 °C | Substrate Tmax: 1372.65 °C | Deposit Tmax: 1079.49 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 1584 (substrate), layer=-1, T=1372.65 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 7, layer=0 , time=7.72 s, Tmax=1372.65 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 773.92 °C | Node 1394 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.11890203 0.03690485 0.01166873]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_heatsource | meltpool_probe | T=732.07 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_conduction | meltpool_probe | T=732.06 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+after_convection | meltpool_probe | T=732.06 ° 
+Hottest inactive node: 1653 | T=25.00 °C | Layer=0 | Position=[0.13783538 0.03784366 0.01484735]
+
+--- Block Complete | Block 8, Layer 0 | t=8.819 s ---
+Active: 1653 | Inactive: 2
+Global Tmin/Tmax: 25.00 / 1454.40 °C
+Active Tmax: 1454.40 °C | Substrate Tmax: 1454.40 °C | Deposit Tmax: 1131.27 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 1584 (substrate), layer=-1, T=1454.40 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 8, layer=0 , time=8.82 s, Tmax=1454.40 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 530.66 °C | Node 1173 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.13011401 0.03968932 0.01102664]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_heatsource | meltpool_probe | T=854.44 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_conduction | meltpool_probe | T=854.43 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+after_convection | meltpool_probe | T=854.43 ° 
+Hottest inactive node: 1654 | T=25.00 °C | Layer=0 | Position=[0.15183538 0.03784366 0.01484735]
+
+--- Block Complete | Block 9, Layer 0 | t=9.921 s ---
+Active: 1654 | Inactive: 1
+Global Tmin/Tmax: 25.00 / 1520.65 °C
+Active Tmax: 1520.65 °C | Substrate Tmax: 1520.65 °C | Deposit Tmax: 1176.36 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 1584 (substrate), layer=-1, T=1520.65 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 9, layer=0 , time=9.92 s, Tmax=1520.65 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 469.25 °C | Node 666 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.1437689  0.03962948 0.0107027 ]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_heatsource | meltpool_probe | T=948.96 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_conduction | meltpool_probe | T=948.95 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+after_convection | meltpool_probe | T=948.95 ° 
+No inactive nodes remaining.
+
+--- Block Complete | Block 10, Layer 0 | t=11.024 s ---
+Active: 1655 | Inactive: 0
+Global Tmin/Tmax: 25.00 / 1576.34 °C
+Active Tmax: 1576.34 °C | Substrate Tmax: 1576.34 °C | Deposit Tmax: 1216.29 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 1584 (substrate), layer=-1, T=1576.34 °C
+Deposited block 10, layer=0 , time=11.02 s, Tmax=1576.34 °C
+Dwell after final layer 1 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | meltpool_probe | T=948.95 ° 
+-------------------
+Simulation complete!
+
+Simulation end: 2026-11-16 20:41:04
+
+Simulated process time: 98.37 s 
+
+Computer calculation time: 7.98 s 
+
+Simulation diagnostics exported.
+Thermal stage rows: 82525
+Thermal summary rows: 50
+Statistics rows: 109
+Validation rows: 935
+
+========== TRACKER EXPORT SUMMARY ==========
+Numerical diagnostic records: 109
+Thermal stage node records: 82525
+Thermal stage summary records: 50
+Five-point validation records: 935
+
+========== SIMULATION SUMMARY ==========
+Maximum global temperature: 1576.3386128412799
+Stored states: 99
+Final simulated time: 98.3699980472441 s
+
+========== THERMOCOUPLE SUMMARY ==========
+TC_0: min=25.00 °C, max=25.00 °C, final=25.00 °C
+TC_1: min=25.00 °C, max=25.00 °C, final=25.00 °C
+TC_2: min=25.00 °C, max=25.00 °C, final=25.00 °C
+TC_3: min=25.00 °C, max=25.00 °C, final=25.00 °C
+
+------ FAR-END DEPOSITION CHECK ------
+Number of far-end nodes: 2
+Final far-end maximum temperature: 524.1351448582249
+Peak far-end temperature: 524.1351448582249
+
+------ GRAPH CONNECTIVITY ------
+Left mean weighted degree: 0.551032
+Right mean weighted degree: 0.404968
+
+------ PROBE DISTANCES ------
+TC_0 nearest substrate node: 2.981 mm
+TC_1 nearest substrate node: 4.409 mm
+TC_2 nearest substrate node: 4.146 mm
+TC_3 nearest substrate node: 1.790 mm
+Saved simulation data: C:\Users\Kayleigh\GraphThermalModel\Validation\Results\Simulation\thermal_history.npz
+Saved figure: C:\Users\Kayleigh\GraphThermalModel\Validation\Results\Simulation\Figures\thermocouple_history.png
+Saved figure: C:\Users\Kayleigh\GraphThermalModel\Validation\Results\Simulation\Figures\meltpool_probe_history.png
+Saved figure: C:\Users\Kayleigh\GraphThermalModel\Validation\Results\Simulation\Figures\global_temperature_history.png
+Saved figure: C:\Users\Kayleigh\GraphThermalModel\Validation\Results\Simulation\Figures\thermocouple_maximum.png
+Saved figure: C:\Users\Kayleigh\GraphThermalModel\Validation\Results\Simulation\Figures\final_3d_temperature.png
+Saved figure: C:\Users\Kayleigh\GraphThermalModel\Validation\Results\Simulation\Figures\thermocouple_locations.png
+Saved figure: C:\Users\Kayleigh\GraphThermalModel\Validation\Results\Simulation\Figures\experimental_thermocouple_history.png
+Loaded experimental data: C:\Users\Kayleigh\GraphThermalModel\A36Steel_Info\ThermalData\Processed\Pass_1\Thermocouples_Pass1.csv
+Saved figure: C:\Users\Kayleigh\GraphThermalModel\Validation\Results\Simulation\Figures\experimental_vs_simulated_thermocouples.png
+
+Simulation and plotting complete.
