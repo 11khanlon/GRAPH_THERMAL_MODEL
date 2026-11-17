@@ -75,6 +75,7 @@ LASER = {
 
 BUILD = {
     "stl_file": r"C:\\Users\\khanlon6\GRAPH_THERMAL_MODEL\\STL\\SingleTrak.stl",  #insertfile 
+    #"stl_file": r"C:\\Users\\Kayleigh\\GraphThermalModel\\STL\\SingleTrak.stl",  #insertfile 
 
     "substrate_length": 170.0e-3,    #m
     "substrate_width": 76.20e-3,      #m
