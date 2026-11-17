@@ -1,0 +1,2137 @@
+Steel material classes are configured in simulation_runner.py
+IMPORTANT: Verify config.MATERIAL is also set to steel.
+
+--- Node density 0.01 nodes/mm³ ---
+Experimental dwell duration: 87.346 s
+Loading STL...
+STL loaded in 0.10 seconds. Success!
+Substrate Nodes : 1645
+Deposition Nodes: 10
+Total Nodes     : 1655
+
+Node Validation
+Substrate Nodes : 1645
+Deposition Nodes: 10
+Total Nodes     : 1655
+
+
+Active Nodes    : 1645
+Inactive Nodes  : 10
+
+Minimum Nodes per Block : 1
+Maximum Nodes per Block : 1645
+Average Nodes per Block : 150.45
+
+Requested Density : 0.010 nodes/mm³
+Average Density   : 0.007 nodes/mm³
+
+Minimum Density : 0.007
+Maximum Density : 0.010
+Average Density : 0.007
+
+------ SURFACE NODE STATISTICS ------
+Total nodes: 1655
+Surface nodes: 0
+Surface fraction : 0.00%
+    top: 0
+ bottom: 0
+   left: 0
+  right: 0
+  front: 0
+   back: 0
+-------------------------------------
+Neighborhood radius = 0.003
+Gaussian sigma = 0.0023330410830778602
+
+ Graph assembly time: 0.08 s 
+Adjacency matrix complete.
+
+Degree matrix verification: 
+[1.08759424 0.         0.88258418 0.21647544 0.         0.48771089
+ 1.54926435 0.35187127 0.44244649 1.39526049]
+Computing eigenvectors...
+This could take a while.
+
+Check eigensystem assembly time: 
+Eigen solve: 0.56 s
+
+Eigen decomposition complete.
+
+------ ARC SOURCE MATERIAL PROPERTIES ------
+Reference temperature: 25.00 °C
+Thermal conductivity:  52.4336 W/m-K
+Specific heat:         502.53 J/kg-K
+Thermal diffusivity:   1.329175e-05 m²/s
+Effective arc power:   1609.92 W
+initial | TC_0 | T=25.00 ° 
+initial | TC_1 | T=25.00 ° 
+initial | TC_2 | T=25.00 ° 
+initial | TC_3 | T=25.00 ° 
+----------------------------
+Beginning deposition
+
+Simulation start: 2026-11-17 10:57:48
+----------------------------
+
+------ PROCESS DISCRETIZATION ------
+Deposition length : 140.000 mm
+Blocks per layer  : 10
+Block length: 14.000 mm
+Travel speed: 12.700 mm/s
+Time per block: 1.1024 s
+Layer 1
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 316.42 °C | Node 1444 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.0114954  0.03612308 0.01067119]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 1646 | T=25.00 °C | Layer=0 | Position=[0.03983538 0.03784366 0.01484735]
+
+--- Block Complete | Block 1, Layer 0 | t=1.102 s ---
+Active: 1646 | Inactive: 9
+Global Tmin/Tmax: 25.00 / 333.29 °C
+Active Tmax: 333.29 °C | Substrate Tmax: 333.29 °C | Deposit Tmax: 55.06 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 787 (substrate), layer=-1, T=333.29 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 1, layer=0 , time=1.10 s, Tmax=333.29 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 669.51 °C | Node 269 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.02940047 0.0386557  0.01259554]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 1647 | T=25.00 °C | Layer=0 | Position=[0.05383538 0.03784366 0.01484735]
+
+--- Block Complete | Block 2, Layer 0 | t=2.205 s ---
+Active: 1647 | Inactive: 8
+Global Tmin/Tmax: 25.00 / 694.51 °C
+Active Tmax: 694.51 °C | Substrate Tmax: 694.51 °C | Deposit Tmax: 524.14 °C
+Current block Tmin/Mean/Tmax: 29.29 / 29.29 / 29.29 °C
+Hottest node: 269 (substrate), layer=-1, T=694.51 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 2, layer=0 , time=2.20 s, Tmax=694.51 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 603.64 °C | Node 896 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.04337119 0.03894915 0.01204781]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 1648 | T=25.00 °C | Layer=0 | Position=[0.06783538 0.03784366 0.01484735]
+
+--- Block Complete | Block 3, Layer 0 | t=3.307 s ---
+Active: 1648 | Inactive: 7
+Global Tmin/Tmax: 25.00 / 925.33 °C
+Active Tmax: 925.33 °C | Substrate Tmax: 925.33 °C | Deposit Tmax: 724.48 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 269 (substrate), layer=-1, T=925.33 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 3, layer=0 , time=3.31 s, Tmax=925.33 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 815.95 °C | Node 1584 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.06189842 0.03676935 0.01173638]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 1649 | T=25.00 °C | Layer=0 | Position=[0.08183538 0.03784366 0.01484735]
+
+--- Block Complete | Block 4, Layer 0 | t=4.409 s ---
+Active: 1649 | Inactive: 6
+Global Tmin/Tmax: 25.00 / 1064.36 °C
+Active Tmax: 1064.36 °C | Substrate Tmax: 1064.36 °C | Deposit Tmax: 851.79 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 269 (substrate), layer=-1, T=1064.36 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 4, layer=0 , time=4.41 s, Tmax=1064.36 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 863.23 °C | Node 236 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.07452566 0.03629081 0.01263271]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 1650 | T=25.00 °C | Layer=0 | Position=[0.09583538 0.03784366 0.01484735]
+
+--- Block Complete | Block 5, Layer 0 | t=5.512 s ---
+Active: 1650 | Inactive: 5
+Global Tmin/Tmax: 25.00 / 1163.81 °C
+Active Tmax: 1163.81 °C | Substrate Tmax: 1163.81 °C | Deposit Tmax: 945.08 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 269 (substrate), layer=-1, T=1163.81 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 5, layer=0 , time=5.51 s, Tmax=1163.81 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 469.07 °C | Node 1649 [DEPOSITED MATERIAL] | Block 5 | Layer 0 | Position [0.08183538 0.03784366 0.01484735]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 1651 | T=25.00 °C | Layer=0 | Position=[0.10983538 0.03784366 0.01484735]
+
+--- Block Complete | Block 6, Layer 0 | t=6.614 s ---
+Active: 1651 | Inactive: 4
+Global Tmin/Tmax: 25.00 / 1265.96 °C
+Active Tmax: 1265.96 °C | Substrate Tmax: 1265.96 °C | Deposit Tmax: 1018.70 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 1584 (substrate), layer=-1, T=1265.96 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 6, layer=0 , time=6.61 s, Tmax=1265.96 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 653.13 °C | Node 337 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.10194821 0.03602614 0.01206578]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 1652 | T=25.00 °C | Layer=0 | Position=[0.12383538 0.03784366 0.01484735]
+
+--- Block Complete | Block 7, Layer 0 | t=7.717 s ---
+Active: 1652 | Inactive: 3
+Global Tmin/Tmax: 25.00 / 1372.65 °C
+Active Tmax: 1372.65 °C | Substrate Tmax: 1372.65 °C | Deposit Tmax: 1079.49 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 1584 (substrate), layer=-1, T=1372.65 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 7, layer=0 , time=7.72 s, Tmax=1372.65 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 773.92 °C | Node 1394 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.11890203 0.03690485 0.01166873]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 1653 | T=25.00 °C | Layer=0 | Position=[0.13783538 0.03784366 0.01484735]
+
+--- Block Complete | Block 8, Layer 0 | t=8.819 s ---
+Active: 1653 | Inactive: 2
+Global Tmin/Tmax: 25.00 / 1454.40 °C
+Active Tmax: 1454.40 °C | Substrate Tmax: 1454.40 °C | Deposit Tmax: 1131.27 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 1584 (substrate), layer=-1, T=1454.40 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 8, layer=0 , time=8.82 s, Tmax=1454.40 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 530.66 °C | Node 1173 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.13011401 0.03968932 0.01102664]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 1654 | T=25.00 °C | Layer=0 | Position=[0.15183538 0.03784366 0.01484735]
+
+--- Block Complete | Block 9, Layer 0 | t=9.921 s ---
+Active: 1654 | Inactive: 1
+Global Tmin/Tmax: 25.00 / 1520.65 °C
+Active Tmax: 1520.65 °C | Substrate Tmax: 1520.65 °C | Deposit Tmax: 1176.36 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 1584 (substrate), layer=-1, T=1520.65 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 9, layer=0 , time=9.92 s, Tmax=1520.65 °C
+Forced surface nodes: 0 
+Free surface nodes: 51
+Max heat-source ΔT: 469.25 °C | Node 666 [SUBSTRATE] | Block 0 | Layer -1 | Position [0.1437689  0.03962948 0.0107027 ]
+Current block heat-source ΔT: min=30.06, max=30.06 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+No inactive nodes remaining.
+
+--- Block Complete | Block 10, Layer 0 | t=11.024 s ---
+Active: 1655 | Inactive: 0
+Global Tmin/Tmax: 25.00 / 1576.34 °C
+Active Tmax: 1576.34 °C | Substrate Tmax: 1576.34 °C | Deposit Tmax: 1216.29 °C
+Current block Tmin/Mean/Tmax: 55.06 / 55.06 / 55.06 °C
+Hottest node: 1584 (substrate), layer=-1, T=1576.34 °C
+Deposited block 10, layer=0 , time=11.02 s, Tmax=1576.34 °C
+Dwell after final layer 1 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=25.00 ° 
+-------------------
+Simulation complete!
+
+Simulation end: 2026-11-17 10:57:54
+
+Simulated process time: 98.37 s 
+
+Computer calculation time: 5.92 s 
+
+Simulation diagnostics exported.
+Thermal stage rows: 82525
+Thermal summary rows: 50
+Statistics rows: 109
+Validation rows: 935
+
+--- Node density 0.05 nodes/mm³ ---
+Experimental dwell duration: 87.346 s
+Loading STL...
+STL loaded in 0.00 seconds. Success!
+Substrate Nodes : 8226
+Deposition Nodes: 70
+Total Nodes     : 8296
+
+Node Validation
+Substrate Nodes : 8226
+Deposition Nodes: 70
+Total Nodes     : 8296
+
+
+Active Nodes    : 8226
+Inactive Nodes  : 70
+
+Minimum Nodes per Block : 7
+Maximum Nodes per Block : 8226
+Average Nodes per Block : 754.18
+
+Requested Density : 0.050 nodes/mm³
+Average Density   : 0.048 nodes/mm³
+
+Minimum Density : 0.048
+Maximum Density : 0.050
+Average Density : 0.048
+
+------ SURFACE NODE STATISTICS ------
+Total nodes: 8296
+Surface nodes: 0
+Surface fraction : 0.00%
+    top: 0
+ bottom: 0
+   left: 0
+  right: 0
+  front: 0
+   back: 0
+-------------------------------------
+Neighborhood radius = 0.003
+Gaussian sigma = 0.0012415325665101795
+
+ Graph assembly time: 0.52 s 
+Adjacency matrix complete.
+
+Degree matrix verification: 
+[0.63198936 0.05241673 0.26909425 0.00449947 0.72932793 0.15474596
+ 1.19351678 0.03621422 0.50703067 0.51094837]
+Computing eigenvectors...
+This could take a while.
+
+Check eigensystem assembly time: 
+Eigen solve: 33.04 s
+
+Eigen decomposition complete.
+
+------ ARC SOURCE MATERIAL PROPERTIES ------
+Reference temperature: 25.00 °C
+Thermal conductivity:  52.4336 W/m-K
+Specific heat:         502.53 J/kg-K
+Thermal diffusivity:   1.329175e-05 m²/s
+Effective arc power:   1609.92 W
+initial | TC_0 | T=25.00 ° 
+initial | TC_1 | T=25.00 ° 
+initial | TC_2 | T=25.00 ° 
+initial | TC_3 | T=25.00 ° 
+----------------------------
+Beginning deposition
+
+Simulation start: 2026-11-17 10:58:29
+----------------------------
+
+------ PROCESS DISCRETIZATION ------
+Deposition length : 140.000 mm
+Blocks per layer  : 10
+Block length: 14.000 mm
+Travel speed: 12.700 mm/s
+Time per block: 1.1024 s
+Layer 1
+Forced surface nodes: 2 
+Free surface nodes: 245
+Max heat-source ΔT: 2540.21 °C | Node 8229 [DEPOSITED MATERIAL] | Block 1 | Layer 0 | Position [0.0213054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+WARNING: 1 inactive nodes heated above ambient + 1°C. 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 8233 | T=25.00 °C | Layer=0 | Position=[0.03983538 0.03784366 0.01484735]
+
+--- Block Complete | Block 1, Layer 0 | t=1.102 s ---
+Active: 8233 | Inactive: 63
+Global Tmin/Tmax: 25.00 / 2563.75 °C
+Active Tmax: 2563.75 °C | Substrate Tmax: 220.06 °C | Deposit Tmax: 2563.75 °C
+Current block Tmin/Mean/Tmax: 75.53 / 492.09 / 2563.75 °C
+Hottest node: 8229 (deposited), layer=0, T=2563.75 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 1, layer=0 , time=1.10 s, Tmax=2563.75 °C
+Forced surface nodes: 4 
+Free surface nodes: 245
+Max heat-source ΔT: 2540.21 °C | Node 8236 [DEPOSITED MATERIAL] | Block 2 | Layer 0 | Position [0.0353054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 8240 | T=25.00 °C | Layer=0 | Position=[0.05383538 0.03784366 0.01484735]
+
+--- Block Complete | Block 2, Layer 0 | t=2.205 s ---
+Active: 8240 | Inactive: 56
+Global Tmin/Tmax: 25.00 / 2885.93 °C
+Active Tmax: 2885.93 °C | Substrate Tmax: 767.17 °C | Deposit Tmax: 2885.93 °C
+Current block Tmin/Mean/Tmax: 66.36 / 523.33 / 2563.75 °C
+Hottest node: 8229 (deposited), layer=0, T=2885.93 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 2, layer=0 , time=2.20 s, Tmax=2885.93 °C
+Forced surface nodes: 6 
+Free surface nodes: 245
+Max heat-source ΔT: 2540.21 °C | Node 8243 [DEPOSITED MATERIAL] | Block 3 | Layer 0 | Position [0.0493054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 8247 | T=25.00 °C | Layer=0 | Position=[0.06783538 0.03784366 0.01484735]
+
+--- Block Complete | Block 3, Layer 0 | t=3.307 s ---
+Active: 8247 | Inactive: 49
+Global Tmin/Tmax: 25.00 / 3052.32 °C
+Active Tmax: 3052.32 °C | Substrate Tmax: 949.05 °C | Deposit Tmax: 3052.32 °C
+Current block Tmin/Mean/Tmax: 117.14 / 413.89 / 1373.14 °C
+Hottest node: 8229 (deposited), layer=0, T=3052.32 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 3, layer=0 , time=3.31 s, Tmax=3052.32 °C
+Forced surface nodes: 8 
+Free surface nodes: 245
+Max heat-source ΔT: 2540.21 °C | Node 8250 [DEPOSITED MATERIAL] | Block 4 | Layer 0 | Position [0.0633054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.01 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.01 ° 
+Hottest inactive node: 8254 | T=25.00 °C | Layer=0 | Position=[0.08183538 0.03784366 0.01484735]
+
+--- Block Complete | Block 4, Layer 0 | t=4.409 s ---
+Active: 8254 | Inactive: 42
+Global Tmin/Tmax: 25.00 / 3164.01 °C
+Active Tmax: 3164.01 °C | Substrate Tmax: 959.82 °C | Deposit Tmax: 3164.01 °C
+Current block Tmin/Mean/Tmax: 79.85 / 528.33 / 2563.75 °C
+Hottest node: 8229 (deposited), layer=0, T=3164.01 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 4, layer=0 , time=4.41 s, Tmax=3164.01 °C
+Forced surface nodes: 10 
+Free surface nodes: 245
+Max heat-source ΔT: 2540.21 °C | Node 8257 [DEPOSITED MATERIAL] | Block 5 | Layer 0 | Position [0.0773054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.01 ° 
+WARNING: 1 inactive nodes heated above ambient + 1°C. 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.04 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.04 ° 
+Hottest inactive node: 8261 | T=25.00 °C | Layer=0 | Position=[0.09583538 0.03784366 0.01484735]
+
+--- Block Complete | Block 5, Layer 0 | t=5.512 s ---
+Active: 8261 | Inactive: 35
+Global Tmin/Tmax: 25.00 / 3247.81 °C
+Active Tmax: 3247.81 °C | Substrate Tmax: 1058.32 °C | Deposit Tmax: 3247.81 °C
+Current block Tmin/Mean/Tmax: 48.15 / 529.85 / 2563.75 °C
+Hottest node: 8229 (deposited), layer=0, T=3247.81 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 5, layer=0 , time=5.51 s, Tmax=3247.81 °C
+Forced surface nodes: 12 
+Free surface nodes: 245
+Max heat-source ΔT: 2540.21 °C | Node 8264 [DEPOSITED MATERIAL] | Block 6 | Layer 0 | Position [0.0913054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.04 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.01 ° 
+after_conduction | TC_3 | T=25.10 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.01 ° 
+after_convection | TC_3 | T=25.10 ° 
+Hottest inactive node: 8268 | T=25.00 °C | Layer=0 | Position=[0.10983538 0.03784366 0.01484735]
+
+--- Block Complete | Block 6, Layer 0 | t=6.614 s ---
+Active: 8268 | Inactive: 28
+Global Tmin/Tmax: 25.00 / 3314.69 °C
+Active Tmax: 3314.69 °C | Substrate Tmax: 1094.32 °C | Deposit Tmax: 3314.69 °C
+Current block Tmin/Mean/Tmax: 52.25 / 472.30 / 2563.75 °C
+Hottest node: 8229 (deposited), layer=0, T=3314.69 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 6, layer=0 , time=6.61 s, Tmax=3314.69 °C
+Forced surface nodes: 14 
+Free surface nodes: 245
+Max heat-source ΔT: 2540.21 °C | Node 8271 [DEPOSITED MATERIAL] | Block 7 | Layer 0 | Position [0.1053054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.01 ° 
+after_heatsource | TC_3 | T=25.10 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.02 ° 
+after_conduction | TC_3 | T=25.19 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.02 ° 
+after_convection | TC_3 | T=25.19 ° 
+Hottest inactive node: 8275 | T=25.00 °C | Layer=0 | Position=[0.12383538 0.03784366 0.01484735]
+
+--- Block Complete | Block 7, Layer 0 | t=7.717 s ---
+Active: 8275 | Inactive: 21
+Global Tmin/Tmax: 25.00 / 3370.22 °C
+Active Tmax: 3370.22 °C | Substrate Tmax: 1100.23 °C | Deposit Tmax: 3370.22 °C
+Current block Tmin/Mean/Tmax: 161.52 / 527.99 / 2563.75 °C
+Hottest node: 8229 (deposited), layer=0, T=3370.22 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 7, layer=0 , time=7.72 s, Tmax=3370.22 °C
+Forced surface nodes: 16 
+Free surface nodes: 245
+Max heat-source ΔT: 2540.21 °C | Node 8278 [DEPOSITED MATERIAL] | Block 8 | Layer 0 | Position [0.1193054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.02 ° 
+after_heatsource | TC_3 | T=25.19 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.05 ° 
+after_conduction | TC_3 | T=25.33 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.05 ° 
+after_convection | TC_3 | T=25.33 ° 
+Hottest inactive node: 8282 | T=25.00 °C | Layer=0 | Position=[0.13783538 0.03784366 0.01484735]
+
+--- Block Complete | Block 8, Layer 0 | t=8.819 s ---
+Active: 8282 | Inactive: 14
+Global Tmin/Tmax: 25.00 / 3417.60 °C
+Active Tmax: 3417.60 °C | Substrate Tmax: 1091.08 °C | Deposit Tmax: 3417.60 °C
+Current block Tmin/Mean/Tmax: 98.08 / 541.86 / 2563.75 °C
+Hottest node: 8229 (deposited), layer=0, T=3417.60 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 8, layer=0 , time=8.82 s, Tmax=3417.60 °C
+Forced surface nodes: 18 
+Free surface nodes: 245
+Max heat-source ΔT: 2540.21 °C | Node 8285 [DEPOSITED MATERIAL] | Block 9 | Layer 0 | Position [0.1333054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.05 ° 
+after_heatsource | TC_3 | T=25.33 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.10 ° 
+after_conduction | TC_3 | T=25.52 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.10 ° 
+after_convection | TC_3 | T=25.52 ° 
+Hottest inactive node: 8289 | T=25.00 °C | Layer=0 | Position=[0.15183538 0.03784366 0.01484735]
+
+--- Block Complete | Block 9, Layer 0 | t=9.921 s ---
+Active: 8289 | Inactive: 7
+Global Tmin/Tmax: 25.00 / 3458.85 °C
+Active Tmax: 3458.85 °C | Substrate Tmax: 1074.66 °C | Deposit Tmax: 3458.85 °C
+Current block Tmin/Mean/Tmax: 135.87 / 517.94 / 2563.75 °C
+Hottest node: 8229 (deposited), layer=0, T=3458.85 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 9, layer=0 , time=9.92 s, Tmax=3458.85 °C
+Forced surface nodes: 20 
+Free surface nodes: 245
+Max heat-source ΔT: 2540.21 °C | Node 8292 [DEPOSITED MATERIAL] | Block 10 | Layer 0 | Position [0.1473054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.10 ° 
+after_heatsource | TC_3 | T=25.52 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.08 ° 
+after_conduction | TC_2 | T=25.16 ° 
+after_conduction | TC_3 | T=25.76 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.08 ° 
+after_convection | TC_2 | T=25.16 ° 
+after_convection | TC_3 | T=25.76 ° 
+No inactive nodes remaining.
+
+--- Block Complete | Block 10, Layer 0 | t=11.024 s ---
+Active: 8296 | Inactive: 0
+Global Tmin/Tmax: 25.00 / 3495.31 °C
+Active Tmax: 3495.31 °C | Substrate Tmax: 1054.57 °C | Deposit Tmax: 3495.31 °C
+Current block Tmin/Mean/Tmax: 100.26 / 482.58 / 2563.75 °C
+Hottest node: 8229 (deposited), layer=0, T=3495.31 °C
+Deposited block 10, layer=0 , time=11.02 s, Tmax=3495.31 °C
+Dwell after final layer 1 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.27 ° 
+dwell | TC_2 | T=25.24 ° 
+dwell | TC_3 | T=26.02 ° 
+dwell | TC_0 | T=25.01 ° 
+dwell | TC_1 | T=25.58 ° 
+dwell | TC_2 | T=25.33 ° 
+dwell | TC_3 | T=26.32 ° 
+dwell | TC_0 | T=25.02 ° 
+dwell | TC_1 | T=25.98 ° 
+dwell | TC_2 | T=25.45 ° 
+dwell | TC_3 | T=26.65 ° 
+dwell | TC_0 | T=25.03 ° 
+dwell | TC_1 | T=26.43 ° 
+dwell | TC_2 | T=25.58 ° 
+dwell | TC_3 | T=27.02 ° 
+dwell | TC_0 | T=25.06 ° 
+dwell | TC_1 | T=26.90 ° 
+dwell | TC_2 | T=25.74 ° 
+dwell | TC_3 | T=27.43 ° 
+dwell | TC_0 | T=25.09 ° 
+dwell | TC_1 | T=27.38 ° 
+dwell | TC_2 | T=25.92 ° 
+dwell | TC_3 | T=27.88 ° 
+dwell | TC_0 | T=25.14 ° 
+dwell | TC_1 | T=27.85 ° 
+dwell | TC_2 | T=26.12 ° 
+dwell | TC_3 | T=28.37 ° 
+dwell | TC_0 | T=25.19 ° 
+dwell | TC_1 | T=28.30 ° 
+dwell | TC_2 | T=26.34 ° 
+dwell | TC_3 | T=28.89 ° 
+dwell | TC_0 | T=25.26 ° 
+dwell | TC_1 | T=28.74 ° 
+dwell | TC_2 | T=26.58 ° 
+dwell | TC_3 | T=29.45 ° 
+dwell | TC_0 | T=25.33 ° 
+dwell | TC_1 | T=29.15 ° 
+dwell | TC_2 | T=26.85 ° 
+dwell | TC_3 | T=30.04 ° 
+dwell | TC_0 | T=25.41 ° 
+dwell | TC_1 | T=29.55 ° 
+dwell | TC_2 | T=27.13 ° 
+dwell | TC_3 | T=30.65 ° 
+dwell | TC_0 | T=25.50 ° 
+dwell | TC_1 | T=29.92 ° 
+dwell | TC_2 | T=27.43 ° 
+dwell | TC_3 | T=31.29 ° 
+dwell | TC_0 | T=25.59 ° 
+dwell | TC_1 | T=30.28 ° 
+dwell | TC_2 | T=27.75 ° 
+dwell | TC_3 | T=31.95 ° 
+dwell | TC_0 | T=25.70 ° 
+dwell | TC_1 | T=30.62 ° 
+dwell | TC_2 | T=28.08 ° 
+dwell | TC_3 | T=32.62 ° 
+dwell | TC_0 | T=25.81 ° 
+dwell | TC_1 | T=30.94 ° 
+dwell | TC_2 | T=28.42 ° 
+dwell | TC_3 | T=33.31 ° 
+dwell | TC_0 | T=25.92 ° 
+dwell | TC_1 | T=31.25 ° 
+dwell | TC_2 | T=28.77 ° 
+dwell | TC_3 | T=34.01 ° 
+dwell | TC_0 | T=26.04 ° 
+dwell | TC_1 | T=31.55 ° 
+dwell | TC_2 | T=29.14 ° 
+dwell | TC_3 | T=34.71 ° 
+dwell | TC_0 | T=26.17 ° 
+dwell | TC_1 | T=31.83 ° 
+dwell | TC_2 | T=29.51 ° 
+dwell | TC_3 | T=35.41 ° 
+dwell | TC_0 | T=26.30 ° 
+dwell | TC_1 | T=32.11 ° 
+dwell | TC_2 | T=29.89 ° 
+dwell | TC_3 | T=36.11 ° 
+dwell | TC_0 | T=26.43 ° 
+dwell | TC_1 | T=32.37 ° 
+dwell | TC_2 | T=30.27 ° 
+dwell | TC_3 | T=36.81 ° 
+dwell | TC_0 | T=26.57 ° 
+dwell | TC_1 | T=32.62 ° 
+dwell | TC_2 | T=30.66 ° 
+dwell | TC_3 | T=37.51 ° 
+dwell | TC_0 | T=26.71 ° 
+dwell | TC_1 | T=32.86 ° 
+dwell | TC_2 | T=31.06 ° 
+dwell | TC_3 | T=38.20 ° 
+dwell | TC_0 | T=26.86 ° 
+dwell | TC_1 | T=33.10 ° 
+dwell | TC_2 | T=31.45 ° 
+dwell | TC_3 | T=38.88 ° 
+dwell | TC_0 | T=27.01 ° 
+dwell | TC_1 | T=33.33 ° 
+dwell | TC_2 | T=31.85 ° 
+dwell | TC_3 | T=39.54 ° 
+dwell | TC_0 | T=27.16 ° 
+dwell | TC_1 | T=33.54 ° 
+dwell | TC_2 | T=32.24 ° 
+dwell | TC_3 | T=40.20 ° 
+dwell | TC_0 | T=27.32 ° 
+dwell | TC_1 | T=33.76 ° 
+dwell | TC_2 | T=32.64 ° 
+dwell | TC_3 | T=40.84 ° 
+dwell | TC_0 | T=27.47 ° 
+dwell | TC_1 | T=33.96 ° 
+dwell | TC_2 | T=33.03 ° 
+dwell | TC_3 | T=41.47 ° 
+dwell | TC_0 | T=27.63 ° 
+dwell | TC_1 | T=34.16 ° 
+dwell | TC_2 | T=33.42 ° 
+dwell | TC_3 | T=42.08 ° 
+dwell | TC_0 | T=27.79 ° 
+dwell | TC_1 | T=34.36 ° 
+dwell | TC_2 | T=33.81 ° 
+dwell | TC_3 | T=42.68 ° 
+dwell | TC_0 | T=27.95 ° 
+dwell | TC_1 | T=34.54 ° 
+dwell | TC_2 | T=34.20 ° 
+dwell | TC_3 | T=43.26 ° 
+dwell | TC_0 | T=28.12 ° 
+dwell | TC_1 | T=34.73 ° 
+dwell | TC_2 | T=34.59 ° 
+dwell | TC_3 | T=43.83 ° 
+dwell | TC_0 | T=28.28 ° 
+dwell | TC_1 | T=34.90 ° 
+dwell | TC_2 | T=34.97 ° 
+dwell | TC_3 | T=44.38 ° 
+dwell | TC_0 | T=28.45 ° 
+dwell | TC_1 | T=35.07 ° 
+dwell | TC_2 | T=35.34 ° 
+dwell | TC_3 | T=44.92 ° 
+dwell | TC_0 | T=28.61 ° 
+dwell | TC_1 | T=35.24 ° 
+dwell | TC_2 | T=35.72 ° 
+dwell | TC_3 | T=45.43 ° 
+dwell | TC_0 | T=28.78 ° 
+dwell | TC_1 | T=35.40 ° 
+dwell | TC_2 | T=36.09 ° 
+dwell | TC_3 | T=45.94 ° 
+dwell | TC_0 | T=28.95 ° 
+dwell | TC_1 | T=35.56 ° 
+dwell | TC_2 | T=36.45 ° 
+dwell | TC_3 | T=46.42 ° 
+dwell | TC_0 | T=29.12 ° 
+dwell | TC_1 | T=35.71 ° 
+dwell | TC_2 | T=36.81 ° 
+dwell | TC_3 | T=46.89 ° 
+dwell | TC_0 | T=29.28 ° 
+dwell | TC_1 | T=35.86 ° 
+dwell | TC_2 | T=37.17 ° 
+dwell | TC_3 | T=47.35 ° 
+dwell | TC_0 | T=29.45 ° 
+dwell | TC_1 | T=36.01 ° 
+dwell | TC_2 | T=37.52 ° 
+dwell | TC_3 | T=47.79 ° 
+dwell | TC_0 | T=29.62 ° 
+dwell | TC_1 | T=36.15 ° 
+dwell | TC_2 | T=37.87 ° 
+dwell | TC_3 | T=48.21 ° 
+dwell | TC_0 | T=29.78 ° 
+dwell | TC_1 | T=36.28 ° 
+dwell | TC_2 | T=38.21 ° 
+dwell | TC_3 | T=48.62 ° 
+dwell | TC_0 | T=29.95 ° 
+dwell | TC_1 | T=36.41 ° 
+dwell | TC_2 | T=38.54 ° 
+dwell | TC_3 | T=49.02 ° 
+dwell | TC_0 | T=30.11 ° 
+dwell | TC_1 | T=36.54 ° 
+dwell | TC_2 | T=38.88 ° 
+dwell | TC_3 | T=49.40 ° 
+dwell | TC_0 | T=30.28 ° 
+dwell | TC_1 | T=36.67 ° 
+dwell | TC_2 | T=39.20 ° 
+dwell | TC_3 | T=49.77 ° 
+dwell | TC_0 | T=30.44 ° 
+dwell | TC_1 | T=36.79 ° 
+dwell | TC_2 | T=39.52 ° 
+dwell | TC_3 | T=50.13 ° 
+dwell | TC_0 | T=30.60 ° 
+dwell | TC_1 | T=36.90 ° 
+dwell | TC_2 | T=39.84 ° 
+dwell | TC_3 | T=50.47 ° 
+dwell | TC_0 | T=30.76 ° 
+dwell | TC_1 | T=37.02 ° 
+dwell | TC_2 | T=40.15 ° 
+dwell | TC_3 | T=50.80 ° 
+dwell | TC_0 | T=30.92 ° 
+dwell | TC_1 | T=37.13 ° 
+dwell | TC_2 | T=40.46 ° 
+dwell | TC_3 | T=51.12 ° 
+dwell | TC_0 | T=31.08 ° 
+dwell | TC_1 | T=37.24 ° 
+dwell | TC_2 | T=40.76 ° 
+dwell | TC_3 | T=51.43 ° 
+dwell | TC_0 | T=31.24 ° 
+dwell | TC_1 | T=37.34 ° 
+dwell | TC_2 | T=41.06 ° 
+dwell | TC_3 | T=51.72 ° 
+dwell | TC_0 | T=31.39 ° 
+dwell | TC_1 | T=37.44 ° 
+dwell | TC_2 | T=41.35 ° 
+dwell | TC_3 | T=52.01 ° 
+dwell | TC_0 | T=31.55 ° 
+dwell | TC_1 | T=37.54 ° 
+dwell | TC_2 | T=41.64 ° 
+dwell | TC_3 | T=52.28 ° 
+dwell | TC_0 | T=31.70 ° 
+dwell | TC_1 | T=37.64 ° 
+dwell | TC_2 | T=41.92 ° 
+dwell | TC_3 | T=52.55 ° 
+dwell | TC_0 | T=31.85 ° 
+dwell | TC_1 | T=37.73 ° 
+dwell | TC_2 | T=42.20 ° 
+dwell | TC_3 | T=52.80 ° 
+dwell | TC_0 | T=32.00 ° 
+dwell | TC_1 | T=37.82 ° 
+dwell | TC_2 | T=42.47 ° 
+dwell | TC_3 | T=53.05 ° 
+dwell | TC_0 | T=32.15 ° 
+dwell | TC_1 | T=37.91 ° 
+dwell | TC_2 | T=42.74 ° 
+dwell | TC_3 | T=53.29 ° 
+dwell | TC_0 | T=32.29 ° 
+dwell | TC_1 | T=37.99 ° 
+dwell | TC_2 | T=43.00 ° 
+dwell | TC_3 | T=53.52 ° 
+dwell | TC_0 | T=32.44 ° 
+dwell | TC_1 | T=38.08 ° 
+dwell | TC_2 | T=43.26 ° 
+dwell | TC_3 | T=53.74 ° 
+dwell | TC_0 | T=32.58 ° 
+dwell | TC_1 | T=38.16 ° 
+dwell | TC_2 | T=43.51 ° 
+dwell | TC_3 | T=53.95 ° 
+dwell | TC_0 | T=32.72 ° 
+dwell | TC_1 | T=38.23 ° 
+dwell | TC_2 | T=43.76 ° 
+dwell | TC_3 | T=54.15 ° 
+dwell | TC_0 | T=32.86 ° 
+dwell | TC_1 | T=38.31 ° 
+dwell | TC_2 | T=44.00 ° 
+dwell | TC_3 | T=54.35 ° 
+dwell | TC_0 | T=33.00 ° 
+dwell | TC_1 | T=38.38 ° 
+dwell | TC_2 | T=44.24 ° 
+dwell | TC_3 | T=54.54 ° 
+dwell | TC_0 | T=33.14 ° 
+dwell | TC_1 | T=38.46 ° 
+dwell | TC_2 | T=44.48 ° 
+dwell | TC_3 | T=54.72 ° 
+dwell | TC_0 | T=33.27 ° 
+dwell | TC_1 | T=38.53 ° 
+dwell | TC_2 | T=44.71 ° 
+dwell | TC_3 | T=54.90 ° 
+dwell | TC_0 | T=33.41 ° 
+dwell | TC_1 | T=38.59 ° 
+dwell | TC_2 | T=44.94 ° 
+dwell | TC_3 | T=55.07 ° 
+dwell | TC_0 | T=33.54 ° 
+dwell | TC_1 | T=38.66 ° 
+dwell | TC_2 | T=45.16 ° 
+dwell | TC_3 | T=55.23 ° 
+dwell | TC_0 | T=33.67 ° 
+dwell | TC_1 | T=38.73 ° 
+dwell | TC_2 | T=45.38 ° 
+dwell | TC_3 | T=55.39 ° 
+dwell | TC_0 | T=33.80 ° 
+dwell | TC_1 | T=38.79 ° 
+dwell | TC_2 | T=45.60 ° 
+dwell | TC_3 | T=55.55 ° 
+dwell | TC_0 | T=33.92 ° 
+dwell | TC_1 | T=38.85 ° 
+dwell | TC_2 | T=45.81 ° 
+dwell | TC_3 | T=55.69 ° 
+dwell | TC_0 | T=34.05 ° 
+dwell | TC_1 | T=38.91 ° 
+dwell | TC_2 | T=46.01 ° 
+dwell | TC_3 | T=55.83 ° 
+dwell | TC_0 | T=34.17 ° 
+dwell | TC_1 | T=38.97 ° 
+dwell | TC_2 | T=46.22 ° 
+dwell | TC_3 | T=55.97 ° 
+dwell | TC_0 | T=34.30 ° 
+dwell | TC_1 | T=39.02 ° 
+dwell | TC_2 | T=46.42 ° 
+dwell | TC_3 | T=56.10 ° 
+dwell | TC_0 | T=34.42 ° 
+dwell | TC_1 | T=39.08 ° 
+dwell | TC_2 | T=46.61 ° 
+dwell | TC_3 | T=56.23 ° 
+dwell | TC_0 | T=34.53 ° 
+dwell | TC_1 | T=39.13 ° 
+dwell | TC_2 | T=46.80 ° 
+dwell | TC_3 | T=56.35 ° 
+dwell | TC_0 | T=34.65 ° 
+dwell | TC_1 | T=39.19 ° 
+dwell | TC_2 | T=46.99 ° 
+dwell | TC_3 | T=56.47 ° 
+dwell | TC_0 | T=34.77 ° 
+dwell | TC_1 | T=39.24 ° 
+dwell | TC_2 | T=47.18 ° 
+dwell | TC_3 | T=56.59 ° 
+dwell | TC_0 | T=34.88 ° 
+dwell | TC_1 | T=39.29 ° 
+dwell | TC_2 | T=47.36 ° 
+dwell | TC_3 | T=56.70 ° 
+dwell | TC_0 | T=34.99 ° 
+dwell | TC_1 | T=39.34 ° 
+dwell | TC_2 | T=47.53 ° 
+dwell | TC_3 | T=56.80 ° 
+dwell | TC_0 | T=35.10 ° 
+dwell | TC_1 | T=39.39 ° 
+dwell | TC_2 | T=47.71 ° 
+dwell | TC_3 | T=56.91 ° 
+dwell | TC_0 | T=35.21 ° 
+dwell | TC_1 | T=39.43 ° 
+dwell | TC_2 | T=47.88 ° 
+dwell | TC_3 | T=57.01 ° 
+dwell | TC_0 | T=35.32 ° 
+dwell | TC_1 | T=39.48 ° 
+dwell | TC_2 | T=48.05 ° 
+dwell | TC_3 | T=57.10 ° 
+dwell | TC_0 | T=35.43 ° 
+dwell | TC_1 | T=39.52 ° 
+dwell | TC_2 | T=48.21 ° 
+dwell | TC_3 | T=57.20 ° 
+dwell | TC_0 | T=35.53 ° 
+dwell | TC_1 | T=39.57 ° 
+dwell | TC_2 | T=48.37 ° 
+dwell | TC_3 | T=57.29 ° 
+dwell | TC_0 | T=35.64 ° 
+dwell | TC_1 | T=39.61 ° 
+dwell | TC_2 | T=48.53 ° 
+dwell | TC_3 | T=57.37 ° 
+dwell | TC_0 | T=35.74 ° 
+dwell | TC_1 | T=39.65 ° 
+dwell | TC_2 | T=48.68 ° 
+dwell | TC_3 | T=57.46 ° 
+dwell | TC_0 | T=35.84 ° 
+dwell | TC_1 | T=39.69 ° 
+dwell | TC_2 | T=48.83 ° 
+dwell | TC_3 | T=57.54 ° 
+dwell | TC_0 | T=35.94 ° 
+dwell | TC_1 | T=39.73 ° 
+dwell | TC_2 | T=48.98 ° 
+dwell | TC_3 | T=57.61 ° 
+dwell | TC_0 | T=35.97 ° 
+dwell | TC_1 | T=39.75 ° 
+dwell | TC_2 | T=49.03 ° 
+dwell | TC_3 | T=57.64 ° 
+-------------------
+Simulation complete!
+
+Simulation end: 2026-11-17 11:04:01
+
+Simulated process time: 98.37 s 
+
+Computer calculation time: 331.83 s 
+
+Simulation diagnostics exported.
+Thermal stage rows: 413225
+Thermal summary rows: 50
+Statistics rows: 109
+Validation rows: 935
+
+--- Node density 0.1 nodes/mm³ ---
+Experimental dwell duration: 87.346 s
+Loading STL...
+STL loaded in 0.00 seconds. Success!
+Substrate Nodes : 16452
+Deposition Nodes: 150
+Total Nodes     : 16602
+
+Node Validation
+Substrate Nodes : 16452
+Deposition Nodes: 150
+Total Nodes     : 16602
+
+
+Active Nodes    : 16452
+Inactive Nodes  : 150
+
+Minimum Nodes per Block : 15
+Maximum Nodes per Block : 16452
+Average Nodes per Block : 1509.27
+
+Requested Density : 0.100 nodes/mm³
+Average Density   : 0.102 nodes/mm³
+
+Minimum Density : 0.100
+Maximum Density : 0.102
+Average Density : 0.102
+
+------ SURFACE NODE STATISTICS ------
+Total nodes: 16602
+Surface nodes: 0
+Surface fraction : 0.00%
+    top: 0
+ bottom: 0
+   left: 0
+  right: 0
+  front: 0
+   back: 0
+-------------------------------------
+Neighborhood radius = 0.003
+Gaussian sigma = 0.0009554638580169277
+
+ Graph assembly time: 1.66 s 
+Adjacency matrix complete.
+
+Degree matrix verification: 
+[2.83356343e-01 1.06732276e-01 1.03920931e-01 3.15195158e-04
+ 5.45344784e-01 5.24201169e-01 1.31534094e+00 8.40958965e-03
+ 2.43119711e-01 2.27006334e-01]
+Computing eigenvectors...
+This could take a while.
+
+Check eigensystem assembly time: 
+Eigen solve: 159.68 s
+
+Eigen decomposition complete.
+
+------ ARC SOURCE MATERIAL PROPERTIES ------
+Reference temperature: 25.00 °C
+Thermal conductivity:  52.4336 W/m-K
+Specific heat:         502.53 J/kg-K
+Thermal diffusivity:   1.329175e-05 m²/s
+Effective arc power:   1609.92 W
+initial | TC_0 | T=25.00 ° 
+initial | TC_1 | T=25.00 ° 
+initial | TC_2 | T=25.00 ° 
+initial | TC_3 | T=25.00 ° 
+----------------------------
+Beginning deposition
+
+Simulation start: 2026-11-17 11:06:47
+----------------------------
+
+------ PROCESS DISCRETIZATION ------
+Deposition length : 140.000 mm
+Blocks per layer  : 10
+Block length: 14.000 mm
+Travel speed: 12.700 mm/s
+Time per block: 1.1024 s
+Layer 1
+Forced surface nodes: 4 
+Free surface nodes: 488
+Max heat-source ΔT: 2540.21 °C | Node 16455 [DEPOSITED MATERIAL] | Block 1 | Layer 0 | Position [0.0213054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+WARNING: 4 inactive nodes heated above ambient + 1°C. 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 16467 | T=25.00 °C | Layer=0 | Position=[0.03983538 0.03784366 0.01484735]
+
+--- Block Complete | Block 1, Layer 0 | t=1.102 s ---
+Active: 16467 | Inactive: 135
+Global Tmin/Tmax: 25.00 / 2220.52 °C
+Active Tmax: 2220.52 °C | Substrate Tmax: 700.82 °C | Deposit Tmax: 2220.52 °C
+Current block Tmin/Mean/Tmax: 86.93 / 508.89 / 2220.52 °C
+Hottest node: 16455 (deposited), layer=0, T=2220.52 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 1, layer=0 , time=1.10 s, Tmax=2220.52 °C
+Forced surface nodes: 8 
+Free surface nodes: 488
+Max heat-source ΔT: 2540.21 °C | Node 16470 [DEPOSITED MATERIAL] | Block 2 | Layer 0 | Position [0.0353054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 16482 | T=25.00 °C | Layer=0 | Position=[0.05383538 0.03784366 0.01484735]
+
+--- Block Complete | Block 2, Layer 0 | t=2.205 s ---
+Active: 16482 | Inactive: 120
+Global Tmin/Tmax: 25.00 / 2143.44 °C
+Active Tmax: 2143.44 °C | Substrate Tmax: 819.95 °C | Deposit Tmax: 2143.44 °C
+Current block Tmin/Mean/Tmax: 62.85 / 448.29 / 2079.97 °C
+Hottest node: 16455 (deposited), layer=0, T=2143.44 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 2, layer=0 , time=2.20 s, Tmax=2143.44 °C
+Forced surface nodes: 12 
+Free surface nodes: 488
+Max heat-source ΔT: 2540.21 °C | Node 16485 [DEPOSITED MATERIAL] | Block 3 | Layer 0 | Position [0.0493054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+WARNING: 2 inactive nodes heated above ambient + 1°C. 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.00 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.00 ° 
+Hottest inactive node: 16497 | T=25.00 °C | Layer=0 | Position=[0.06783538 0.03784366 0.01484735]
+
+--- Block Complete | Block 3, Layer 0 | t=3.307 s ---
+Active: 16497 | Inactive: 105
+Global Tmin/Tmax: 25.00 / 1957.02 °C
+Active Tmax: 1957.02 °C | Substrate Tmax: 899.86 °C | Deposit Tmax: 1957.02 °C
+Current block Tmin/Mean/Tmax: 98.66 / 461.02 / 1953.79 °C
+Hottest node: 16455 (deposited), layer=0, T=1957.02 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 3, layer=0 , time=3.31 s, Tmax=1957.02 °C
+Forced surface nodes: 16 
+Free surface nodes: 488
+Max heat-source ΔT: 2540.21 °C | Node 16500 [DEPOSITED MATERIAL] | Block 4 | Layer 0 | Position [0.0633054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.00 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.01 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.01 ° 
+Hottest inactive node: 16512 | T=25.00 °C | Layer=0 | Position=[0.08183538 0.03784366 0.01484735]
+
+--- Block Complete | Block 4, Layer 0 | t=4.409 s ---
+Active: 16512 | Inactive: 90
+Global Tmin/Tmax: 25.00 / 1941.09 °C
+Active Tmax: 1941.09 °C | Substrate Tmax: 881.50 °C | Deposit Tmax: 1941.09 °C
+Current block Tmin/Mean/Tmax: 76.10 / 464.60 / 1941.09 °C
+Hottest node: 16500 (deposited), layer=0, T=1941.09 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 4, layer=0 , time=4.41 s, Tmax=1941.09 °C
+Forced surface nodes: 20 
+Free surface nodes: 488
+Max heat-source ΔT: 2540.21 °C | Node 16515 [DEPOSITED MATERIAL] | Block 5 | Layer 0 | Position [0.0773054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.01 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.03 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.03 ° 
+Hottest inactive node: 16527 | T=25.00 °C | Layer=0 | Position=[0.09583538 0.03784366 0.01484735]
+
+--- Block Complete | Block 5, Layer 0 | t=5.512 s ---
+Active: 16527 | Inactive: 75
+Global Tmin/Tmax: 25.00 / 1924.48 °C
+Active Tmax: 1924.48 °C | Substrate Tmax: 903.97 °C | Deposit Tmax: 1924.48 °C
+Current block Tmin/Mean/Tmax: 77.18 / 450.42 / 1924.48 °C
+Hottest node: 16515 (deposited), layer=0, T=1924.48 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 5, layer=0 , time=5.51 s, Tmax=1924.48 °C
+Forced surface nodes: 24 
+Free surface nodes: 488
+Max heat-source ΔT: 2540.21 °C | Node 16530 [DEPOSITED MATERIAL] | Block 6 | Layer 0 | Position [0.0913054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.03 ° 
+WARNING: 2 inactive nodes heated above ambient + 1°C. 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.10 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.10 ° 
+Hottest inactive node: 16542 | T=25.00 °C | Layer=0 | Position=[0.10983538 0.03784366 0.01484735]
+
+--- Block Complete | Block 6, Layer 0 | t=6.614 s ---
+Active: 16542 | Inactive: 60
+Global Tmin/Tmax: 25.00 / 2009.22 °C
+Active Tmax: 2009.22 °C | Substrate Tmax: 989.39 °C | Deposit Tmax: 2009.22 °C
+Current block Tmin/Mean/Tmax: 111.64 / 531.90 / 2009.22 °C
+Hottest node: 16530 (deposited), layer=0, T=2009.22 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 6, layer=0 , time=6.61 s, Tmax=2009.22 °C
+Forced surface nodes: 28 
+Free surface nodes: 488
+Max heat-source ΔT: 2540.21 °C | Node 16545 [DEPOSITED MATERIAL] | Block 7 | Layer 0 | Position [0.1053054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.10 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.22 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.22 ° 
+Hottest inactive node: 16557 | T=25.00 °C | Layer=0 | Position=[0.12383538 0.03784366 0.01484735]
+
+--- Block Complete | Block 7, Layer 0 | t=7.717 s ---
+Active: 16557 | Inactive: 45
+Global Tmin/Tmax: 25.00 / 2162.70 °C
+Active Tmax: 2162.70 °C | Substrate Tmax: 1110.26 °C | Deposit Tmax: 2162.70 °C
+Current block Tmin/Mean/Tmax: 133.94 / 486.93 / 2162.70 °C
+Hottest node: 16545 (deposited), layer=0, T=2162.70 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 7, layer=0 , time=7.72 s, Tmax=2162.70 °C
+Forced surface nodes: 32 
+Free surface nodes: 488
+Max heat-source ΔT: 2540.21 °C | Node 16560 [DEPOSITED MATERIAL] | Block 8 | Layer 0 | Position [0.1193054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.22 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.42 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.42 ° 
+Hottest inactive node: 16572 | T=25.00 °C | Layer=0 | Position=[0.13783538 0.03784366 0.01484735]
+
+--- Block Complete | Block 8, Layer 0 | t=8.819 s ---
+Active: 16572 | Inactive: 30
+Global Tmin/Tmax: 25.00 / 1971.95 °C
+Active Tmax: 1971.95 °C | Substrate Tmax: 1118.08 °C | Deposit Tmax: 1971.95 °C
+Current block Tmin/Mean/Tmax: 62.98 / 473.58 / 1944.46 °C
+Hottest node: 16545 (deposited), layer=0, T=1971.95 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 8, layer=0 , time=8.82 s, Tmax=1971.95 °C
+Forced surface nodes: 36 
+Free surface nodes: 488
+Max heat-source ΔT: 2540.21 °C | Node 16575 [DEPOSITED MATERIAL] | Block 9 | Layer 0 | Position [0.1333054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.42 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=25.70 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=25.70 ° 
+Hottest inactive node: 16587 | T=25.00 °C | Layer=0 | Position=[0.15183538 0.03784366 0.01484735]
+
+--- Block Complete | Block 9, Layer 0 | t=9.921 s ---
+Active: 16587 | Inactive: 15
+Global Tmin/Tmax: 25.00 / 2298.61 °C
+Active Tmax: 2298.61 °C | Substrate Tmax: 1092.32 °C | Deposit Tmax: 2298.61 °C
+Current block Tmin/Mean/Tmax: 101.13 / 593.61 / 2298.61 °C
+Hottest node: 16575 (deposited), layer=0, T=2298.61 °C
+Inactive Tmax: 25.00 °C | Heated inactive (>ambient+1°C): 0
+Deposited block 9, layer=0 , time=9.92 s, Tmax=2298.61 °C
+Forced surface nodes: 40 
+Free surface nodes: 488
+Max heat-source ΔT: 2540.21 °C | Node 16590 [DEPOSITED MATERIAL] | Block 10 | Layer 0 | Position [0.1473054  0.03755813 0.01501784]
+Current block heat-source ΔT: min=12.61, max=2540.21 °C
+after_heatsource | TC_0 | T=25.00 ° 
+after_heatsource | TC_1 | T=25.00 ° 
+after_heatsource | TC_2 | T=25.00 ° 
+after_heatsource | TC_3 | T=25.70 ° 
+after_conduction | TC_0 | T=25.00 ° 
+after_conduction | TC_1 | T=25.00 ° 
+after_conduction | TC_2 | T=25.00 ° 
+after_conduction | TC_3 | T=26.09 ° 
+after_convection | TC_0 | T=25.00 ° 
+after_convection | TC_1 | T=25.00 ° 
+after_convection | TC_2 | T=25.00 ° 
+after_convection | TC_3 | T=26.09 ° 
+No inactive nodes remaining.
+
+--- Block Complete | Block 10, Layer 0 | t=11.024 s ---
+Active: 16602 | Inactive: 0
+Global Tmin/Tmax: 25.00 / 2285.05 °C
+Active Tmax: 2285.05 °C | Substrate Tmax: 1217.75 °C | Deposit Tmax: 2285.05 °C
+Current block Tmin/Mean/Tmax: 89.79 / 571.51 / 2149.36 °C
+Hottest node: 16575 (deposited), layer=0, T=2285.05 °C
+Deposited block 10, layer=0 , time=11.02 s, Tmax=2285.05 °C
+Dwell after final layer 1 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.00 ° 
+dwell | TC_3 | T=26.50 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.00 ° 
+dwell | TC_2 | T=25.01 ° 
+dwell | TC_3 | T=26.99 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.01 ° 
+dwell | TC_2 | T=25.01 ° 
+dwell | TC_3 | T=27.58 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.01 ° 
+dwell | TC_2 | T=25.01 ° 
+dwell | TC_3 | T=28.26 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.03 ° 
+dwell | TC_2 | T=25.02 ° 
+dwell | TC_3 | T=29.05 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.05 ° 
+dwell | TC_2 | T=25.03 ° 
+dwell | TC_3 | T=29.93 ° 
+dwell | TC_0 | T=25.00 ° 
+dwell | TC_1 | T=25.09 ° 
+dwell | TC_2 | T=25.04 ° 
+dwell | TC_3 | T=30.89 ° 
+dwell | TC_0 | T=25.01 ° 
+dwell | TC_1 | T=25.14 ° 
+dwell | TC_2 | T=25.05 ° 
+dwell | TC_3 | T=31.92 ° 
+dwell | TC_0 | T=25.01 ° 
+dwell | TC_1 | T=25.20 ° 
+dwell | TC_2 | T=25.07 ° 
+dwell | TC_3 | T=33.01 ° 
+dwell | TC_0 | T=25.02 ° 
+dwell | TC_1 | T=25.28 ° 
+dwell | TC_2 | T=25.09 ° 
+dwell | TC_3 | T=34.16 ° 
+dwell | TC_0 | T=25.04 ° 
+dwell | TC_1 | T=25.38 ° 
+dwell | TC_2 | T=25.11 ° 
+dwell | TC_3 | T=35.34 ° 
+dwell | TC_0 | T=25.06 ° 
+dwell | TC_1 | T=25.50 ° 
+dwell | TC_2 | T=25.14 ° 
+dwell | TC_3 | T=36.55 ° 
+dwell | TC_0 | T=25.08 ° 
+dwell | TC_1 | T=25.64 ° 
+dwell | TC_2 | T=25.18 ° 
+dwell | TC_3 | T=37.78 ° 
+dwell | TC_0 | T=25.11 ° 
+dwell | TC_1 | T=25.79 ° 
+dwell | TC_2 | T=25.22 ° 
+dwell | TC_3 | T=39.02 ° 
+dwell | TC_0 | T=25.15 ° 
+dwell | TC_1 | T=25.97 ° 
+dwell | TC_2 | T=25.27 ° 
+dwell | TC_3 | T=40.26 ° 
+dwell | TC_0 | T=25.19 ° 
+dwell | TC_1 | T=26.16 ° 
+dwell | TC_2 | T=25.33 ° 
+dwell | TC_3 | T=41.49 ° 
+dwell | TC_0 | T=25.24 ° 
+dwell | TC_1 | T=26.37 ° 
+dwell | TC_2 | T=25.39 ° 
+dwell | TC_3 | T=42.72 ° 
+dwell | TC_0 | T=25.30 ° 
+dwell | TC_1 | T=26.59 ° 
+dwell | TC_2 | T=25.46 ° 
+dwell | TC_3 | T=43.92 ° 
+dwell | TC_0 | T=25.37 ° 
+dwell | TC_1 | T=26.83 ° 
+dwell | TC_2 | T=25.54 ° 
+dwell | TC_3 | T=45.10 ° 
+dwell | TC_0 | T=25.45 ° 
+dwell | TC_1 | T=27.08 ° 
+dwell | TC_2 | T=25.63 ° 
+dwell | TC_3 | T=46.25 ° 
+dwell | TC_0 | T=25.53 ° 
+dwell | TC_1 | T=27.35 ° 
+dwell | TC_2 | T=25.73 ° 
+dwell | TC_3 | T=47.38 ° 
+dwell | TC_0 | T=25.63 ° 
+dwell | TC_1 | T=27.63 ° 
+dwell | TC_2 | T=25.83 ° 
+dwell | TC_3 | T=48.47 ° 
+dwell | TC_0 | T=25.73 ° 
+dwell | TC_1 | T=27.91 ° 
+dwell | TC_2 | T=25.94 ° 
+dwell | TC_3 | T=49.53 ° 
+dwell | TC_0 | T=25.83 ° 
+dwell | TC_1 | T=28.20 ° 
+dwell | TC_2 | T=26.06 ° 
+dwell | TC_3 | T=50.55 ° 
+dwell | TC_0 | T=25.95 ° 
+dwell | TC_1 | T=28.50 ° 
+dwell | TC_2 | T=26.19 ° 
+dwell | TC_3 | T=51.54 ° 
+dwell | TC_0 | T=26.07 ° 
+dwell | TC_1 | T=28.81 ° 
+dwell | TC_2 | T=26.33 ° 
+dwell | TC_3 | T=52.49 ° 
+dwell | TC_0 | T=26.20 ° 
+dwell | TC_1 | T=29.12 ° 
+dwell | TC_2 | T=26.47 ° 
+dwell | TC_3 | T=53.40 ° 
+dwell | TC_0 | T=26.34 ° 
+dwell | TC_1 | T=29.43 ° 
+dwell | TC_2 | T=26.62 ° 
+dwell | TC_3 | T=54.28 ° 
+dwell | TC_0 | T=26.49 ° 
+dwell | TC_1 | T=29.75 ° 
+dwell | TC_2 | T=26.77 ° 
+dwell | TC_3 | T=55.13 ° 
+dwell | TC_0 | T=26.64 ° 
+dwell | TC_1 | T=30.07 ° 
+dwell | TC_2 | T=26.94 ° 
+dwell | TC_3 | T=55.94 ° 
+dwell | TC_0 | T=26.79 ° 
+dwell | TC_1 | T=30.38 ° 
+dwell | TC_2 | T=27.11 ° 
+dwell | TC_3 | T=56.72 ° 
+dwell | TC_0 | T=26.95 ° 
+dwell | TC_1 | T=30.70 ° 
+dwell | TC_2 | T=27.28 ° 
+dwell | TC_3 | T=57.46 ° 
+dwell | TC_0 | T=27.12 ° 
+dwell | TC_1 | T=31.01 ° 
+dwell | TC_2 | T=27.47 ° 
+dwell | TC_3 | T=58.17 ° 
+dwell | TC_0 | T=27.29 ° 
+dwell | TC_1 | T=31.32 ° 
+dwell | TC_2 | T=27.65 ° 
+dwell | TC_3 | T=58.85 ° 
+dwell | TC_0 | T=27.47 ° 
+dwell | TC_1 | T=31.63 ° 
+dwell | TC_2 | T=27.85 ° 
+dwell | TC_3 | T=59.50 ° 
+dwell | TC_0 | T=27.65 ° 
+dwell | TC_1 | T=31.94 ° 
+dwell | TC_2 | T=28.05 ° 
+dwell | TC_3 | T=60.12 ° 
+dwell | TC_0 | T=27.83 ° 
+dwell | TC_1 | T=32.24 ° 
+dwell | TC_2 | T=28.25 ° 
+dwell | TC_3 | T=60.71 ° 
+dwell | TC_0 | T=28.02 ° 
+dwell | TC_1 | T=32.54 ° 
+dwell | TC_2 | T=28.46 ° 
+dwell | TC_3 | T=61.28 ° 
+dwell | TC_0 | T=28.21 ° 
+dwell | TC_1 | T=32.83 ° 
+dwell | TC_2 | T=28.67 ° 
+dwell | TC_3 | T=61.82 ° 
+dwell | TC_0 | T=28.40 ° 
+dwell | TC_1 | T=33.12 ° 
+dwell | TC_2 | T=28.88 ° 
+dwell | TC_3 | T=62.34 ° 
+dwell | TC_0 | T=28.60 ° 
+dwell | TC_1 | T=33.40 ° 
+dwell | TC_2 | T=29.10 ° 
+dwell | TC_3 | T=62.83 ° 
+dwell | TC_0 | T=28.80 ° 
+dwell | TC_1 | T=33.68 ° 
+dwell | TC_2 | T=29.32 ° 
+dwell | TC_3 | T=63.29 ° 
+dwell | TC_0 | T=29.00 ° 
+dwell | TC_1 | T=33.96 ° 
+dwell | TC_2 | T=29.55 ° 
+dwell | TC_3 | T=63.74 ° 
+dwell | TC_0 | T=29.20 ° 
+dwell | TC_1 | T=34.22 ° 
+dwell | TC_2 | T=29.78 ° 
+dwell | TC_3 | T=64.17 ° 
+dwell | TC_0 | T=29.40 ° 
+dwell | TC_1 | T=34.48 ° 
+dwell | TC_2 | T=30.01 ° 
+dwell | TC_3 | T=64.57 ° 
+dwell | TC_0 | T=29.61 ° 
+dwell | TC_1 | T=34.74 ° 
+dwell | TC_2 | T=30.24 ° 
+dwell | TC_3 | T=64.96 ° 
+dwell | TC_0 | T=29.81 ° 
+dwell | TC_1 | T=34.99 ° 
+dwell | TC_2 | T=30.48 ° 
+dwell | TC_3 | T=65.33 ° 
+dwell | TC_0 | T=30.02 ° 
+dwell | TC_1 | T=35.23 ° 
+dwell | TC_2 | T=30.72 ° 
+dwell | TC_3 | T=65.68 ° 
+dwell | TC_0 | T=30.22 ° 
+dwell | TC_1 | T=35.47 ° 
+dwell | TC_2 | T=30.96 ° 
+dwell | TC_3 | T=66.01 ° 
+dwell | TC_0 | T=30.43 ° 
+dwell | TC_1 | T=35.71 ° 
+dwell | TC_2 | T=31.20 ° 
+dwell | TC_3 | T=66.33 ° 
+dwell | TC_0 | T=30.63 ° 
+dwell | TC_1 | T=35.93 ° 
+dwell | TC_2 | T=31.44 ° 
+dwell | TC_3 | T=66.63 ° 
+dwell | TC_0 | T=30.84 ° 
+dwell | TC_1 | T=36.15 ° 
+dwell | TC_2 | T=31.69 ° 
+dwell | TC_3 | T=66.92 ° 
+dwell | TC_0 | T=31.05 ° 
+dwell | TC_1 | T=36.37 ° 
+dwell | TC_2 | T=31.93 ° 
+dwell | TC_3 | T=67.19 ° 
+dwell | TC_0 | T=31.25 ° 
+dwell | TC_1 | T=36.58 ° 
+dwell | TC_2 | T=32.18 ° 
+dwell | TC_3 | T=67.46 ° 
+dwell | TC_0 | T=31.46 ° 
+dwell | TC_1 | T=36.79 ° 
+dwell | TC_2 | T=32.42 ° 
+dwell | TC_3 | T=67.70 ° 
+dwell | TC_0 | T=31.66 ° 
+dwell | TC_1 | T=36.99 ° 
+dwell | TC_2 | T=32.67 ° 
+dwell | TC_3 | T=67.94 ° 
+dwell | TC_0 | T=31.86 ° 
+dwell | TC_1 | T=37.18 ° 
+dwell | TC_2 | T=32.92 ° 
+dwell | TC_3 | T=68.17 ° 
+dwell | TC_0 | T=32.07 ° 
+dwell | TC_1 | T=37.37 ° 
+dwell | TC_2 | T=33.17 ° 
+dwell | TC_3 | T=68.38 ° 
+dwell | TC_0 | T=32.27 ° 
+dwell | TC_1 | T=37.56 ° 
+dwell | TC_2 | T=33.42 ° 
+dwell | TC_3 | T=68.59 ° 
+dwell | TC_0 | T=32.47 ° 
+dwell | TC_1 | T=37.74 ° 
+dwell | TC_2 | T=33.67 ° 
+dwell | TC_3 | T=68.78 ° 
+dwell | TC_0 | T=32.67 ° 
+dwell | TC_1 | T=37.91 ° 
+dwell | TC_2 | T=33.92 ° 
+dwell | TC_3 | T=68.97 ° 
+dwell | TC_0 | T=32.86 ° 
+dwell | TC_1 | T=38.08 ° 
+dwell | TC_2 | T=34.17 ° 
+dwell | TC_3 | T=69.14 ° 
+dwell | TC_0 | T=33.06 ° 
+dwell | TC_1 | T=38.25 ° 
+dwell | TC_2 | T=34.42 ° 
+dwell | TC_3 | T=69.31 ° 
+dwell | TC_0 | T=33.25 ° 
+dwell | TC_1 | T=38.41 ° 
+dwell | TC_2 | T=34.66 ° 
+dwell | TC_3 | T=69.47 ° 
+dwell | TC_0 | T=33.45 ° 
+dwell | TC_1 | T=38.57 ° 
+dwell | TC_2 | T=34.91 ° 
+dwell | TC_3 | T=69.62 ° 
+dwell | TC_0 | T=33.64 ° 
+dwell | TC_1 | T=38.72 ° 
+dwell | TC_2 | T=35.16 ° 
+dwell | TC_3 | T=69.77 ° 
+dwell | TC_0 | T=33.83 ° 
+dwell | TC_1 | T=38.87 ° 
+dwell | TC_2 | T=35.41 ° 
+dwell | TC_3 | T=69.91 ° 
+dwell | TC_0 | T=34.02 ° 
+dwell | TC_1 | T=39.02 ° 
+dwell | TC_2 | T=35.66 ° 
+dwell | TC_3 | T=70.04 ° 
+dwell | TC_0 | T=34.20 ° 
+dwell | TC_1 | T=39.16 ° 
+dwell | TC_2 | T=35.90 ° 
+dwell | TC_3 | T=70.16 ° 
+dwell | TC_0 | T=34.39 ° 
+dwell | TC_1 | T=39.30 ° 
+dwell | TC_2 | T=36.15 ° 
+dwell | TC_3 | T=70.28 ° 
+dwell | TC_0 | T=34.57 ° 
+dwell | TC_1 | T=39.44 ° 
+dwell | TC_2 | T=36.39 ° 
+dwell | TC_3 | T=70.40 ° 
+dwell | TC_0 | T=34.75 ° 
+dwell | TC_1 | T=39.57 ° 
+dwell | TC_2 | T=36.64 ° 
+dwell | TC_3 | T=70.50 ° 
+dwell | TC_0 | T=34.93 ° 
+dwell | TC_1 | T=39.70 ° 
+dwell | TC_2 | T=36.88 ° 
+dwell | TC_3 | T=70.61 ° 
+dwell | TC_0 | T=35.11 ° 
+dwell | TC_1 | T=39.82 ° 
+dwell | TC_2 | T=37.12 ° 
+dwell | TC_3 | T=70.70 ° 
+dwell | TC_0 | T=35.29 ° 
+dwell | TC_1 | T=39.95 ° 
+dwell | TC_2 | T=37.36 ° 
+dwell | TC_3 | T=70.80 ° 
+dwell | TC_0 | T=35.46 ° 
+dwell | TC_1 | T=40.07 ° 
+dwell | TC_2 | T=37.60 ° 
+dwell | TC_3 | T=70.89 ° 
+dwell | TC_0 | T=35.63 ° 
+dwell | TC_1 | T=40.18 ° 
+dwell | TC_2 | T=37.84 ° 
+dwell | TC_3 | T=70.97 ° 
+dwell | TC_0 | T=35.80 ° 
+dwell | TC_1 | T=40.30 ° 
+dwell | TC_2 | T=38.08 ° 
+dwell | TC_3 | T=71.05 ° 
+dwell | TC_0 | T=35.97 ° 
+dwell | TC_1 | T=40.41 ° 
+dwell | TC_2 | T=38.31 ° 
+dwell | TC_3 | T=71.13 ° 
+dwell | TC_0 | T=36.13 ° 
+dwell | TC_1 | T=40.52 ° 
+dwell | TC_2 | T=38.55 ° 
+dwell | TC_3 | T=71.20 ° 
+dwell | TC_0 | T=36.30 ° 
+dwell | TC_1 | T=40.62 ° 
+dwell | TC_2 | T=38.78 ° 
+dwell | TC_3 | T=71.27 ° 
+dwell | TC_0 | T=36.46 ° 
+dwell | TC_1 | T=40.72 ° 
+dwell | TC_2 | T=39.01 ° 
+dwell | TC_3 | T=71.34 ° 
+dwell | TC_0 | T=36.62 ° 
+dwell | TC_1 | T=40.83 ° 
+dwell | TC_2 | T=39.24 ° 
+dwell | TC_3 | T=71.40 ° 
+dwell | TC_0 | T=36.78 ° 
+dwell | TC_1 | T=40.92 ° 
+dwell | TC_2 | T=39.47 ° 
+dwell | TC_3 | T=71.46 ° 
+dwell | TC_0 | T=36.94 ° 
+dwell | TC_1 | T=41.02 ° 
+dwell | TC_2 | T=39.70 ° 
+dwell | TC_3 | T=71.52 ° 
+dwell | TC_0 | T=37.09 ° 
+dwell | TC_1 | T=41.12 ° 
+dwell | TC_2 | T=39.93 ° 
+dwell | TC_3 | T=71.57 ° 
+dwell | TC_0 | T=37.24 ° 
+dwell | TC_1 | T=41.21 ° 
+dwell | TC_2 | T=40.15 ° 
+dwell | TC_3 | T=71.62 ° 
+dwell | TC_0 | T=37.30 ° 
+dwell | TC_1 | T=41.24 ° 
+dwell | TC_2 | T=40.23 ° 
+dwell | TC_3 | T=71.64 ° 
+-------------------
+Simulation complete!
+
+Simulation end: 2026-11-17 11:40:58
+
+Simulated process time: 98.37 s 
+
+Computer calculation time: 2051.69 s 
+
+Simulation diagnostics exported.
+Thermal stage rows: 826725
+Thermal summary rows: 50
+Statistics rows: 109
+Validation rows: 935
+
+CONVERGENCE SUMMARY
+
+ density  epsilon_m       gain  n_nodes  n_components_full_graph  largest_component_fraction  isolated_nodes  mean_neighbors  graph_seconds  total_seconds  TC_0_RMSE_C  TC_0_peak_difference_C  TC_1_RMSE_C  TC_1_peak_difference_C  TC_2_RMSE_C  TC_2_peak_difference_C  TC_3_RMSE_C  TC_3_peak_difference_C  RMSE_vs_finest_C  max_peak_difference_C  passes_tolerance  reference_density
+    0.01      0.003 10000000.0     1655                      928                    0.010272             601        1.044109       0.778987       7.579159     6.073978               12.295708     9.592257               16.239102     7.265685               15.229983    34.023164               46.641844         18.298022              46.641844             False                0.1
+    0.05      0.003 10000000.0     8296                      150                    0.970106             102        5.055207      33.703670     369.517093     0.814970                1.324100     2.784447                1.491981     7.578502                8.804048    11.773437               14.001436          7.149560              14.001436             False                0.1
+    0.10      0.003 10000000.0    16602                       11                    0.999277               8       10.079749     161.777473    2221.485455     0.000000                0.000000     0.000000                0.000000     0.000000                0.000000     0.000000                0.000000          0.000000               0.000000              True                0.1
+
+No tested coarser resolution met the convergence tolerances.
+Graph calibration will NOT start.
+Consider testing additional node densities.

@@ -16,8 +16,10 @@ from simulation_runner import run_simulation, PROBE_NAMES
 TC_COLUMNS = ("ch0", "ch1", "ch2", "ch3")
 TC_NAMES = PROBE_NAMES
 
-EPSILON_VALUES = np.array([1, 3.0, 4.0, 4.75, 5.5, 6.5, 12, 30, 35]) * 1e-3  # meters
-GAIN_VALUES = np.array([1e5, 3e5, 1e6, 3e6, 1e7, 1e8])       # m^-2'''
+EPSILON_VALUES = np.array([4.0, 4.75, 5.5]) 
+#np.array([1, 3.0, 4.0, 4.75, 5.5, 6.5, 12, 30, 35]) * 1e-3  # meters
+GAIN_VALUES =  np.array([ 3e6, 1e7, 1e8]) 
+#np.array([1e5, 3e5, 1e6, 3e6, 1e7, 1e8])       # m^-2'''
 
 # At least this fraction of the baseline's valid experimental comparison samples must remain comparable in each candidate. No time-delay fitting is performed
 MIN_COVERAGE = 0.95

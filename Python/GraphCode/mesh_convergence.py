@@ -19,7 +19,8 @@ from simulation_runner import run_simulation, PROBE_NAMES
 
 # ------------------------- USER SETTINGS -------------------------
 # Density in nodes/mm^3. Start modestly; full graph eigensystems can be costly
-NODE_DENSITIES = [.01, 0.1, 0.2, 0.35, 0.5, 0.6, 0.7]
+NODE_DENSITIES = [0.01, 0.05, 0.1]
+#[.01, 0.1, 0.2, 0.35, 0.5, 0.6, 0.7]
 
 # First study: fixed epsilon and gain from config.py.
 # If True, epsilon scales with characteristic node spacing (different study).
